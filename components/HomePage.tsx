@@ -95,6 +95,9 @@ export default function HomePage() {
         },
         handleScale: { mouseWheel: true, pinch: true },
         handleScroll: { mouseWheel: true, pressedMouseMove: true, horzTouchDrag: true, vertTouchDrag: false },
+        localization: {
+          priceFormatter: (price: number) => '$' + price.toFixed(3),
+        },
       });
 
       const candlestickSeries = chart.addCandlestickSeries({
@@ -104,6 +107,11 @@ export default function HomePage() {
         borderDownColor: '#ef4444',
         wickUpColor: '#ffffff',
         wickDownColor: '#ef4444',
+        priceFormat: {
+          type: 'price',
+          precision: 3,
+          minMove: 0.001,
+        },
       });
 
       chartRef.current = chart;
@@ -142,27 +150,32 @@ export default function HomePage() {
       try {
         let geckoTimeframe = 'hour';
         let aggregate = 1;
+        let limit = 200;
         
         switch (timeframe) {
           case '1h':
             geckoTimeframe = 'minute';
             aggregate = 1;
+            limit = 60;
             break;
           case '24h':
             geckoTimeframe = 'minute';
             aggregate = 15;
+            limit = 96;
             break;
           case '7d':
             geckoTimeframe = 'hour';
-            aggregate = 1;
+            aggregate = 2;
+            limit = 84;
             break;
           case '30d':
-            geckoTimeframe = 'hour';
-            aggregate = 4;
+            geckoTimeframe = 'day';
+            aggregate = 1;
+            limit = 30;
             break;
         }
 
-        const url = `https://api.geckoterminal.com/api/v2/networks/base/pools/${priceData.pairAddress}/ohlcv/${geckoTimeframe}?aggregate=${aggregate}&limit=200`;
+        const url = `https://api.geckoterminal.com/api/v2/networks/base/pools/${priceData.pairAddress}/ohlcv/${geckoTimeframe}?aggregate=${aggregate}&limit=${limit}`;
         
         const res = await fetch(url, {
           headers: { 'Accept': 'application/json' }
@@ -183,7 +196,12 @@ export default function HomePage() {
               .sort((a: any, b: any) => a.time - b.time);
 
             seriesRef.current.setData(ohlcvData);
-            chartRef.current?.timeScale().fitContent();
+            
+            // Fit content and add some padding
+            if (chartRef.current) {
+              chartRef.current.timeScale().fitContent();
+              chartRef.current.timeScale().scrollToPosition(2, false);
+            }
           }
         }
       } catch (err) {
@@ -201,11 +219,10 @@ export default function HomePage() {
   };
 
   const getValue100000 = () => {
-    if (!priceData) return '$0.00';
+    if (!priceData) return '$0.000';
     const price = parseFloat(priceData.priceUsd);
     const value = price * MULTIPLIER;
-    if (value < 0.01) return `$${value.toFixed(4)}`;
-    return `$${value.toFixed(2)}`;
+    return `$${value.toFixed(3)}`;
   };
 
   const isPositive = priceData ? priceData.priceChange24h >= 0 : true;
