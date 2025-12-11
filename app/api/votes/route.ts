@@ -6,20 +6,17 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY || ''
 );
 
-// Get current vote period (resets at 12pm UTC daily)
 function getCurrentPeriod(): string {
   const now = new Date();
-  const resetHour = 12; // 12pm UTC
+  const resetHour = 12;
   
-  // If before 12pm UTC, use yesterday's date
   if (now.getUTCHours() < resetHour) {
     now.setUTCDate(now.getUTCDate() - 1);
   }
   
-  return now.toISOString().split('T')[0]; // YYYY-MM-DD
+  return now.toISOString().split('T')[0];
 }
 
-// GET - Fetch vote stats
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const token = searchParams.get('token');
@@ -58,23 +55,32 @@ export async function GET(request: NextRequest) {
       userVote = userVoteData?.vote || null;
     }
 
+    // Get recent votes
+    const { data: recentVotes } = await supabase
+      .from('votes')
+      .select('username, vote, created_at')
+      .eq('token', token.toLowerCase())
+      .eq('period', period)
+      .order('created_at', { ascending: false })
+      .limit(20);
+
     return NextResponse.json({
       bullish,
       bearish,
       userVote,
       period,
+      recentVotes: recentVotes || [],
     });
   } catch (error) {
     console.error('Error fetching votes:', error);
-    return NextResponse.json({ bullish: 0, bearish: 0, userVote: null });
+    return NextResponse.json({ bullish: 0, bearish: 0, userVote: null, recentVotes: [] });
   }
 }
 
-// POST - Submit a vote
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { token, vote, fid, address, username } = body;
+    const { token, vote, fid, username } = body;
 
     if (!token || !vote || !fid) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -106,7 +112,6 @@ export async function POST(request: NextRequest) {
         token: token.toLowerCase(),
         vote,
         fid,
-        address: address?.toLowerCase() || null,
         username: username || null,
         period,
         created_at: new Date().toISOString(),
