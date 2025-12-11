@@ -148,29 +148,22 @@ export default function HomePage() {
 
     const fetchOHLCV = async () => {
       try {
-        let geckoTimeframe = 'minute';
-        let aggregate = 15;
+        let url = '';
         
         switch (timeframe) {
           case '1h':
-            geckoTimeframe = 'minute';
-            aggregate = 1;
+            url = `https://api.geckoterminal.com/api/v2/networks/base/pools/${priceData.pairAddress}/ohlcv/minute?aggregate=1&limit=60`;
             break;
           case '24h':
-            geckoTimeframe = 'minute';
-            aggregate = 15;
+            url = `https://api.geckoterminal.com/api/v2/networks/base/pools/${priceData.pairAddress}/ohlcv/minute?aggregate=15&limit=96`;
             break;
           case '7d':
-            geckoTimeframe = 'minute';
-            aggregate = 60;
+            url = `https://api.geckoterminal.com/api/v2/networks/base/pools/${priceData.pairAddress}/ohlcv/hour?aggregate=1&limit=168`;
             break;
           case '30d':
-            geckoTimeframe = 'minute';
-            aggregate = 240;
+            url = `https://api.geckoterminal.com/api/v2/networks/base/pools/${priceData.pairAddress}/ohlcv/day?aggregate=1&limit=30`;
             break;
         }
-
-        const url = `https://api.geckoterminal.com/api/v2/networks/base/pools/${priceData.pairAddress}/ohlcv/${geckoTimeframe}?aggregate=${aggregate}&limit=200`;
         
         const res = await fetch(url, {
           headers: { 'Accept': 'application/json' }
@@ -179,7 +172,7 @@ export default function HomePage() {
         if (res.ok) {
           const data = await res.json();
           
-          if (data.data?.attributes?.ohlcv_list) {
+          if (data.data?.attributes?.ohlcv_list && data.data.attributes.ohlcv_list.length > 0) {
             const ohlcvData = data.data.attributes.ohlcv_list
               .map((candle: number[]) => ({
                 time: candle[0] as any,
