@@ -1,7 +1,7 @@
 'use client';
 
 import { TOKEN, SOCIALS, DEXSCREENER } from '@/lib/constants';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 const links = [
   { id: 'dexscreener', name: 'DexScreener', url: DEXSCREENER.tokenUrl },
@@ -13,6 +13,9 @@ const links = [
 export default function InfoPage() {
   const [copied, setCopied] = useState(false);
   const [sdk, setSdk] = useState(null);
+  const [muted, setMuted] = useState(true);
+  const [videoLoaded, setVideoLoaded] = useState(false);
+  const videoRef = useRef(null);
   
   useEffect(function() {
     async function loadSdk() {
@@ -25,6 +28,12 @@ export default function InfoPage() {
     }
     loadSdk();
   }, []);
+
+  useEffect(function() {
+    if (videoRef.current) {
+      videoRef.current.volume = 0.3;
+    }
+  }, [videoLoaded]);
   
   async function copyAddress() {
     try {
@@ -63,6 +72,17 @@ export default function InfoPage() {
     }
   }
 
+  function toggleMute() {
+    if (videoRef.current) {
+      videoRef.current.muted = !videoRef.current.muted;
+      setMuted(!muted);
+    }
+  }
+
+  function handleVideoLoaded() {
+    setVideoLoaded(true);
+  }
+
   var copyBtnClass = copied 
     ? "px-3 py-2 rounded-lg font-medium text-xs bg-white/20 text-white"
     : "px-3 py-2 rounded-lg font-medium text-xs bg-red-500/20 text-red-500";
@@ -70,17 +90,40 @@ export default function InfoPage() {
   return (
     <div className="flex flex-col h-full overflow-y-auto p-3 gap-3">
       {/* Video Header */}
-      <div className="bg-black border border-white/10 rounded-xl overflow-hidden h-32 flex items-center justify-center">
+      <div className="bg-black border border-white/10 rounded-xl overflow-hidden h-32 flex items-center justify-center relative">
         <video
+          ref={videoRef}
           autoPlay
           loop
-          muted
+          muted={muted}
           playsInline
-          className="w-[90%] h-[90%] object-cover rounded-lg"
-          style={{ objectPosition: 'center 55%' }}
+          onCanPlay={handleVideoLoaded}
+          className="w-[90%] h-[90%] object-cover rounded-lg transition-opacity duration-700"
+          style={{ 
+            objectPosition: 'center 55%',
+            opacity: videoLoaded ? 1 : 0
+          }}
         >
           <source src="/video.mp4" type="video/mp4" />
         </video>
+        
+        {/* Mute Toggle Button */}
+        <button
+          onClick={toggleMute}
+          className="absolute bottom-2 right-2 p-1.5 bg-black/50 hover:bg-black/70 rounded-full transition-colors"
+        >
+          {muted ? (
+            <svg className="w-4 h-4 text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+              <path d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+              <path d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
+            </svg>
+          ) : (
+            <svg className="w-4 h-4 text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+              <path d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+              <path d="M15.536 8.464a5 5 0 010 7.072M18.364 5.636a9 9 0 010 12.728" />
+            </svg>
+          )}
+        </button>
       </div>
       
       {/* Contract Address */}
