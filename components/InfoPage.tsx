@@ -60,11 +60,14 @@ export default function InfoPage() {
   async function handleBuyClick() {
     if (sdk) {
       try {
-        await sdk.actions.swapToken({
-          tokenAddress: TOKEN.address,
+        await sdk.actions.viewToken({
+          token: {
+            address: TOKEN.address,
+            chainId: 'eip155:8453',
+          },
         });
       } catch (err) {
-        console.error('Swap failed:', err);
+        console.error('View token failed:', err);
         window.open("https://app.uniswap.org/swap?outputCurrency=" + TOKEN.address + "&chain=base", '_blank');
       }
     } else {

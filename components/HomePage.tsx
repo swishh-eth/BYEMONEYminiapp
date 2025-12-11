@@ -212,7 +212,7 @@ export default function HomePage() {
         await sdk.actions.viewToken({
           token: {
             address: TOKEN.address,
-            chainId: `eip155:${TOKEN.chainId}`,
+            chainId: 'eip155:8453',
           },
         });
       } catch (err) {
