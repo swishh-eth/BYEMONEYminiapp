@@ -30,7 +30,7 @@ const Icons = {
 
 export default function BottomNav({ activeIndex, onNavigate }: BottomNavProps) {
   return (
-    <nav className="bg-red-500">
+    <nav className="bg-red-700">
       <div className="flex justify-around items-center py-3 px-4">
         {PAGES.map((page, index) => {
           const isActive = activeIndex === index;
@@ -41,7 +41,7 @@ export default function BottomNav({ activeIndex, onNavigate }: BottomNavProps) {
               className={`p-2 transition-all duration-300 ${
                 isActive 
                   ? 'text-white scale-125' 
-                  : 'text-white/50 hover:text-white/70 scale-100'
+                  : 'text-black hover:text-black/70 scale-100'
               }`}
               style={{
                 filter: isActive ? 'drop-shadow(0 0 8px rgba(255,255,255,0.8)) drop-shadow(0 0 20px rgba(255,255,255,0.5))' : 'none'
