@@ -143,15 +143,6 @@ export default function VotePage({ userFid, username }: VotePageProps) {
     return date.toLocaleDateString();
   };
 
-  const getTokenSymbol = (address: string) => {
-    for (const key in TOKENS) {
-      if (TOKENS[key as TokenKey].address.toLowerCase() === address.toLowerCase()) {
-        return TOKENS[key as TokenKey].symbol;
-      }
-    }
-    return 'Unknown';
-  };
-
   if (loading) {
     return (
       <div className="flex flex-col h-full p-3 items-center justify-center">
@@ -170,17 +161,17 @@ export default function VotePage({ userFid, username }: VotePageProps) {
         {/* Token Picker Button */}
         <button 
           onClick={() => setShowTokenPicker(!showTokenPicker)}
-          className="mt-2 px-4 py-2 bg-white/10 hover:bg-white/15 rounded-lg text-red-500 font-bold text-lg flex items-center gap-2 mx-auto"
+          className="mt-2 w-full bg-black border border-red-500 hover:bg-white/5 rounded-xl px-4 py-3 text-white font-bold text-lg flex items-center justify-between"
         >
-          ${token.symbol}
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+          <span>${token.symbol}</span>
+          <svg className={`w-4 h-4 transition-transform ${showTokenPicker ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
             <path d="M19 9l-7 7-7-7" />
           </svg>
         </button>
         
         {/* Token Dropdown */}
         {showTokenPicker && (
-          <div className="mt-2 bg-black border border-white/10 rounded-xl overflow-hidden">
+          <div className="mt-1 bg-black border border-white/10 rounded-xl overflow-hidden">
             {Object.entries(TOKENS).map(([key, t]) => (
               <button
                 key={key}
@@ -192,7 +183,7 @@ export default function VotePage({ userFid, username }: VotePageProps) {
                   selectedToken === key ? 'bg-white/5' : ''
                 }`}
               >
-                <span className="font-medium text-white">${t.symbol}</span>
+                <span className="font-bold text-white">${t.symbol}</span>
                 {selectedToken === key && (
                   <svg className="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
                     <path d="M5 13l4 4L19 7" />
@@ -301,7 +292,7 @@ export default function VotePage({ userFid, username }: VotePageProps) {
                       )}
                     </div>
                     <span className="text-xs text-white/70">
-                      @{vote.username || 'anon'} <span className="text-white/40">on ${vote.token || getTokenSymbol(token.address)}</span>
+                      @{vote.username || 'anon'} <span className="text-white/40">on ${vote.token}</span>
                     </span>
                   </div>
                   <span className="text-[10px] text-white/30">{formatTime(vote.created_at)}</span>
