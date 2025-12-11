@@ -48,7 +48,21 @@ export default function InfoPage() {
     }
   }
 
-  var buyUrl = "https://app.uniswap.org/swap?outputCurrency=" + TOKEN.address + "&chain=base";
+  async function handleBuyClick() {
+    if (sdk) {
+      try {
+        await sdk.actions.swapToken({
+          tokenAddress: TOKEN.address,
+        });
+      } catch (err) {
+        console.error('Swap failed:', err);
+        window.open("https://app.uniswap.org/swap?outputCurrency=" + TOKEN.address + "&chain=base", '_blank');
+      }
+    } else {
+      window.open("https://app.uniswap.org/swap?outputCurrency=" + TOKEN.address + "&chain=base", '_blank');
+    }
+  }
+
   var copyBtnClass = copied 
     ? "px-3 py-2 rounded-lg font-medium text-xs bg-white/20 text-white"
     : "px-3 py-2 rounded-lg font-medium text-xs bg-red-500/20 text-red-500";
@@ -56,13 +70,14 @@ export default function InfoPage() {
   return (
     <div className="flex flex-col h-full overflow-y-auto p-3 gap-3">
       {/* Video Header */}
-      <div className="bg-black border border-white/10 rounded-xl overflow-hidden">
+      <div className="bg-black border border-white/10 rounded-xl overflow-hidden h-32 flex items-center justify-center">
         <video
           autoPlay
           loop
           muted
           playsInline
-          className="w-full h-32 object-cover"
+          className="w-[90%] h-[90%] object-cover rounded-lg"
+          style={{ objectPosition: 'center 55%' }}
         >
           <source src="/video.mp4" type="video/mp4" />
         </video>
@@ -116,9 +131,12 @@ export default function InfoPage() {
       </div>
       
       {/* Buy Button */}
-      <a href={buyUrl} target="_blank" rel="noopener noreferrer" className="bg-red-500 rounded-xl p-3 text-center font-bold text-white text-sm">
+      <button 
+        onClick={handleBuyClick}
+        className="bg-red-500 rounded-xl p-3 text-center font-bold text-white text-sm"
+      >
         Buy $BYEMONEY
-      </a>
+      </button>
       
       {/* Disclaimer */}
       <p className="text-[9px] text-white/30 text-center">
