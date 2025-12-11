@@ -51,10 +51,10 @@ export default function HomePage() {
   };
 
   // Calculate value of 1000 tokens
-  const getValue1000 = () => {
+  const getValue10000 = () => {
     if (!priceData) return '$0.00';
     const price = parseFloat(priceData.priceUsd);
-    const value = price * 1000;
+    const value = price * 10000;
     if (value < 0.01) return `$${value.toFixed(4)}`;
     return `$${value.toFixed(2)}`;
   };
@@ -66,14 +66,14 @@ export default function HomePage() {
       {/* Price Header */}
       <div className="bg-black border border-white/10 rounded-xl p-4">
         <div className="flex items-center justify-between mb-1">
-          <span className="text-[10px] text-white/40">1,000 ${TOKEN.symbol}</span>
+          <span className="text-[10px] text-white/40">10,000 ${TOKEN.symbol}</span>
           <span className="text-[10px] text-white/40">Holding Value</span>
         </div>
         
         <div className="flex items-center justify-between">
           <div className="flex items-baseline gap-2">
             <span className="font-bold text-xl text-white">
-              {loading ? '...' : getValue1000()}
+              {loading ? '...' : getValue10000()}
             </span>
             {priceData && (
               <span className={`text-sm font-semibold ${isPositive ? 'text-green-500' : 'text-red-500'}`}>
