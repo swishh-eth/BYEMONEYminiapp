@@ -13,7 +13,6 @@ interface PriceData {
 
 export default function HomePage() {
   const [priceData, setPriceData] = useState<PriceData | null>(null);
-  const [timeframe, setTimeframe] = useState<'1D' | '1W' | '1M' | '1Y'>('1W');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -41,22 +40,23 @@ export default function HomePage() {
     };
 
     fetchPrice();
-    const interval = setInterval(fetchPrice, 30000); // Update every 30s
+    const interval = setInterval(fetchPrice, 30000);
     return () => clearInterval(interval);
   }, []);
-
-  const formatPrice = (price: string) => {
-    const num = parseFloat(price);
-    if (num < 0.00001) return `$${num.toExponential(2)}`;
-    if (num < 0.01) return `$${num.toFixed(6)}`;
-    if (num < 1) return `$${num.toFixed(4)}`;
-    return `$${num.toFixed(2)}`;
-  };
 
   const formatNumber = (num: number) => {
     if (num >= 1000000) return `$${(num / 1000000).toFixed(2)}M`;
     if (num >= 1000) return `$${(num / 1000).toFixed(2)}K`;
     return `$${num.toFixed(2)}`;
+  };
+
+  // Calculate value of 1000 tokens
+  const getValue1000 = () => {
+    if (!priceData) return '$0.00';
+    const price = parseFloat(priceData.priceUsd);
+    const value = price * 1000;
+    if (value < 0.01) return `$${value.toFixed(4)}`;
+    return `$${value.toFixed(2)}`;
   };
 
   const isPositive = priceData ? priceData.priceChange24h >= 0 : true;
@@ -66,19 +66,22 @@ export default function HomePage() {
       {/* Price Header */}
       <div className="bg-black border border-white/10 rounded-xl p-4">
         <div className="flex items-center justify-between mb-1">
-          <span className="text-[10px] text-white/40">Price</span>
+          <span className="text-[10px] text-white/40">1,000 ${TOKEN.symbol}</span>
           <span className="text-[10px] text-white/40">Holding Value</span>
         </div>
         
-        <div className="flex items-baseline gap-3">
-          <span className={`font-bold text-2xl ${isPositive ? 'text-white' : 'text-red-500'}`}>
-            {loading ? '...' : priceData ? formatPrice(priceData.priceUsd) : '$0.00'}
-          </span>
-          {priceData && (
-            <span className={`text-sm font-semibold ${isPositive ? 'text-green-500' : 'text-red-500'}`}>
-              {isPositive ? '+' : ''}{priceData.priceChange24h.toFixed(2)}%
+        <div className="flex items-center justify-between">
+          <div className="flex items-baseline gap-2">
+            <span className="font-bold text-xl text-white">
+              {loading ? '...' : getValue1000()}
             </span>
-          )}
+            {priceData && (
+              <span className={`text-sm font-semibold ${isPositive ? 'text-green-500' : 'text-red-500'}`}>
+                {isPositive ? '+' : ''}{priceData.priceChange24h.toFixed(2)}%
+              </span>
+            )}
+          </div>
+          <span className="font-bold text-xl text-white/50">$0.00</span>
         </div>
       </div>
 
@@ -91,23 +94,6 @@ export default function HomePage() {
           allow="clipboard-write"
           loading="lazy"
         />
-      </div>
-
-      {/* Timeframe Selector */}
-      <div className="flex gap-2 justify-center">
-        {(['1D', '1W', '1M', '1Y'] as const).map((tf) => (
-          <button
-            key={tf}
-            onClick={() => setTimeframe(tf)}
-            className={`px-4 py-2 rounded-lg text-xs font-medium transition-colors ${
-              timeframe === tf
-                ? 'bg-white/10 text-white'
-                : 'text-white/40 hover:text-white/60'
-            }`}
-          >
-            {tf}
-          </button>
-        ))}
       </div>
 
       {/* Stats Row */}
