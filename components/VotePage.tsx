@@ -203,13 +203,13 @@ export default function VotePage({ userFid, username }: VotePageProps) {
       {/* Vote Results Bar */}
       <div className="bg-black border border-white/10 rounded-xl p-3">
         <div className="flex justify-between text-xs mb-2">
-          <span className="text-green-500 font-semibold">{bullishPercent.toFixed(1)}% Bullish</span>
+          <span className="text-white font-semibold">{bullishPercent.toFixed(1)}% Bullish</span>
           <span className="text-red-500 font-semibold">{bearishPercent.toFixed(1)}% Bearish</span>
         </div>
         
         <div className="h-2 bg-white/10 rounded-full overflow-hidden flex">
           <div 
-            className="bg-green-500 transition-all duration-500"
+            className="bg-white transition-all duration-500"
             style={{ width: `${bullishPercent}%` }}
           />
           <div 
@@ -232,7 +232,7 @@ export default function VotePage({ userFid, username }: VotePageProps) {
       ) : stats.userVote ? (
         <div className="bg-black border border-white/10 rounded-xl p-4 text-center">
           <p className="text-white/50 text-xs">You voted</p>
-          <p className={`font-bold text-lg ${stats.userVote === 'bullish' ? 'text-green-500' : 'text-red-500'}`}>
+          <p className={`font-bold text-lg ${stats.userVote === 'bullish' ? 'text-white' : 'text-red-500'}`}>
             {stats.userVote === 'bullish' ? '↑ Bullish' : '↓ Bearish'}
           </p>
         </div>
@@ -241,12 +241,12 @@ export default function VotePage({ userFid, username }: VotePageProps) {
           <button
             onClick={() => handleVote('bullish')}
             disabled={voting}
-            className="flex-1 bg-green-500/20 hover:bg-green-500/30 border border-green-500/30 rounded-xl py-4 flex flex-col items-center justify-center gap-1 transition-colors disabled:opacity-50"
+            className="flex-1 bg-white/10 hover:bg-white/20 border border-white/30 rounded-xl py-4 flex flex-col items-center justify-center gap-1 transition-colors disabled:opacity-50"
           >
-            <svg className="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+            <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
               <path d="M5 15l7-7 7 7" />
             </svg>
-            <span className="font-bold text-green-500">Bullish</span>
+            <span className="font-bold text-white">Bullish</span>
           </button>
           
           <button
@@ -279,10 +279,10 @@ export default function VotePage({ userFid, username }: VotePageProps) {
                 <div key={i} className="px-3 py-2 flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
-                      vote.vote === 'bullish' ? 'bg-green-500/20' : 'bg-red-500/20'
+                      vote.vote === 'bullish' ? 'bg-white/20' : 'bg-red-500/20'
                     }`}>
                       {vote.vote === 'bullish' ? (
-                        <svg className="w-3 h-3 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}>
+                        <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}>
                           <path d="M5 15l7-7 7 7" />
                         </svg>
                       ) : (
