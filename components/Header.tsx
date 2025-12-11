@@ -14,18 +14,8 @@ interface HeaderProps {
 export default function Header({ user }: HeaderProps) {
   return (
     <header className="flex-shrink-0 px-3 py-2 flex items-center justify-between bg-black border-b border-white/10">
-      {/* Logo & Name */}
-      <div className="flex items-center gap-2">
-        <div className="w-8 h-8 rounded-full bg-red-500 flex items-center justify-center">
-          <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-            <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-          </svg>
-        </div>
-        <div>
-          <h1 className="font-bold text-sm text-red-500">${TOKEN.symbol}</h1>
-          <p className="text-[9px] text-white/40">on Base</p>
-        </div>
-      </div>
+      {/* Logo */}
+      <h1 className="font-bold text-xl text-red-500">${TOKEN.symbol}</h1>
       
       {/* User Profile or Live indicator */}
       {user ? (

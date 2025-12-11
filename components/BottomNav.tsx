@@ -10,7 +10,8 @@ interface BottomNavProps {
 const Icons = {
   vote: (
     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-      <path d="M7 17l5-5 5 5M7 7l5 5 5-5" />
+      <path d="M5 15l7-7 7 7" />
+      <path d="M5 9l7 7 7-7" />
     </svg>
   ),
   home: (
@@ -22,7 +23,8 @@ const Icons = {
   info: (
     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
       <circle cx="12" cy="12" r="10" />
-      <path d="M12 16v-4M12 8h.01" />
+      <line x1="12" y1="16" x2="12" y2="12" />
+      <line x1="12" y1="8" x2="12.01" y2="8" />
     </svg>
   ),
 };
