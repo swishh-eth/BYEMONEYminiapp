@@ -6,14 +6,22 @@ import BottomNav from '@/components/BottomNav';
 import SwipeContainer from '@/components/SwipeContainer';
 import HomePage from '@/components/HomePage';
 import InfoPage from '@/components/InfoPage';
-import LinksPage from '@/components/LinksPage';
+import VotePage from '@/components/VotePage';
+
+interface FarcasterUser {
+  fid: number;
+  username?: string;
+  displayName?: string;
+  pfpUrl?: string;
+  custody?: string;
+  verifications?: string[];
+}
 
 export default function App() {
-  // Start on Chart page (index 1 - middle)
   const [activeIndex, setActiveIndex] = useState(1);
   const [isReady, setIsReady] = useState(false);
+  const [user, setUser] = useState<FarcasterUser | null>(null);
 
-  // Initialize Farcaster Mini App SDK
   useEffect(() => {
     const initSDK = async () => {
       try {
@@ -23,6 +31,21 @@ export default function App() {
         
         if (isMiniApp) {
           const { sdk } = await import('@farcaster/miniapp-sdk');
+          
+          // Get context with user info
+          const context = await sdk.context;
+          
+          if (context?.user) {
+            setUser({
+              fid: context.user.fid,
+              username: context.user.username,
+              displayName: context.user.displayName,
+              pfpUrl: context.user.pfpUrl,
+              custody: context.user.custody,
+              verifications: context.user.verifications,
+            });
+          }
+          
           await sdk.actions.ready();
         }
       } catch (error) {
@@ -39,6 +62,9 @@ export default function App() {
     setActiveIndex(index);
   };
 
+  // Get user's primary address (first verification or custody)
+  const userAddress = user?.verifications?.[0] || user?.custody;
+
   if (!isReady) {
     return (
       <div className="h-full flex items-center justify-center bg-black">
@@ -54,15 +80,18 @@ export default function App() {
     );
   }
 
-  // Pages order: Info, Chart, Links (Chart is middle/index 1)
   return (
     <>
       <Header />
       
       <SwipeContainer activeIndex={activeIndex} onNavigate={handleNavigate}>
-        <InfoPage />
+        <VotePage 
+          userFid={user?.fid} 
+          userAddress={userAddress}
+          username={user?.username}
+        />
         <HomePage />
-        <LinksPage />
+        <InfoPage />
       </SwipeContainer>
       
       <BottomNav activeIndex={activeIndex} onNavigate={handleNavigate} />

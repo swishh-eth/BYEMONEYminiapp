@@ -25,7 +25,7 @@ export const SOCIALS = {
 
 // Navigation Pages - Chart is middle (index 1), start on Chart
 export const PAGES = [
-  { id: 'info', label: 'Info' },
+  { id: 'vote', label: 'Vote' },
   { id: 'home', label: 'Chart' },
-  { id: 'links', label: 'Links' },
+  { id: 'info', label: 'Info' },
 ] as const;
