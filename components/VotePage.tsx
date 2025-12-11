@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { TOKENS } from '@/lib/constants';
 
 interface VotePageProps {
@@ -32,9 +32,10 @@ export default function VotePage({ userFid, username }: VotePageProps) {
     userVote: null,
   });
   const [recentVotes, setRecentVotes] = useState<RecentVote[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [initialLoading, setInitialLoading] = useState(true);
   const [voting, setVoting] = useState(false);
   const [timeLeft, setTimeLeft] = useState('');
+  const hasLoadedOnce = useRef(false);
 
   const token = TOKENS[selectedToken];
 
@@ -62,7 +63,6 @@ export default function VotePage({ userFid, username }: VotePageProps) {
 
   useEffect(() => {
     const fetchData = async () => {
-      setLoading(true);
       try {
         const params = new URLSearchParams({ token: token.address });
         if (userFid) params.append('fid', userFid.toString());
@@ -80,7 +80,10 @@ export default function VotePage({ userFid, username }: VotePageProps) {
       } catch (err) {
         console.error('Failed to fetch votes:', err);
       } finally {
-        setLoading(false);
+        if (!hasLoadedOnce.current) {
+          hasLoadedOnce.current = true;
+          setInitialLoading(false);
+        }
       }
     };
 
@@ -143,7 +146,8 @@ export default function VotePage({ userFid, username }: VotePageProps) {
     return date.toLocaleDateString();
   };
 
-  if (loading) {
+  // Only show loading spinner on very first load
+  if (initialLoading) {
     return (
       <div className="flex flex-col h-full p-3 items-center justify-center">
         <div className="w-8 h-8 border-2 border-red-500 border-t-transparent rounded-full animate-spin"></div>
