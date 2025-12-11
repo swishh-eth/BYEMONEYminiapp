@@ -7,7 +7,7 @@ interface BottomNavProps {
   onNavigate: (index: number) => void;
 }
 
-// SVG Icons
+// SVG Icons - matches PAGES order: vote, home, info
 const Icons: Record<string, JSX.Element> = {
   vote: (
     <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
@@ -30,7 +30,7 @@ const Icons: Record<string, JSX.Element> = {
 
 export default function BottomNav({ activeIndex, onNavigate }: BottomNavProps) {
   return (
-    <nav className="bg-red-500">
+    <nav className="bg-red-500 flex-shrink-0">
       <div className="flex justify-around items-center py-3 px-4">
         {PAGES.map((page, index) => {
           const isActive = activeIndex === index;

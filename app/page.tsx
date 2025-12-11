@@ -9,7 +9,7 @@ import VotePage from '@/components/VotePage';
 import InfoPage from '@/components/InfoPage';
 
 export default function App() {
-  const [activeIndex, setActiveIndex] = useState(0);
+  const [activeIndex, setActiveIndex] = useState(1); // Start on Chart (index 1)
   const [isReady, setIsReady] = useState(false);
   const [userFid, setUserFid] = useState<number | undefined>();
   const [username, setUsername] = useState<string | undefined>();
@@ -59,17 +59,18 @@ export default function App() {
     );
   }
 
+  // Page order matches PAGES constant: vote (0), home/chart (1), info (2)
   return (
-    <>
+    <div className="h-full flex flex-col">
       <Header />
       
       <SwipeContainer activeIndex={activeIndex} onNavigate={handleNavigate}>
-        <HomePage />
         <VotePage userFid={userFid} username={username} />
+        <HomePage />
         <InfoPage />
       </SwipeContainer>
       
       <BottomNav activeIndex={activeIndex} onNavigate={handleNavigate} />
-    </>
+    </div>
   );
 }
