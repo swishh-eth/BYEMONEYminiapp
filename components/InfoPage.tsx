@@ -12,7 +12,7 @@ const links = [
 
 export default function InfoPage() {
   const [copied, setCopied] = useState(false);
-  const [sdk, setSdk] = useState<any>(null);
+  const [sdk, setSdk] = useState(null);
   
   useEffect(function() {
     async function loadSdk() {
@@ -36,7 +36,7 @@ export default function InfoPage() {
     }
   }
 
-  async function handleLinkClick(link: any) {
+  async function handleLinkClick(link) {
     if (link.inApp && sdk) {
       try {
         await sdk.actions.openUrl({ url: 'https://warpcast.com/thosmur' });
@@ -48,10 +48,15 @@ export default function InfoPage() {
     }
   }
 
+  var buyUrl = "https://app.uniswap.org/swap?outputCurrency=" + TOKEN.address + "&chain=base";
+  var copyBtnClass = copied 
+    ? "px-3 py-2 rounded-lg font-medium text-xs bg-green-500/20 text-green-400"
+    : "px-3 py-2 rounded-lg font-medium text-xs bg-red-500/20 text-red-500";
+
   return (
     <div className="flex flex-col h-full overflow-y-auto p-3 gap-3">
       <div className="bg-black border border-white/10 rounded-xl p-4 text-center">
-        <h2 className="font-bold text-2xl text-red-500">${TOKEN.symbol}</h2>
+        <h2 className="font-bold text-2xl text-red-500">$BYEMONEY</h2>
         <p className="text-white/50 text-xs mt-1">Say Goodbye to Your Money</p>
       </div>
       
@@ -61,13 +66,7 @@ export default function InfoPage() {
           <code className="flex-1 text-[10px] text-white/70 bg-white/5 rounded-lg p-2 font-mono truncate">
             {TOKEN.address}
           </code>
-          <button
-            onClick={copyAddress}
-            className={copied 
-              ? "px-3 py-2 rounded-lg font-medium text-xs bg-green-500/20 text-green-400"
-              : "px-3 py-2 rounded-lg font-medium text-xs bg-red-500/20 text-red-500 hover:bg-red-500/30"
-            }
-          >
+          <button onClick={copyAddress} className={copyBtnClass}>
             {copied ? '✓' : 'Copy'}
           </button>
         </div>
@@ -96,7 +95,7 @@ export default function InfoPage() {
               <button
                 key={link.id}
                 onClick={function() { handleLinkClick(link); }}
-                className="bg-white/5 hover:bg-white/10 rounded-lg p-2.5 text-center text-xs text-white/70 hover:text-white transition-colors"
+                className="bg-white/5 hover:bg-white/10 rounded-lg p-2.5 text-center text-xs text-white/70 hover:text-white"
               >
                 {link.name}
               </button>
@@ -105,13 +104,8 @@ export default function InfoPage() {
         </div>
       </div>
       
-      
-        href={"https://app.uniswap.org/swap?outputCurrency=" + TOKEN.address + "&chain=base"}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="bg-red-500 hover:bg-red-600 rounded-xl p-3 text-center font-bold text-white text-sm transition-colors"
-      >
-        Buy ${TOKEN.symbol}
+      <a href={buyUrl} target="_blank" rel="noopener noreferrer" className="bg-red-500 rounded-xl p-3 text-center font-bold text-white text-sm">
+        Buy $BYEMONEY
       </a>
       
       <p className="text-[9px] text-white/30 text-center">
