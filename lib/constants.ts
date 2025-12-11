@@ -15,10 +15,10 @@ export const DEXSCREENER = {
   apiUrl: `https://api.dexscreener.com/latest/dex/tokens/${TOKEN.address}`,
 } as const;
 
-// Social Links (update these with real links)
+// Social Links
 export const SOCIALS = {
-  twitter: 'https://twitter.com/byemoney',
-  telegram: 'https://t.me/byemoney',
+  farcaster: 'https://warpcast.com/thosmur',
+  telegram: 'https://t.me/byemoneycoin',
   dexscreener: DEXSCREENER.tokenUrl,
   basescan: `https://basescan.org/token/${TOKEN.address}`,
 } as const;
