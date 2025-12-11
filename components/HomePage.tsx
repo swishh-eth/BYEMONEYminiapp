@@ -148,34 +148,29 @@ export default function HomePage() {
 
     const fetchOHLCV = async () => {
       try {
-        let geckoTimeframe = 'hour';
-        let aggregate = 1;
-        let limit = 200;
+        let geckoTimeframe = 'minute';
+        let aggregate = 15;
         
         switch (timeframe) {
           case '1h':
             geckoTimeframe = 'minute';
             aggregate = 1;
-            limit = 60;
             break;
           case '24h':
             geckoTimeframe = 'minute';
             aggregate = 15;
-            limit = 96;
             break;
           case '7d':
-            geckoTimeframe = 'hour';
-            aggregate = 2;
-            limit = 84;
+            geckoTimeframe = 'minute';
+            aggregate = 60;
             break;
           case '30d':
-            geckoTimeframe = 'day';
-            aggregate = 1;
-            limit = 30;
+            geckoTimeframe = 'minute';
+            aggregate = 240;
             break;
         }
 
-        const url = `https://api.geckoterminal.com/api/v2/networks/base/pools/${priceData.pairAddress}/ohlcv/${geckoTimeframe}?aggregate=${aggregate}&limit=${limit}`;
+        const url = `https://api.geckoterminal.com/api/v2/networks/base/pools/${priceData.pairAddress}/ohlcv/${geckoTimeframe}?aggregate=${aggregate}&limit=200`;
         
         const res = await fetch(url, {
           headers: { 'Accept': 'application/json' }
