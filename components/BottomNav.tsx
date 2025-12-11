@@ -30,7 +30,7 @@ const Icons: Record<string, JSX.Element> = {
 
 export default function BottomNav({ activeIndex, onNavigate }: BottomNavProps) {
   return (
-    <nav className="bg-red-500 flex-shrink-0">
+    <nav className="bg-black flex-shrink-0 border-t border-white/10">
       <div className="flex justify-around items-center py-3 px-4">
         {PAGES.map((page, index) => {
           const isActive = activeIndex === index;
@@ -41,7 +41,7 @@ export default function BottomNav({ activeIndex, onNavigate }: BottomNavProps) {
               className={`p-2 transition-all duration-300 ${
                 isActive 
                   ? 'text-white scale-125' 
-                  : 'text-black hover:text-black/70 scale-100'
+                  : 'text-red-500 hover:text-red-400 scale-100'
               }`}
               style={{
                 filter: isActive ? 'drop-shadow(0 0 8px rgba(255,255,255,0.8)) drop-shadow(0 0 20px rgba(255,255,255,0.5))' : 'none'
