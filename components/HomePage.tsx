@@ -65,7 +65,11 @@ export default function HomePage() {
         chartRef.current.remove();
       }
 
-      const chart = createChart(chartContainerRef.current!, {
+      const container = chartContainerRef.current!;
+      
+      const chart = createChart(container, {
+        width: container.clientWidth,
+        height: container.clientHeight,
         layout: {
           background: { type: ColorType.Solid, color: 'transparent' },
           textColor: 'rgba(255, 255, 255, 0.5)',
@@ -96,9 +100,6 @@ export default function HomePage() {
         },
         handleScale: { mouseWheel: true, pinch: true },
         handleScroll: { mouseWheel: true, pressedMouseMove: true, horzTouchDrag: true, vertTouchDrag: false },
-        localization: {
-          priceFormatter: (price: number) => '$' + price.toFixed(3),
-        },
       });
 
       const candlestickSeries = chart.addCandlestickSeries({
@@ -108,11 +109,6 @@ export default function HomePage() {
         borderDownColor: '#ef4444',
         wickUpColor: '#ffffff',
         wickDownColor: '#ef4444',
-        priceFormat: {
-          type: 'price',
-          precision: 3,
-          minMove: 0.001,
-        },
       });
 
       chartRef.current = chart;
@@ -128,7 +124,6 @@ export default function HomePage() {
       };
 
       window.addEventListener('resize', handleResize);
-      handleResize();
 
       return () => window.removeEventListener('resize', handleResize);
     };
@@ -268,9 +263,9 @@ export default function HomePage() {
       </div>
 
       {/* Chart */}
-      <div className="flex-1 bg-black border border-white/10 rounded-xl overflow-hidden min-h-0 flex flex-col">
-        <div ref={chartContainerRef} className="flex-1 p-2" />
-        <p className="text-[9px] text-white/30 text-center pb-2">
+      <div className="flex-1 bg-black border border-white/10 rounded-xl overflow-hidden flex flex-col min-h-[200px]">
+        <div ref={chartContainerRef} className="flex-1 w-full" style={{ minHeight: '200px' }} />
+        <p className="text-[9px] text-white/30 text-center py-2 border-t border-white/5">
           Prices shown are for 100,000 ${TOKEN.symbol}
         </p>
       </div>
