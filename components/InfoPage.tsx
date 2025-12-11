@@ -50,16 +50,25 @@ export default function InfoPage() {
 
   var buyUrl = "https://app.uniswap.org/swap?outputCurrency=" + TOKEN.address + "&chain=base";
   var copyBtnClass = copied 
-    ? "px-3 py-2 rounded-lg font-medium text-xs bg-green-500/20 text-green-400"
+    ? "px-3 py-2 rounded-lg font-medium text-xs bg-white/20 text-white"
     : "px-3 py-2 rounded-lg font-medium text-xs bg-red-500/20 text-red-500";
 
   return (
     <div className="flex flex-col h-full overflow-y-auto p-3 gap-3">
-      <div className="bg-black border border-white/10 rounded-xl p-4 text-center">
-        <h2 className="font-bold text-2xl text-red-500">$BYEMONEY</h2>
-        <p className="text-white/50 text-xs mt-1">Say Goodbye to Your Money</p>
+      {/* Video Header */}
+      <div className="bg-black border border-white/10 rounded-xl overflow-hidden">
+        <video
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="w-full h-32 object-cover"
+        >
+          <source src="/video.mp4" type="video/mp4" />
+        </video>
       </div>
       
+      {/* Contract Address */}
       <div className="bg-black border border-white/10 rounded-xl p-3">
         <p className="text-[10px] text-white/40 mb-2">Contract Address</p>
         <div className="flex items-center gap-2">
@@ -72,6 +81,7 @@ export default function InfoPage() {
         </div>
       </div>
       
+      {/* Token Stats */}
       <div className="grid grid-cols-3 gap-2">
         <div className="bg-black border border-white/10 rounded-xl p-2.5 text-center">
           <p className="text-[9px] text-white/40">Chain</p>
@@ -87,6 +97,7 @@ export default function InfoPage() {
         </div>
       </div>
       
+      {/* Links */}
       <div className="bg-black border border-white/10 rounded-xl p-3">
         <p className="text-[10px] text-white/40 mb-2">Links</p>
         <div className="grid grid-cols-2 gap-2">
@@ -104,10 +115,12 @@ export default function InfoPage() {
         </div>
       </div>
       
+      {/* Buy Button */}
       <a href={buyUrl} target="_blank" rel="noopener noreferrer" className="bg-red-500 rounded-xl p-3 text-center font-bold text-white text-sm">
         Buy $BYEMONEY
       </a>
       
+      {/* Disclaimer */}
       <p className="text-[9px] text-white/30 text-center">
         DYOR. Crypto is volatile. Only invest what you can afford to lose.
       </p>
