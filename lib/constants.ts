@@ -1,12 +1,30 @@
-// BYEMONEY Token Constants
-export const TOKEN = {
-  name: 'BYEMONEY',
-  symbol: 'BYEMONEY',
-  address: '0xA12A532B0B7024b1D01Ae66a3b8cF77366c7dB07',
-  chain: 'base',
-  chainId: 8453,
-  decimals: 18,
+// Supported Tokens for Voting
+export const TOKENS = {
+  byemoney: {
+    name: 'BYEMONEY',
+    symbol: 'BYEMONEY',
+    address: '0xA12A532B0B7024b1D01Ae66a3b8cF77366c7dB07',
+    chain: 'base',
+    chainId: 8453,
+  },
+  ethereum: {
+    name: 'Ethereum',
+    symbol: 'ETH',
+    address: '0x0000000000000000000000000000000000000000',
+    chain: 'base',
+    chainId: 8453,
+  },
+  clanker: {
+    name: 'Clanker',
+    symbol: 'CLANKER',
+    address: '0x1bc0c42215582d5A085795f4baDbaC3ff36d1Bcb',
+    chain: 'base',
+    chainId: 8453,
+  },
 } as const;
+
+// Default token (BYEMONEY)
+export const TOKEN = TOKENS.byemoney;
 
 // DexScreener URLs
 export const DEXSCREENER = {
@@ -23,7 +41,7 @@ export const SOCIALS = {
   basescan: `https://basescan.org/token/${TOKEN.address}`,
 } as const;
 
-// Navigation Pages - Chart is middle (index 1), start on Chart
+// Navigation Pages
 export const PAGES = [
   { id: 'vote', label: 'Vote' },
   { id: 'home', label: 'Chart' },

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { TOKEN } from '@/lib/constants';
+import { TOKENS } from '@/lib/constants';
 
 interface VotePageProps {
   userFid?: number;
@@ -17,10 +17,15 @@ interface VoteStats {
 interface RecentVote {
   username: string;
   vote: 'bullish' | 'bearish';
+  token: string;
   created_at: string;
 }
 
+type TokenKey = keyof typeof TOKENS;
+
 export default function VotePage({ userFid, username }: VotePageProps) {
+  const [selectedToken, setSelectedToken] = useState<TokenKey>('byemoney');
+  const [showTokenPicker, setShowTokenPicker] = useState(false);
   const [stats, setStats] = useState<VoteStats>({
     bullish: 0,
     bearish: 0,
@@ -30,6 +35,8 @@ export default function VotePage({ userFid, username }: VotePageProps) {
   const [loading, setLoading] = useState(true);
   const [voting, setVoting] = useState(false);
   const [timeLeft, setTimeLeft] = useState('');
+
+  const token = TOKENS[selectedToken];
 
   useEffect(() => {
     const updateTimeLeft = () => {
@@ -55,8 +62,9 @@ export default function VotePage({ userFid, username }: VotePageProps) {
 
   useEffect(() => {
     const fetchData = async () => {
+      setLoading(true);
       try {
-        const params = new URLSearchParams({ token: TOKEN.address });
+        const params = new URLSearchParams({ token: token.address });
         if (userFid) params.append('fid', userFid.toString());
         
         const res = await fetch(`/api/votes?${params}`);
@@ -77,7 +85,7 @@ export default function VotePage({ userFid, username }: VotePageProps) {
     };
 
     fetchData();
-  }, [userFid]);
+  }, [userFid, selectedToken, token.address]);
 
   const handleVote = async (vote: 'bullish' | 'bearish') => {
     if (!userFid || voting || stats.userVote) return;
@@ -88,7 +96,8 @@ export default function VotePage({ userFid, username }: VotePageProps) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          token: TOKEN.address,
+          token: token.address,
+          tokenSymbol: token.symbol,
           vote,
           fid: userFid,
           username,
@@ -106,6 +115,7 @@ export default function VotePage({ userFid, username }: VotePageProps) {
         setRecentVotes(prev => [{
           username: username || 'anon',
           vote,
+          token: token.symbol,
           created_at: new Date().toISOString(),
         }, ...prev]);
       }
@@ -133,7 +143,15 @@ export default function VotePage({ userFid, username }: VotePageProps) {
     return date.toLocaleDateString();
   };
 
-  // Show loading state while checking vote status
+  const getTokenSymbol = (address: string) => {
+    for (const key in TOKENS) {
+      if (TOKENS[key as TokenKey].address.toLowerCase() === address.toLowerCase()) {
+        return TOKENS[key as TokenKey].symbol;
+      }
+    }
+    return 'Unknown';
+  };
+
   if (loading) {
     return (
       <div className="flex flex-col h-full p-3 items-center justify-center">
@@ -147,8 +165,43 @@ export default function VotePage({ userFid, username }: VotePageProps) {
     <div className="flex flex-col h-full p-3 gap-3">
       {/* Header */}
       <div className="text-center">
-        <h2 className="font-bold text-lg text-white">Sentiment Vote</h2>
-        <p className="text-[10px] text-white/40">How are you feeling about ${TOKEN.symbol}?</p>
+        <h2 className="font-bold text-lg text-white">How are you feeling about...</h2>
+        
+        {/* Token Picker Button */}
+        <button 
+          onClick={() => setShowTokenPicker(!showTokenPicker)}
+          className="mt-2 px-4 py-2 bg-white/10 hover:bg-white/15 rounded-lg text-red-500 font-bold text-lg flex items-center gap-2 mx-auto"
+        >
+          ${token.symbol}
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+            <path d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+        
+        {/* Token Dropdown */}
+        {showTokenPicker && (
+          <div className="mt-2 bg-black border border-white/10 rounded-xl overflow-hidden">
+            {Object.entries(TOKENS).map(([key, t]) => (
+              <button
+                key={key}
+                onClick={() => {
+                  setSelectedToken(key as TokenKey);
+                  setShowTokenPicker(false);
+                }}
+                className={`w-full px-4 py-3 text-left hover:bg-white/10 flex items-center justify-between ${
+                  selectedToken === key ? 'bg-white/5' : ''
+                }`}
+              >
+                <span className="font-medium text-white">${t.symbol}</span>
+                {selectedToken === key && (
+                  <svg className="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                    <path d="M5 13l4 4L19 7" />
+                  </svg>
+                )}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Timer */}
@@ -247,7 +300,9 @@ export default function VotePage({ userFid, username }: VotePageProps) {
                         </svg>
                       )}
                     </div>
-                    <span className="text-xs text-white/70">@{vote.username || 'anon'}</span>
+                    <span className="text-xs text-white/70">
+                      @{vote.username || 'anon'} <span className="text-white/40">on ${vote.token || getTokenSymbol(token.address)}</span>
+                    </span>
                   </div>
                   <span className="text-[10px] text-white/30">{formatTime(vote.created_at)}</span>
                 </div>

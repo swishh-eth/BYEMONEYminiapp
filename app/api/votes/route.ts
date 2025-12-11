@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
   const period = getCurrentPeriod();
 
   try {
-    // Get vote counts
+    // Get vote counts for specific token
     const { data: votes, error } = await supabase
       .from('votes')
       .select('vote')
@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
     const bullish = votes?.filter(v => v.vote === 'bullish').length || 0;
     const bearish = votes?.filter(v => v.vote === 'bearish').length || 0;
 
-    // Check if user already voted
+    // Check if user already voted on this token
     let userVote = null;
     if (fid) {
       const { data: userVoteData } = await supabase
@@ -55,11 +55,10 @@ export async function GET(request: NextRequest) {
       userVote = userVoteData?.vote || null;
     }
 
-    // Get recent votes
+    // Get recent votes across ALL tokens
     const { data: recentVotes } = await supabase
       .from('votes')
-      .select('username, vote, created_at')
-      .eq('token', token.toLowerCase())
+      .select('username, vote, token_symbol, created_at')
       .eq('period', period)
       .order('created_at', { ascending: false })
       .limit(20);
@@ -69,7 +68,12 @@ export async function GET(request: NextRequest) {
       bearish,
       userVote,
       period,
-      recentVotes: recentVotes || [],
+      recentVotes: (recentVotes || []).map(v => ({
+        username: v.username,
+        vote: v.vote,
+        token: v.token_symbol,
+        created_at: v.created_at,
+      })),
     });
   } catch (error) {
     console.error('Error fetching votes:', error);
@@ -80,7 +84,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { token, vote, fid, username } = body;
+    const { token, tokenSymbol, vote, fid, username } = body;
 
     if (!token || !vote || !fid) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -92,7 +96,7 @@ export async function POST(request: NextRequest) {
 
     const period = getCurrentPeriod();
 
-    // Check if user already voted this period
+    // Check if user already voted on this token this period
     const { data: existing } = await supabase
       .from('votes')
       .select('id')
@@ -110,6 +114,7 @@ export async function POST(request: NextRequest) {
       .from('votes')
       .insert({
         token: token.toLowerCase(),
+        token_symbol: tokenSymbol || 'UNKNOWN',
         vote,
         fid,
         username: username || null,
@@ -119,7 +124,7 @@ export async function POST(request: NextRequest) {
 
     if (error) throw error;
 
-    // Get updated counts
+    // Get updated counts for this token
     const { data: votes } = await supabase
       .from('votes')
       .select('vote')
