@@ -103,7 +103,6 @@ export default function VotePage({ userFid, username }: VotePageProps) {
           bearish: data.bearish,
           userVote: vote,
         }));
-        // Add own vote to recent
         setRecentVotes(prev => [{
           username: username || 'anon',
           vote,
@@ -133,6 +132,16 @@ export default function VotePage({ userFid, username }: VotePageProps) {
     if (hours < 24) return `${hours}h ago`;
     return date.toLocaleDateString();
   };
+
+  // Show loading state while checking vote status
+  if (loading) {
+    return (
+      <div className="flex flex-col h-full p-3 items-center justify-center">
+        <div className="w-8 h-8 border-2 border-red-500 border-t-transparent rounded-full animate-spin"></div>
+        <p className="text-white/50 text-xs mt-3">Loading...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-full p-3 gap-3">
@@ -171,7 +180,7 @@ export default function VotePage({ userFid, username }: VotePageProps) {
         </div>
       </div>
 
-      {/* Vote Buttons - Split */}
+      {/* Vote Buttons or Status */}
       {!userFid ? (
         <div className="bg-black border border-white/10 rounded-xl p-4 text-center">
           <p className="text-white/50 text-sm">Open in Farcaster to vote</p>
