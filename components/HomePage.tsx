@@ -18,9 +18,23 @@ export default function HomePage() {
   const [priceData, setPriceData] = useState<PriceData | null>(null);
   const [loading, setLoading] = useState(true);
   const [timeframe, setTimeframe] = useState('24h');
+  const [sdk, setSdk] = useState<any>(null);
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<any>(null);
   const seriesRef = useRef<any>(null);
+
+  // Load Farcaster SDK
+  useEffect(() => {
+    async function loadSdk() {
+      try {
+        const module = await import('@farcaster/miniapp-sdk');
+        setSdk(module.sdk);
+      } catch (err) {
+        console.log('SDK not available');
+      }
+    }
+    loadSdk();
+  }, []);
 
   // Fetch price data from DexScreener
   useEffect(() => {
@@ -160,9 +174,6 @@ export default function HomePage() {
           case '7d':
             url = `https://api.geckoterminal.com/api/v2/networks/base/pools/${priceData.pairAddress}/ohlcv/hour?aggregate=1&limit=168`;
             break;
-          case '30d':
-            url = `https://api.geckoterminal.com/api/v2/networks/base/pools/${priceData.pairAddress}/ohlcv/day?aggregate=1&limit=30`;
-            break;
         }
         
         const res = await fetch(url, {
@@ -195,6 +206,24 @@ export default function HomePage() {
     fetchOHLCV();
   }, [timeframe, priceData?.pairAddress]);
 
+  const handleBuyClick = async () => {
+    if (sdk) {
+      try {
+        await sdk.actions.viewToken({
+          token: {
+            address: TOKEN.address,
+            chainId: `eip155:${TOKEN.chainId}`,
+          },
+        });
+      } catch (err) {
+        console.error('View token failed:', err);
+        window.open(`https://app.uniswap.org/swap?outputCurrency=${TOKEN.address}&chain=base`, '_blank');
+      }
+    } else {
+      window.open(`https://app.uniswap.org/swap?outputCurrency=${TOKEN.address}&chain=base`, '_blank');
+    }
+  };
+
   const formatNumber = (num: number) => {
     if (num >= 1000000) return `$${(num / 1000000).toFixed(2)}M`;
     if (num >= 1000) return `$${(num / 1000).toFixed(2)}K`;
@@ -214,7 +243,6 @@ export default function HomePage() {
     { id: '1h', label: '1H' },
     { id: '24h', label: '24H' },
     { id: '7d', label: '7D' },
-    { id: '30d', label: '30D' },
   ];
 
   return (
@@ -238,7 +266,7 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* Timeframe Selector */}
+      {/* Timeframe Selector + Buy Button */}
       <div className="flex gap-2">
         {timeframes.map((tf) => (
           <button
@@ -253,6 +281,12 @@ export default function HomePage() {
             {tf.label}
           </button>
         ))}
+        <button
+          onClick={handleBuyClick}
+          className="flex-1 py-2 rounded-lg text-xs font-medium bg-red-500 text-white hover:bg-red-600 transition-colors"
+        >
+          Buy
+        </button>
       </div>
 
       {/* Chart */}
