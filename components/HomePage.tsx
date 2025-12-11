@@ -207,20 +207,18 @@ export default function HomePage() {
   }, [timeframe, priceData?.pairAddress]);
 
   const handleBuyClick = async () => {
+    // Warpcast deep link to token page
+    const tokenUrl = `https://warpcast.com/~/token/eip155:8453:${TOKEN.address}`;
+    
     if (sdk) {
       try {
-        await sdk.actions.viewToken({
-          token: {
-            address: TOKEN.address,
-            chainId: 'eip155:8453',
-          },
-        });
+        await sdk.actions.openUrl({ url: tokenUrl });
       } catch (err) {
-        console.error('View token failed:', err);
-        window.open(`https://app.uniswap.org/swap?outputCurrency=${TOKEN.address}&chain=base`, '_blank');
+        console.error('Open URL failed:', err);
+        window.open(tokenUrl, '_blank');
       }
     } else {
-      window.open(`https://app.uniswap.org/swap?outputCurrency=${TOKEN.address}&chain=base`, '_blank');
+      window.open(tokenUrl, '_blank');
     }
   };
 
