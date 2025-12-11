@@ -90,7 +90,7 @@ export default function InfoPage() {
   return (
     <div className="flex flex-col h-full overflow-y-auto p-3 gap-3">
       {/* Video Header */}
-      <div className="bg-black border border-white/10 rounded-xl overflow-hidden h-32 flex items-center justify-center relative">
+      <div className="bg-black border border-white/10 rounded-xl overflow-hidden h-32 relative">
         <video
           ref={videoRef}
           autoPlay
@@ -98,9 +98,9 @@ export default function InfoPage() {
           muted={muted}
           playsInline
           onCanPlay={handleVideoLoaded}
-          className="w-[90%] h-[90%] object-cover rounded-lg transition-opacity duration-700"
+          className="w-full h-full object-cover transition-opacity duration-700"
           style={{ 
-            objectPosition: 'center 55%',
+            objectPosition: 'center center',
             opacity: videoLoaded ? 1 : 0
           }}
         >
