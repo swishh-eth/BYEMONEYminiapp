@@ -7,12 +7,11 @@ interface BottomNavProps {
   onNavigate: (index: number) => void;
 }
 
-// SVG Icons - larger size
-const Icons = {
-  info: (
+// SVG Icons - order matches PAGES: vote, home, info
+const Icons: Record<string, JSX.Element> = {
+  vote: (
     <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-      <circle cx="12" cy="12" r="10" />
-      <path d="M12 16v-4M12 8h.01" />
+      <path d="M5 15l7-7 7 7" />
     </svg>
   ),
   home: (
@@ -21,9 +20,10 @@ const Icons = {
       <path d="M18 17V9M13 17V5M8 17v-3" />
     </svg>
   ),
-  vote: (
+  info: (
     <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-      <path d="M5 15l7-7 7 7" />
+      <circle cx="12" cy="12" r="10" />
+      <path d="M12 16v-4M12 8h.01" />
     </svg>
   ),
 };
@@ -47,7 +47,7 @@ export default function BottomNav({ activeIndex, onNavigate }: BottomNavProps) {
                 filter: isActive ? 'drop-shadow(0 0 8px rgba(255,255,255,0.8)) drop-shadow(0 0 20px rgba(255,255,255,0.5))' : 'none'
               }}
             >
-              {Icons[page.id as keyof typeof Icons]}
+              {Icons[page.id]}
             </button>
           );
         })}

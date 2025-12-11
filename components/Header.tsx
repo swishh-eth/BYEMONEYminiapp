@@ -9,7 +9,7 @@ interface HeaderProps {
   onNavigate?: (index: number) => void;
 }
 
-// SVG Icons for menu
+// SVG Icons for menu - order matches PAGES: vote, home, info
 const Icons: Record<string, JSX.Element> = {
   vote: (
     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>

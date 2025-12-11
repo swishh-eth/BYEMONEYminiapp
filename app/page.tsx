@@ -61,7 +61,7 @@ export default function App() {
 
   return (
     <>
-      <Header activeIndex={activeIndex} onNavigate={handleNavigate} />
+      <Header />
       
       <SwipeContainer activeIndex={activeIndex} onNavigate={handleNavigate}>
         <HomePage />
