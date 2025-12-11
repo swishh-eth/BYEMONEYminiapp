@@ -2,6 +2,7 @@
 
 import { TOKEN, SOCIALS, DEXSCREENER } from '@/lib/constants';
 import { useState, useEffect, useRef } from 'react';
+import { sdk } from '@farcaster/miniapp-sdk';
 
 const links = [
   { id: 'dexscreener', name: 'DexScreener', url: DEXSCREENER.tokenUrl },
@@ -12,22 +13,9 @@ const links = [
 
 export default function InfoPage() {
   const [copied, setCopied] = useState(false);
-  const [sdk, setSdk] = useState(null);
   const [muted, setMuted] = useState(true);
   const [videoLoaded, setVideoLoaded] = useState(false);
-  const videoRef = useRef(null);
-  
-  useEffect(function() {
-    async function loadSdk() {
-      try {
-        const module = await import('@farcaster/miniapp-sdk');
-        setSdk(module.sdk);
-      } catch (err) {
-        console.log('SDK not available');
-      }
-    }
-    loadSdk();
-  }, []);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(function() {
     if (videoRef.current) {
@@ -45,8 +33,8 @@ export default function InfoPage() {
     }
   }
 
-  async function handleLinkClick(link) {
-    if (link.inApp && sdk) {
+  async function handleLinkClick(link: typeof links[0]) {
+    if (link.inApp) {
       try {
         await sdk.actions.openUrl({ url: 'https://warpcast.com/thosmur' });
       } catch (err) {
@@ -58,17 +46,11 @@ export default function InfoPage() {
   }
 
   async function handleBuyClick() {
-    const tokenUrl = `https://warpcast.com/~/token/eip155:8453:${TOKEN.address}`;
-    
-    if (sdk) {
-      try {
-        await sdk.actions.openUrl({ url: tokenUrl });
-      } catch (err) {
-        console.error('Open URL failed:', err);
-        window.open(tokenUrl, '_blank');
-      }
-    } else {
-      window.open(tokenUrl, '_blank');
+    try {
+      await sdk.actions.viewToken({ token: `eip155:8453/erc20:${TOKEN.address}` });
+    } catch (err) {
+      console.error('View token failed:', err);
+      window.open(DEXSCREENER.tokenUrl, '_blank');
     }
   }
 
@@ -83,7 +65,7 @@ export default function InfoPage() {
     setVideoLoaded(true);
   }
 
-  var copyBtnClass = copied 
+  const copyBtnClass = copied 
     ? "px-3 py-2 rounded-lg font-medium text-xs bg-white/20 text-white"
     : "px-3 py-2 rounded-lg font-medium text-xs bg-red-500/20 text-red-500";
 

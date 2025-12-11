@@ -2,6 +2,7 @@
 
 import { TOKEN, DEXSCREENER } from '@/lib/constants';
 import { useState, useEffect, useRef } from 'react';
+import { sdk } from '@farcaster/miniapp-sdk';
 
 interface PriceData {
   priceUsd: string;
@@ -18,23 +19,9 @@ export default function HomePage() {
   const [priceData, setPriceData] = useState<PriceData | null>(null);
   const [loading, setLoading] = useState(true);
   const [timeframe, setTimeframe] = useState('24h');
-  const [sdk, setSdk] = useState<any>(null);
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<any>(null);
   const seriesRef = useRef<any>(null);
-
-  // Load Farcaster SDK
-  useEffect(() => {
-    async function loadSdk() {
-      try {
-        const module = await import('@farcaster/miniapp-sdk');
-        setSdk(module.sdk);
-      } catch (err) {
-        console.log('SDK not available');
-      }
-    }
-    loadSdk();
-  }, []);
 
   // Fetch price data from DexScreener
   useEffect(() => {
@@ -207,18 +194,11 @@ export default function HomePage() {
   }, [timeframe, priceData?.pairAddress]);
 
   const handleBuyClick = async () => {
-    // Warpcast deep link to token page
-    const tokenUrl = `https://warpcast.com/~/token/eip155:8453:${TOKEN.address}`;
-    
-    if (sdk) {
-      try {
-        await sdk.actions.openUrl({ url: tokenUrl });
-      } catch (err) {
-        console.error('Open URL failed:', err);
-        window.open(tokenUrl, '_blank');
-      }
-    } else {
-      window.open(tokenUrl, '_blank');
+    try {
+      await sdk.actions.viewToken({ token: `eip155:8453/erc20:${TOKEN.address}` });
+    } catch (err) {
+      console.error('View token failed:', err);
+      window.open(DEXSCREENER.tokenUrl, '_blank');
     }
   };
 
