@@ -196,12 +196,7 @@ export default function HomePage() {
               .sort((a: any, b: any) => a.time - b.time);
 
             seriesRef.current.setData(ohlcvData);
-            
-            // Fit content and add some padding
-            if (chartRef.current) {
-              chartRef.current.timeScale().fitContent();
-              chartRef.current.timeScale().scrollToPosition(2, false);
-            }
+            chartRef.current?.timeScale().fitContent();
           }
         }
       } catch (err) {
