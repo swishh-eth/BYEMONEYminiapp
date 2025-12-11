@@ -5,7 +5,6 @@ import { TOKEN } from '@/lib/constants';
 
 interface VotePageProps {
   userFid?: number;
-  userAddress?: string;
   username?: string;
 }
 
@@ -16,7 +15,7 @@ interface VoteStats {
   resetsAt: string;
 }
 
-export default function VotePage({ userFid, userAddress, username }: VotePageProps) {
+export default function VotePage({ userFid, username }: VotePageProps) {
   const [stats, setStats] = useState<VoteStats>({
     bullish: 0,
     bearish: 0,
@@ -84,7 +83,6 @@ export default function VotePage({ userFid, userAddress, username }: VotePagePro
           token: TOKEN.address,
           vote,
           fid: userFid,
-          address: userAddress,
           username,
         }),
       });

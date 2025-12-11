@@ -13,8 +13,6 @@ interface FarcasterUser {
   username?: string;
   displayName?: string;
   pfpUrl?: string;
-  custody?: string;
-  verifications?: string[];
 }
 
 export default function App() {
@@ -41,8 +39,6 @@ export default function App() {
               username: context.user.username,
               displayName: context.user.displayName,
               pfpUrl: context.user.pfpUrl,
-              custody: context.user.custody,
-              verifications: context.user.verifications,
             });
           }
           
@@ -61,9 +57,6 @@ export default function App() {
   const handleNavigate = (index: number) => {
     setActiveIndex(index);
   };
-
-  // Get user's primary address (first verification or custody)
-  const userAddress = user?.verifications?.[0] || user?.custody;
 
   if (!isReady) {
     return (
@@ -87,7 +80,6 @@ export default function App() {
       <SwipeContainer activeIndex={activeIndex} onNavigate={handleNavigate}>
         <VotePage 
           userFid={user?.fid} 
-          userAddress={userAddress}
           username={user?.username}
         />
         <HomePage />
