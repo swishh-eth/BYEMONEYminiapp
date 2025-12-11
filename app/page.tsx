@@ -1,151 +1,91 @@
 'use client';
 
-import { TOKEN, DEXSCREENER } from '@/lib/constants';
 import { useState, useEffect } from 'react';
+import Header from '@/components/Header';
+import BottomNav from '@/components/BottomNav';
+import SwipeContainer from '@/components/SwipeContainer';
+import HomePage from '@/components/HomePage';
+import InfoPage from '@/components/InfoPage';
+import VotePage from '@/components/VotePage';
 
-interface PriceData {
-  priceUsd: string;
-  priceChange24h: number;
-  volume24h: number;
-  liquidity: number;
-  marketCap: number;
+interface FarcasterUser {
+  fid: number;
+  username?: string;
+  displayName?: string;
+  pfpUrl?: string;
 }
 
-export default function HomePage() {
-  const [priceData, setPriceData] = useState<PriceData | null>(null);
-  const [timeframe, setTimeframe] = useState<'1D' | '1W' | '1M' | '1Y'>('1W');
-  const [loading, setLoading] = useState(true);
+export default function App() {
+  const [activeIndex, setActiveIndex] = useState(1);
+  const [isReady, setIsReady] = useState(false);
+  const [user, setUser] = useState<FarcasterUser | null>(null);
 
   useEffect(() => {
-    const fetchPrice = async () => {
+    const initSDK = async () => {
       try {
-        const res = await fetch(DEXSCREENER.apiUrl);
-        if (res.ok) {
-          const data = await res.json();
-          if (data.pairs && data.pairs.length > 0) {
-            const pair = data.pairs[0];
-            setPriceData({
-              priceUsd: pair.priceUsd || '0',
-              priceChange24h: pair.priceChange?.h24 || 0,
-              volume24h: pair.volume?.h24 || 0,
-              liquidity: pair.liquidity?.usd || 0,
-              marketCap: pair.marketCap || pair.fdv || 0,
+        const url = new URL(window.location.href);
+        const isMiniApp = url.searchParams.get('miniApp') === 'true' || 
+                          window.parent !== window;
+        
+        if (isMiniApp) {
+          const { sdk } = await import('@farcaster/miniapp-sdk');
+          
+          const context = await sdk.context;
+          
+          if (context?.user) {
+            setUser({
+              fid: context.user.fid,
+              username: context.user.username,
+              displayName: context.user.displayName,
+              pfpUrl: context.user.pfpUrl,
             });
           }
+          
+          await sdk.actions.ready();
         }
-      } catch (err) {
-        console.error('Failed to fetch price:', err);
+      } catch (error) {
+        console.log('Running in standalone mode');
       } finally {
-        setLoading(false);
+        setIsReady(true);
       }
     };
 
-    fetchPrice();
-    const interval = setInterval(fetchPrice, 30000);
-    return () => clearInterval(interval);
+    initSDK();
   }, []);
 
-  const formatPrice = (price: string) => {
-    const num = parseFloat(price);
-    if (num === 0) return '$0.00';
-    if (num < 0.0000001) {
-      // Count leading zeros after decimal
-      const str = num.toFixed(20);
-      const match = str.match(/^0\.0*([1-9]\d{0,3})/);
-      if (match) {
-        const zeros = str.indexOf(match[1]) - 2;
-        const significant = match[1].slice(0, 4);
-        return `$0.0(${zeros})${significant}`;
-      }
-      return `$${num.toExponential(2)}`;
-    }
-    if (num < 0.0001) return `$${num.toFixed(8)}`;
-    if (num < 0.01) return `$${num.toFixed(6)}`;
-    if (num < 1) return `$${num.toFixed(4)}`;
-    return `$${num.toFixed(2)}`;
+  const handleNavigate = (index: number) => {
+    setActiveIndex(index);
   };
 
-  const formatNumber = (num: number) => {
-    if (num >= 1000000) return `$${(num / 1000000).toFixed(2)}M`;
-    if (num >= 1000) return `$${(num / 1000).toFixed(2)}K`;
-    return `$${num.toFixed(2)}`;
-  };
-
-  const isPositive = priceData ? priceData.priceChange24h >= 0 : true;
+  if (!isReady) {
+    return (
+      <div className="h-dvh flex items-center justify-center bg-black">
+        <div className="text-center">
+          <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-red-500 flex items-center justify-center animate-pulse">
+            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+              <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+            </svg>
+          </div>
+          <p className="text-white/50 text-xs">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="flex flex-col h-full p-3 gap-3">
-      {/* Price Header */}
-      <div className="bg-black border border-white/10 rounded-xl p-4">
-        <div className="flex items-center justify-between mb-1">
-          <span className="text-[10px] text-white/40">Price</span>
-          <span className="text-[10px] text-white/40">Holding Value</span>
-        </div>
-        
-        <div className="flex items-center justify-between">
-          <div className="flex items-baseline gap-2">
-            <span className="font-bold text-xl text-white">
-              {loading ? '...' : priceData ? formatPrice(priceData.priceUsd) : '$0.00'}
-            </span>
-            {priceData && (
-              <span className={`text-sm font-semibold ${isPositive ? 'text-green-500' : 'text-red-500'}`}>
-                {isPositive ? '+' : ''}{priceData.priceChange24h.toFixed(2)}%
-              </span>
-            )}
-          </div>
-          <span className="font-bold text-xl text-white/50">$0.00</span>
-        </div>
-      </div>
-
-      {/* Chart */}
-      <div className="flex-1 bg-black border border-white/10 rounded-xl overflow-hidden min-h-0">
-        <iframe
-          src={DEXSCREENER.embedUrl}
-          className="w-full h-full"
-          title="Price Chart"
-          allow="clipboard-write"
-          loading="lazy"
+    <div className="h-dvh flex flex-col bg-black">
+      <Header user={user} />
+      
+      <SwipeContainer activeIndex={activeIndex} onNavigate={handleNavigate}>
+        <VotePage 
+          userFid={user?.fid} 
+          username={user?.username}
         />
-      </div>
-
-      {/* Timeframe Selector */}
-      <div className="flex gap-2 justify-center">
-        {(['1D', '1W', '1M', '1Y'] as const).map((tf) => (
-          <button
-            key={tf}
-            onClick={() => setTimeframe(tf)}
-            className={`px-4 py-2 rounded-lg text-xs font-medium transition-colors ${
-              timeframe === tf
-                ? 'bg-white/10 text-white'
-                : 'text-white/40 hover:text-white/60'
-            }`}
-          >
-            {tf}
-          </button>
-        ))}
-      </div>
-
-      {/* Stats Row */}
-      <div className="grid grid-cols-3 gap-2">
-        <div className="bg-black border border-white/10 rounded-xl p-2.5 text-center">
-          <p className="text-[9px] text-white/40">Volume 24h</p>
-          <p className="font-semibold text-white text-xs mt-0.5">
-            {loading ? '...' : priceData ? formatNumber(priceData.volume24h) : '$0'}
-          </p>
-        </div>
-        <div className="bg-black border border-white/10 rounded-xl p-2.5 text-center">
-          <p className="text-[9px] text-white/40">Liquidity</p>
-          <p className="font-semibold text-white text-xs mt-0.5">
-            {loading ? '...' : priceData ? formatNumber(priceData.liquidity) : '$0'}
-          </p>
-        </div>
-        <div className="bg-black border border-white/10 rounded-xl p-2.5 text-center">
-          <p className="text-[9px] text-white/40">MCap</p>
-          <p className="font-semibold text-white text-xs mt-0.5">
-            {loading ? '...' : priceData ? formatNumber(priceData.marketCap) : '$0'}
-          </p>
-        </div>
-      </div>
+        <HomePage />
+        <InfoPage />
+      </SwipeContainer>
+      
+      <BottomNav activeIndex={activeIndex} onNavigate={handleNavigate} />
     </div>
   );
 }
