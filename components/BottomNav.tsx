@@ -30,7 +30,7 @@ const Icons = {
 
 export default function BottomNav({ activeIndex, onNavigate }: BottomNavProps) {
   return (
-    <nav className="bg-red-500">
+    <nav className="bg-red-500 md:hidden">
       <div className="flex justify-around items-center py-3 px-4">
         {PAGES.map((page, index) => {
           const isActive = activeIndex === index;

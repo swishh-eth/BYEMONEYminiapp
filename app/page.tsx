@@ -5,44 +5,32 @@ import Header from '@/components/Header';
 import BottomNav from '@/components/BottomNav';
 import SwipeContainer from '@/components/SwipeContainer';
 import HomePage from '@/components/HomePage';
-import InfoPage from '@/components/InfoPage';
 import VotePage from '@/components/VotePage';
-
-interface FarcasterUser {
-  fid: number;
-  username?: string;
-  displayName?: string;
-  pfpUrl?: string;
-}
+import InfoPage from '@/components/InfoPage';
 
 export default function App() {
-  const [activeIndex, setActiveIndex] = useState(1);
+  const [activeIndex, setActiveIndex] = useState(0);
   const [isReady, setIsReady] = useState(false);
-  const [user, setUser] = useState<FarcasterUser | null>(null);
+  const [userFid, setUserFid] = useState<number | undefined>();
+  const [username, setUsername] = useState<string | undefined>();
 
+  // Initialize Farcaster Mini App SDK
   useEffect(() => {
     const initSDK = async () => {
       try {
-        const url = new URL(window.location.href);
-        const isMiniApp = url.searchParams.get('miniApp') === 'true' || 
-                          window.parent !== window;
+        const { sdk } = await import('@farcaster/miniapp-sdk');
         
-        if (isMiniApp) {
-          const { sdk } = await import('@farcaster/miniapp-sdk');
-          
-          const context = await sdk.context;
-          
-          if (context?.user) {
-            setUser({
-              fid: context.user.fid,
-              username: context.user.username,
-              displayName: context.user.displayName,
-              pfpUrl: context.user.pfpUrl,
-            });
-          }
-          
-          await sdk.actions.ready();
+        // Signal that the app is ready
+        await sdk.actions.ready();
+        
+        // Get user context
+        const context = await sdk.context;
+        if (context?.user) {
+          setUserFid(context.user.fid);
+          setUsername(context.user.username);
         }
+        
+        console.log('Mini App SDK initialized');
       } catch (error) {
         console.log('Running in standalone mode');
       } finally {
@@ -57,35 +45,31 @@ export default function App() {
     setActiveIndex(index);
   };
 
+  // Show loading state briefly
   if (!isReady) {
     return (
-      <div className="h-dvh flex items-center justify-center bg-black">
+      <div className="h-full flex items-center justify-center bg-black">
         <div className="text-center">
-          <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-red-500 flex items-center justify-center animate-pulse">
-            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-              <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-            </svg>
+          <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-red-500 flex items-center justify-center animate-pulse">
+            <span className="text-2xl">💸</span>
           </div>
-          <p className="text-white/50 text-xs">Loading...</p>
+          <p className="text-white/50 text-sm">Loading...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="h-dvh flex flex-col bg-black">
-      <Header user={user} />
+    <>
+      <Header activeIndex={activeIndex} onNavigate={handleNavigate} />
       
       <SwipeContainer activeIndex={activeIndex} onNavigate={handleNavigate}>
-        <VotePage 
-          userFid={user?.fid} 
-          username={user?.username}
-        />
         <HomePage />
+        <VotePage userFid={userFid} username={username} />
         <InfoPage />
       </SwipeContainer>
       
       <BottomNav activeIndex={activeIndex} onNavigate={handleNavigate} />
-    </div>
+    </>
   );
 }
