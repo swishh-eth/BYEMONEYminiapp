@@ -12,6 +12,8 @@ interface PriceData {
   pairAddress: string;
 }
 
+const MULTIPLIER = 100000;
+
 export default function HomePage() {
   const [priceData, setPriceData] = useState<PriceData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -138,7 +140,6 @@ export default function HomePage() {
 
     const fetchOHLCV = async () => {
       try {
-        // Map timeframe to GeckoTerminal parameters
         let geckoTimeframe = 'hour';
         let aggregate = 1;
         
@@ -174,10 +175,10 @@ export default function HomePage() {
             const ohlcvData = data.data.attributes.ohlcv_list
               .map((candle: number[]) => ({
                 time: candle[0] as any,
-                open: candle[1],
-                high: candle[2],
-                low: candle[3],
-                close: candle[4],
+                open: candle[1] * MULTIPLIER,
+                high: candle[2] * MULTIPLIER,
+                low: candle[3] * MULTIPLIER,
+                close: candle[4] * MULTIPLIER,
               }))
               .sort((a: any, b: any) => a.time - b.time);
 
@@ -202,7 +203,7 @@ export default function HomePage() {
   const getValue100000 = () => {
     if (!priceData) return '$0.00';
     const price = parseFloat(priceData.priceUsd);
-    const value = price * 100000;
+    const value = price * MULTIPLIER;
     if (value < 0.01) return `$${value.toFixed(4)}`;
     return `$${value.toFixed(2)}`;
   };
@@ -255,8 +256,11 @@ export default function HomePage() {
       </div>
 
       {/* Chart */}
-      <div className="flex-1 bg-black border border-white/10 rounded-xl overflow-hidden min-h-0 p-2">
-        <div ref={chartContainerRef} className="w-full h-full" />
+      <div className="flex-1 bg-black border border-white/10 rounded-xl overflow-hidden min-h-0 flex flex-col">
+        <div ref={chartContainerRef} className="flex-1 p-2" />
+        <p className="text-[9px] text-white/30 text-center pb-2">
+          Prices shown are for 100,000 ${TOKEN.symbol}
+        </p>
       </div>
 
       {/* Stats Row */}
