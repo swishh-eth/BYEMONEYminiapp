@@ -9,14 +9,7 @@ interface PriceData {
   volume24h: number;
   liquidity: number;
   marketCap: number;
-}
-
-interface CandleData {
-  time: number;
-  open: number;
-  high: number;
-  low: number;
-  close: number;
+  pairAddress: string;
 }
 
 export default function HomePage() {
@@ -27,7 +20,7 @@ export default function HomePage() {
   const chartRef = useRef<any>(null);
   const seriesRef = useRef<any>(null);
 
-  // Fetch price data
+  // Fetch price data from DexScreener
   useEffect(() => {
     const fetchPrice = async () => {
       try {
@@ -42,6 +35,7 @@ export default function HomePage() {
               volume24h: pair.volume?.h24 || 0,
               liquidity: pair.liquidity?.usd || 0,
               marketCap: pair.marketCap || pair.fdv || 0,
+              pairAddress: pair.pairAddress || '',
             });
           }
         }
@@ -64,7 +58,6 @@ export default function HomePage() {
     const initChart = async () => {
       const { createChart, ColorType, CrosshairMode } = await import('lightweight-charts');
       
-      // Clear existing chart
       if (chartRef.current) {
         chartRef.current.remove();
       }
@@ -91,26 +84,15 @@ export default function HomePage() {
         },
         rightPriceScale: {
           borderColor: 'rgba(255, 255, 255, 0.1)',
-          scaleMargins: {
-            top: 0.1,
-            bottom: 0.1,
-          },
+          scaleMargins: { top: 0.1, bottom: 0.1 },
         },
         timeScale: {
           borderColor: 'rgba(255, 255, 255, 0.1)',
           timeVisible: true,
           secondsVisible: false,
         },
-        handleScale: {
-          mouseWheel: true,
-          pinch: true,
-        },
-        handleScroll: {
-          mouseWheel: true,
-          pressedMouseMove: true,
-          horzTouchDrag: true,
-          vertTouchDrag: false,
-        },
+        handleScale: { mouseWheel: true, pinch: true },
+        handleScroll: { mouseWheel: true, pressedMouseMove: true, horzTouchDrag: true, vertTouchDrag: false },
       });
 
       const candlestickSeries = chart.addCandlestickSeries({
@@ -125,10 +107,6 @@ export default function HomePage() {
       chartRef.current = chart;
       seriesRef.current = candlestickSeries;
 
-      // Generate sample data based on current price
-      generateChartData(timeframe);
-
-      // Handle resize
       const handleResize = () => {
         if (chartContainerRef.current && chartRef.current) {
           chartRef.current.applyOptions({
@@ -141,9 +119,7 @@ export default function HomePage() {
       window.addEventListener('resize', handleResize);
       handleResize();
 
-      return () => {
-        window.removeEventListener('resize', handleResize);
-      };
+      return () => window.removeEventListener('resize', handleResize);
     };
 
     initChart();
@@ -156,78 +132,66 @@ export default function HomePage() {
     };
   }, []);
 
-  // Update chart when timeframe changes
+  // Fetch real OHLCV data from GeckoTerminal
   useEffect(() => {
-    if (seriesRef.current && priceData) {
-      generateChartData(timeframe);
-    }
-  }, [timeframe, priceData]);
+    if (!seriesRef.current || !priceData?.pairAddress) return;
 
-  const generateChartData = (tf: string) => {
-    if (!seriesRef.current || !priceData) return;
+    const fetchOHLCV = async () => {
+      try {
+        // Map timeframe to GeckoTerminal parameters
+        let geckoTimeframe = 'hour';
+        let aggregate = 1;
+        
+        switch (timeframe) {
+          case '1h':
+            geckoTimeframe = 'minute';
+            aggregate = 1;
+            break;
+          case '24h':
+            geckoTimeframe = 'minute';
+            aggregate = 15;
+            break;
+          case '7d':
+            geckoTimeframe = 'hour';
+            aggregate = 1;
+            break;
+          case '30d':
+            geckoTimeframe = 'hour';
+            aggregate = 4;
+            break;
+        }
 
-    const currentPrice = parseFloat(priceData.priceUsd);
-    const now = Math.floor(Date.now() / 1000);
-    const data: CandleData[] = [];
+        const url = `https://api.geckoterminal.com/api/v2/networks/base/pools/${priceData.pairAddress}/ohlcv/${geckoTimeframe}?aggregate=${aggregate}&limit=200`;
+        
+        const res = await fetch(url, {
+          headers: { 'Accept': 'application/json' }
+        });
+        
+        if (res.ok) {
+          const data = await res.json();
+          
+          if (data.data?.attributes?.ohlcv_list) {
+            const ohlcvData = data.data.attributes.ohlcv_list
+              .map((candle: number[]) => ({
+                time: candle[0] as any,
+                open: candle[1],
+                high: candle[2],
+                low: candle[3],
+                close: candle[4],
+              }))
+              .sort((a: any, b: any) => a.time - b.time);
 
-    let periods = 50;
-    let interval = 3600; // 1 hour in seconds
+            seriesRef.current.setData(ohlcvData);
+            chartRef.current?.timeScale().fitContent();
+          }
+        }
+      } catch (err) {
+        console.error('Failed to fetch OHLCV:', err);
+      }
+    };
 
-    switch (tf) {
-      case '1h':
-        periods = 60;
-        interval = 60; // 1 minute
-        break;
-      case '24h':
-        periods = 96;
-        interval = 900; // 15 minutes
-        break;
-      case '7d':
-        periods = 84;
-        interval = 7200; // 2 hours
-        break;
-      case '30d':
-        periods = 90;
-        interval = 28800; // 8 hours
-        break;
-    }
-
-    // Generate realistic-looking price action
-    let price = currentPrice * (1 - (priceData.priceChange24h / 100) * 0.5);
-    const volatility = currentPrice * 0.02; // 2% volatility
-
-    for (let i = periods; i >= 0; i--) {
-      const time = now - (i * interval);
-      
-      // Random walk with trend towards current price
-      const trend = (currentPrice - price) * 0.02;
-      const noise = (Math.random() - 0.5) * volatility;
-      price = price + trend + noise;
-      
-      const open = price;
-      const close = price + (Math.random() - 0.5) * volatility * 0.5;
-      const high = Math.max(open, close) + Math.random() * volatility * 0.3;
-      const low = Math.min(open, close) - Math.random() * volatility * 0.3;
-
-      data.push({
-        time: time as any,
-        open,
-        high,
-        low,
-        close,
-      });
-
-      price = close;
-    }
-
-    // Ensure last candle closes at current price
-    if (data.length > 0) {
-      data[data.length - 1].close = currentPrice;
-    }
-
-    seriesRef.current.setData(data);
-    chartRef.current?.timeScale().fitContent();
-  };
+    fetchOHLCV();
+  }, [timeframe, priceData?.pairAddress]);
 
   const formatNumber = (num: number) => {
     if (num >= 1000000) return `$${(num / 1000000).toFixed(2)}M`;
