@@ -7,10 +7,12 @@ import { createClient } from '@supabase/supabase-js';
 
 const CONTRACT_ADDRESS = '0x0625E29C2A71A834482bFc6b4cc012ACeee62DA4' as `0x${string}`;
 const TICKET_PRICE_ETH = 0.001;
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const supabase = SUPABASE_URL && SUPABASE_ANON_KEY 
+  ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+  : null;
 
 const CONTRACT_ABI = [
   {
@@ -168,6 +170,8 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
   }, [userFid, username]);
 
   const fetchOrCreateUser = async (fid: number, uname: string) => {
+    if (!supabase) return;
+    
     try {
       const { data: existing } = await supabase
         .from('prediction_users')
@@ -199,7 +203,7 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
   };
 
   const fetchRecentBets = useCallback(async () => {
-    if (!marketData?.id) return;
+    if (!marketData?.id || !supabase) return;
     
     try {
       console.log('Fetching bets for market:', Number(marketData.id));
@@ -429,7 +433,40 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
 
       await publicClient.waitForTransactionReceipt({ hash: txHash });
 
-      if (userFid && marketData) {
+      if (userFid && marketData && supabase) {
+        // Ensure user exists in prediction_users before inserting bet
+        try {
+          const { data: existingUser } = await supabase
+            .from('prediction_users')
+            .select('fid')
+            .eq('fid', userFid)
+            .single();
+          
+          if (!existingUser) {
+            // Fetch from Neynar and create user
+            const userResponse = await fetch(`/api/user?fid=${userFid}`);
+            if (userResponse.ok) {
+              const userData = await userResponse.json();
+              await supabase.from('prediction_users').upsert({
+                fid: userFid,
+                username: userData.username || username || 'anon',
+                pfp_url: userData.pfp_url || '',
+                updated_at: new Date().toISOString(),
+              });
+            } else {
+              // Create with basic info if API fails
+              await supabase.from('prediction_users').upsert({
+                fid: userFid,
+                username: username || 'anon',
+                pfp_url: '',
+                updated_at: new Date().toISOString(),
+              });
+            }
+          }
+        } catch (e) {
+          console.log('User lookup/create error:', e);
+        }
+
         const betData = {
           fid: userFid,
           wallet_address: walletAddress,
@@ -449,7 +486,7 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
           console.log('Bet saved to Supabase');
         }
       } else {
-        console.log('Missing userFid or marketData:', { userFid, marketId: marketData?.id });
+        console.log('Missing userFid, marketData, or supabase:', { userFid, marketId: marketData?.id, hasSupabase: !!supabase });
       }
       
       setTxState('success');
@@ -539,16 +576,24 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
 
   const totalCostEth = ticketCount * TICKET_PRICE_ETH;
   
-  // Calculate REAL potential winnings (pool changes when you bet)
-  const newUpPool = selectedDirection === 'up' ? upPool + totalCostEth : upPool;
-  const newDownPool = selectedDirection === 'down' ? downPool + totalCostEth : downPool;
+  // Calculate REAL multipliers after your bet is added
+  const newUpPool = upPool + (selectedDirection === 'up' ? totalCostEth : 0);
+  const newDownPool = downPool + (selectedDirection === 'down' ? totalCostEth : 0);
   const newTotalPool = newUpPool + newDownPool;
   const poolAfterFee = newTotalPool * (1 - houseFee);
   
+  // These are the real multipliers you'll get
+  const realUpMultiplier = newUpPool > 0 ? poolAfterFee / newUpPool : 1.9;
+  const realDownMultiplier = newDownPool > 0 ? poolAfterFee / newDownPool : 1.9;
+  
+  // Show real multiplier on selected button, current multiplier on unselected
+  const displayUpMultiplier = selectedDirection === 'up' ? realUpMultiplier : upMultiplier;
+  const displayDownMultiplier = selectedDirection === 'down' ? realDownMultiplier : downMultiplier;
+  
   const potentialWinnings = selectedDirection === 'up' 
-    ? newUpPool > 0 ? (poolAfterFee * totalCostEth) / newUpPool : 0
+    ? totalCostEth * realUpMultiplier
     : selectedDirection === 'down' 
-    ? newDownPool > 0 ? (poolAfterFee * totalCostEth) / newDownPool : 0
+    ? totalCostEth * realDownMultiplier
     : 0;
 
   const startPriceUsd = marketData ? Number(marketData.startPrice) / 1e8 : 0;
@@ -730,7 +775,7 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
                   </div>
                   <span className="font-bold text-sm">PUMP</span>
                   <span className={`text-[10px] ${selectedDirection === 'up' ? 'text-white/70' : 'text-white/40'}`}>
-                    {upMultiplier.toFixed(2)}x
+                    {displayUpMultiplier.toFixed(2)}x
                   </span>
                 </div>
               </button>
@@ -753,7 +798,7 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
                   </div>
                   <span className="font-bold text-sm">DUMP</span>
                   <span className={`text-[10px] ${selectedDirection === 'down' ? 'text-white/70' : 'text-white/40'}`}>
-                    {downMultiplier.toFixed(2)}x
+                    {displayDownMultiplier.toFixed(2)}x
                   </span>
                 </div>
               </button>
