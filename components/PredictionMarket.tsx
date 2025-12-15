@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { createPublicClient, http, formatEther, parseEther, encodeFunctionData } from 'viem';
 import { base } from 'viem/chains';
 import { createClient } from '@supabase/supabase-js';
@@ -48,6 +48,24 @@ const CONTRACT_ABI = [
     ],
   },
   {
+    name: 'markets',
+    type: 'function',
+    stateMutability: 'view',
+    inputs: [{ name: 'marketId', type: 'uint256' }],
+    outputs: [
+      { name: 'id', type: 'uint256' },
+      { name: 'startPrice', type: 'uint256' },
+      { name: 'endPrice', type: 'uint256' },
+      { name: 'startTime', type: 'uint256' },
+      { name: 'endTime', type: 'uint256' },
+      { name: 'upPool', type: 'uint256' },
+      { name: 'downPool', type: 'uint256' },
+      { name: 'totalTickets', type: 'uint256' },
+      { name: 'status', type: 'uint8' },
+      { name: 'result', type: 'uint8' },
+    ],
+  },
+  {
     name: 'buyTickets',
     type: 'function',
     stateMutability: 'payable',
@@ -75,6 +93,13 @@ const CONTRACT_ABI = [
     inputs: [],
     outputs: [{ name: '', type: 'bool' }],
   },
+  {
+    name: 'currentMarketId',
+    type: 'function',
+    stateMutability: 'view',
+    inputs: [],
+    outputs: [{ name: '', type: 'uint256' }],
+  },
 ] as const;
 
 const publicClient = createPublicClient({
@@ -100,6 +125,29 @@ interface RecentBet {
   price_at_bet: number | null;
 }
 
+interface UnclaimedMarket {
+  marketId: number;
+  upTickets: number;
+  downTickets: number;
+  result: number;
+  status: number;
+  estimatedWinnings: number;
+  upPool: number;
+  downPool: number;
+}
+
+interface HistoryItem {
+  marketId: number;
+  direction: 'up' | 'down';
+  tickets: number;
+  result: number;
+  status: number;
+  claimed: boolean;
+  winnings: number;
+  timestamp: string;
+  priceAtBet: number;
+}
+
 export default function PredictionMarket({ userFid, username }: PredictionMarketProps) {
   const [walletAddress, setWalletAddress] = useState<`0x${string}` | null>(null);
   const [ethBalance, setEthBalance] = useState<string>('0');
@@ -112,6 +160,11 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
   const [dontShowAgain, setDontShowAgain] = useState(false);
   const [recentBets, setRecentBets] = useState<RecentBet[]>([]);
   const [userPfp, setUserPfp] = useState<string | null>(null);
+  const [showHistory, setShowHistory] = useState(false);
+  const [unclaimedMarkets, setUnclaimedMarkets] = useState<UnclaimedMarket[]>([]);
+  const [history, setHistory] = useState<HistoryItem[]>([]);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [claimingMarketId, setClaimingMarketId] = useState<number | null>(null);
   
   const [marketData, setMarketData] = useState<{
     id: bigint;
@@ -136,6 +189,47 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
   const [isBettingOpen, setIsBettingOpen] = useState(true);
   const [sdk, setSdk] = useState<any>(null);
 
+  // Audio refs
+  const clickSoundRef = useRef<HTMLAudioElement | null>(null);
+  const successSoundRef = useRef<HTMLAudioElement | null>(null);
+  const winSoundRef = useRef<HTMLAudioElement | null>(null);
+
+  // Initialize sounds
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      clickSoundRef.current = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdH2Coverage0NDQ0NDQ0M=');
+      clickSoundRef.current.volume = 0.2;
+      successSoundRef.current = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdH2Af4');
+      successSoundRef.current.volume = 0.3;
+    }
+  }, []);
+
+  const playClick = () => {
+    try {
+      clickSoundRef.current?.play().catch(() => {});
+    } catch {}
+  };
+
+  const playSuccess = () => {
+    try {
+      successSoundRef.current?.play().catch(() => {});
+    } catch {}
+  };
+
+  const triggerHaptic = async (type: 'light' | 'medium' | 'heavy' | 'success' | 'error') => {
+    try {
+      if (sdk?.haptics) {
+        if (type === 'success') {
+          await sdk.haptics.notificationOccurred('success');
+        } else if (type === 'error') {
+          await sdk.haptics.notificationOccurred('error');
+        } else {
+          await sdk.haptics.impactOccurred(type);
+        }
+      }
+    } catch {}
+  };
+
   useEffect(() => {
     const skipModal = localStorage.getItem('skipBetConfirm') === 'true';
     if (skipModal) setDontShowAgain(true);
@@ -154,8 +248,7 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
           if (accounts?.[0]) {
             setWalletAddress(accounts[0] as `0x${string}`);
           }
-        } catch {
-        }
+        } catch {}
       } catch (error) {
         console.log('SDK init error:', error);
       }
@@ -202,12 +295,124 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
     }
   };
 
+  // Fetch unclaimed winnings from previous markets
+  const fetchUnclaimedMarkets = useCallback(async () => {
+    if (!walletAddress || !supabase) return;
+    
+    try {
+      // Get user's bet history from Supabase
+      const { data: bets } = await supabase
+        .from('prediction_bets')
+        .select('market_id, direction, tickets, price_at_bet, timestamp')
+        .eq('wallet_address', walletAddress.toLowerCase())
+        .order('timestamp', { ascending: false });
+
+      if (!bets || bets.length === 0) return;
+
+      // Get unique market IDs
+      const marketIds = [...new Set(bets.map(b => b.market_id))];
+      
+      const unclaimed: UnclaimedMarket[] = [];
+      const historyItems: HistoryItem[] = [];
+
+      // Check each market
+      for (const marketId of marketIds) {
+        try {
+          const [position, marketInfo] = await Promise.all([
+            publicClient.readContract({
+              address: CONTRACT_ADDRESS,
+              abi: CONTRACT_ABI,
+              functionName: 'getPosition',
+              args: [BigInt(marketId), walletAddress],
+            }),
+            publicClient.readContract({
+              address: CONTRACT_ADDRESS,
+              abi: CONTRACT_ABI,
+              functionName: 'markets',
+              args: [BigInt(marketId)],
+            }),
+          ]);
+
+          const upTickets = Number(position[0]);
+          const downTickets = Number(position[1]);
+          const claimed = position[2];
+          
+          const status = Number(marketInfo[8]);
+          const result = Number(marketInfo[9]);
+          const upPool = Number(formatEther(marketInfo[5]));
+          const downPool = Number(formatEther(marketInfo[6]));
+          const totalPool = upPool + downPool;
+
+          // Find bet info
+          const userBets = bets.filter(b => b.market_id === marketId);
+          const betDirection = userBets[0]?.direction as 'up' | 'down';
+          const totalTickets = userBets.reduce((sum, b) => sum + b.tickets, 0);
+          const priceAtBet = userBets[0]?.price_at_bet || 0;
+
+          // Calculate winnings
+          let winnings = 0;
+          if (status === 1) { // Resolved
+            if (result === 0) { // Tie - refund
+              winnings = totalTickets * TICKET_PRICE_ETH;
+            } else if (result === 1 && upTickets > 0) { // UP won
+              const poolAfterFee = totalPool * 0.95;
+              winnings = (poolAfterFee * upTickets * TICKET_PRICE_ETH) / upPool;
+            } else if (result === 2 && downTickets > 0) { // DOWN won
+              const poolAfterFee = totalPool * 0.95;
+              winnings = (poolAfterFee * downTickets * TICKET_PRICE_ETH) / downPool;
+            }
+          } else if (status === 2) { // Cancelled - refund
+            winnings = totalTickets * TICKET_PRICE_ETH;
+          }
+
+          // Add to history
+          if (totalTickets > 0) {
+            historyItems.push({
+              marketId,
+              direction: betDirection,
+              tickets: totalTickets,
+              result,
+              status,
+              claimed,
+              winnings,
+              timestamp: userBets[0]?.timestamp || '',
+              priceAtBet,
+            });
+          }
+
+          // Check if unclaimed and has winnings
+          if (!claimed && winnings > 0 && status !== 0) {
+            unclaimed.push({
+              marketId,
+              upTickets,
+              downTickets,
+              result,
+              status,
+              estimatedWinnings: winnings,
+              upPool,
+              downPool,
+            });
+          }
+        } catch (e) {
+          console.log('Error fetching market', marketId, e);
+        }
+      }
+
+      setUnclaimedMarkets(unclaimed);
+      setHistory(historyItems);
+    } catch (error) {
+      console.error('Failed to fetch unclaimed:', error);
+    }
+  }, [walletAddress]);
+
+  useEffect(() => {
+    fetchUnclaimedMarkets();
+  }, [fetchUnclaimedMarkets, marketData?.id]);
+
   const fetchRecentBets = useCallback(async () => {
     if (!marketData?.id || !supabase) return;
     
     try {
-      console.log('Fetching bets for market:', Number(marketData.id));
-      
       const { data, error } = await supabase
         .from('prediction_bets')
         .select(`
@@ -232,8 +437,6 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
         console.error('Supabase fetch error:', error);
         return;
       }
-
-      console.log('Fetched bets:', data);
 
       if (data) {
         const bets: RecentBet[] = data.map((bet: any) => ({
@@ -370,19 +573,25 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
 
   const connectWallet = async () => {
     if (!sdk) return;
+    playClick();
+    triggerHaptic('light');
     try {
       const accounts = await sdk.wallet.ethProvider.request({
         method: 'eth_requestAccounts',
       });
       if (accounts?.[0]) {
         setWalletAddress(accounts[0] as `0x${string}`);
+        triggerHaptic('success');
       }
     } catch (error) {
       console.error('Failed to connect:', error);
+      triggerHaptic('error');
     }
   };
 
   const handleDirectionClick = (direction: 'up' | 'down') => {
+    playClick();
+    triggerHaptic('light');
     if (selectedDirection === direction) {
       setSelectedDirection(null);
     } else {
@@ -391,6 +600,8 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
   };
 
   const handleBuyClick = () => {
+    playClick();
+    triggerHaptic('medium');
     if (dontShowAgain) {
       executeBuy();
     } else {
@@ -399,6 +610,7 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
   };
 
   const handleConfirmBuy = () => {
+    playClick();
     if (dontShowAgain) {
       localStorage.setItem('skipBetConfirm', 'true');
     }
@@ -434,7 +646,6 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
       await publicClient.waitForTransactionReceipt({ hash: txHash });
 
       if (userFid && marketData && supabase) {
-        // Ensure user exists in prediction_users before inserting bet
         try {
           const { data: existingUser } = await supabase
             .from('prediction_users')
@@ -443,7 +654,6 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
             .single();
           
           if (!existingUser) {
-            // Fetch from Neynar and create user
             const userResponse = await fetch(`/api/user?fid=${userFid}`);
             if (userResponse.ok) {
               const userData = await userResponse.json();
@@ -454,7 +664,6 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
                 updated_at: new Date().toISOString(),
               });
             } else {
-              // Create with basic info if API fails
               await supabase.from('prediction_users').upsert({
                 fid: userFid,
                 username: username || 'anon',
@@ -469,7 +678,7 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
 
         const betData = {
           fid: userFid,
-          wallet_address: walletAddress,
+          wallet_address: walletAddress.toLowerCase(),
           market_id: Number(marketData.id),
           direction: selectedDirection,
           tickets: ticketCount,
@@ -477,19 +686,13 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
           price_at_bet: currentPriceUsd,
           timestamp: new Date().toISOString(),
         };
-        console.log('Inserting bet:', betData);
         
-        const { error: betError } = await supabase.from('prediction_bets').insert(betData);
-        if (betError) {
-          console.error('Failed to save bet to Supabase:', betError);
-        } else {
-          console.log('Bet saved to Supabase');
-        }
-      } else {
-        console.log('Missing userFid, marketData, or supabase:', { userFid, marketId: marketData?.id, hasSupabase: !!supabase });
+        await supabase.from('prediction_bets').insert(betData);
       }
       
       setTxState('success');
+      playSuccess();
+      triggerHaptic('success');
       fetchMarketData();
       fetchUserPosition();
       fetchBalance();
@@ -504,6 +707,7 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
       console.error('Buy failed:', error);
       setTxState('error');
       setErrorMsg(error?.message?.includes('rejected') ? 'Rejected' : 'Failed');
+      triggerHaptic('error');
       setTimeout(() => {
         setTxState('idle');
         setErrorMsg('');
@@ -511,16 +715,21 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
     }
   };
 
-  const handleClaim = async () => {
-    if (!walletAddress || !marketData || !sdk) return;
+  const handleClaim = async (marketId?: number) => {
+    if (!walletAddress || !sdk) return;
+    
+    const claimMarketId = marketId ?? (marketData ? Number(marketData.id) : null);
+    if (!claimMarketId) return;
 
+    setClaimingMarketId(claimMarketId);
     setTxState('claiming');
+    triggerHaptic('medium');
     
     try {
       const data = encodeFunctionData({
         abi: CONTRACT_ABI,
         functionName: 'claim',
-        args: [marketData.id],
+        args: [BigInt(claimMarketId)],
       });
 
       const txHash = await sdk.wallet.ethProvider.request({
@@ -535,14 +744,27 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
       await publicClient.waitForTransactionReceipt({ hash: txHash });
       
       setTxState('success');
+      playSuccess();
+      triggerHaptic('success');
+      setShowConfetti(true);
+      setTimeout(() => setShowConfetti(false), 3000);
+      
       fetchUserPosition();
       fetchBalance();
+      fetchUnclaimedMarkets();
       
-      setTimeout(() => setTxState('idle'), 2500);
+      setTimeout(() => {
+        setTxState('idle');
+        setClaimingMarketId(null);
+      }, 2500);
     } catch (error) {
       console.error('Claim failed:', error);
       setTxState('error');
-      setTimeout(() => setTxState('idle'), 2500);
+      triggerHaptic('error');
+      setTimeout(() => {
+        setTxState('idle');
+        setClaimingMarketId(null);
+      }, 2500);
     }
   };
 
@@ -576,17 +798,14 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
 
   const totalCostEth = ticketCount * TICKET_PRICE_ETH;
   
-  // Calculate REAL multipliers after your bet is added
   const newUpPool = upPool + (selectedDirection === 'up' ? totalCostEth : 0);
   const newDownPool = downPool + (selectedDirection === 'down' ? totalCostEth : 0);
   const newTotalPool = newUpPool + newDownPool;
   const poolAfterFee = newTotalPool * (1 - houseFee);
   
-  // These are the real multipliers you'll get
   const realUpMultiplier = newUpPool > 0 ? poolAfterFee / newUpPool : 1.9;
   const realDownMultiplier = newDownPool > 0 ? poolAfterFee / newDownPool : 1.9;
   
-  // Show real multiplier on selected button, current multiplier on unselected
   const displayUpMultiplier = selectedDirection === 'up' ? realUpMultiplier : upMultiplier;
   const displayDownMultiplier = selectedDirection === 'down' ? realDownMultiplier : downMultiplier;
   
@@ -602,8 +821,138 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
 
   const isLocked = hasMarket && !isResolved && !isCancelled && !isBettingOpen;
 
+  const totalUnclaimed = unclaimedMarkets.reduce((sum, m) => sum + m.estimatedWinnings, 0);
+
+  // History Page
+  if (showHistory) {
+    return (
+      <div className="flex flex-col h-full bg-black text-white overflow-hidden">
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          <div className="absolute inset-0 opacity-[0.02]" 
+            style={{
+              backgroundImage: `radial-gradient(circle at 1px 1px, white 1px, transparent 0)`,
+              backgroundSize: '32px 32px',
+            }}
+          />
+        </div>
+
+        <div className="relative flex flex-col h-full p-4 gap-3 overflow-y-auto">
+          <div className="flex items-center justify-between mb-2">
+            <button 
+              onClick={() => { setShowHistory(false); playClick(); triggerHaptic('light'); }}
+              className="flex items-center gap-2 text-white/60 hover:text-white transition-colors"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                <path d="M15 19l-7-7 7-7" />
+              </svg>
+              <span className="text-sm">Back</span>
+            </button>
+            <h1 className="text-lg font-bold">Betting History</h1>
+            <div className="w-16" />
+          </div>
+
+          {unclaimedMarkets.length > 0 && (
+            <div className="bg-gradient-to-r from-emerald-500/20 to-green-500/20 border border-emerald-500/30 rounded-xl p-4 animate-pulse-subtle">
+              <p className="text-[10px] text-emerald-400 uppercase tracking-wider mb-2">Unclaimed Winnings</p>
+              <p className="text-2xl font-bold text-emerald-400">{totalUnclaimed.toFixed(4)} ETH</p>
+              <div className="mt-3 space-y-2">
+                {unclaimedMarkets.map((m) => (
+                  <div key={m.marketId} className="flex items-center justify-between bg-black/30 rounded-lg p-3">
+                    <div>
+                      <p className="text-sm text-white/70">Round #{m.marketId}</p>
+                      <p className="text-xs text-white/40">
+                        {m.status === 2 ? 'Cancelled' : m.result === 1 ? 'UP won' : 'DOWN won'}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => handleClaim(m.marketId)}
+                      disabled={claimingMarketId === m.marketId}
+                      className="bg-emerald-500 hover:bg-emerald-600 text-black text-xs font-bold px-4 py-2 rounded-lg transition-all disabled:opacity-50"
+                    >
+                      {claimingMarketId === m.marketId ? 'Claiming...' : `Claim ${m.estimatedWinnings.toFixed(4)}`}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="space-y-2">
+            {history.length === 0 ? (
+              <div className="text-center py-12 text-white/40">
+                <p>No betting history yet</p>
+              </div>
+            ) : (
+              history.map((item) => (
+                <div 
+                  key={item.marketId} 
+                  className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-4 animate-fade-in"
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                        item.direction === 'up' ? 'bg-emerald-500/20' : 'bg-red-500/20'
+                      }`}>
+                        <svg className={`w-4 h-4 ${item.direction === 'up' ? 'text-emerald-400' : 'text-red-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                          <path d={item.direction === 'up' ? 'M5 15l7-7 7 7' : 'M19 9l-7 7-7-7'} />
+                        </svg>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">Round #{item.marketId}</p>
+                        <p className="text-[10px] text-white/40">{item.tickets} ticket{item.tickets > 1 ? 's' : ''} @ ${item.priceAtBet?.toFixed(2)}</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      {item.status === 0 ? (
+                        <span className="text-xs text-yellow-400">Active</span>
+                      ) : item.status === 2 ? (
+                        <span className="text-xs text-orange-400">Cancelled</span>
+                      ) : item.result === (item.direction === 'up' ? 1 : 2) ? (
+                        <span className="text-xs text-emerald-400">Won</span>
+                      ) : item.result === 0 ? (
+                        <span className="text-xs text-white/40">Tie</span>
+                      ) : (
+                        <span className="text-xs text-red-400">Lost</span>
+                      )}
+                      {item.winnings > 0 && (
+                        <p className={`text-sm font-bold ${item.claimed ? 'text-white/40' : 'text-emerald-400'}`}>
+                          {item.claimed ? 'Claimed' : `+${item.winnings.toFixed(4)} ETH`}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col h-full bg-black text-white overflow-hidden">
+      {/* Confetti */}
+      {showConfetti && (
+        <div className="fixed inset-0 pointer-events-none z-50">
+          {[...Array(50)].map((_, i) => (
+            <div
+              key={i}
+              className="absolute animate-confetti"
+              style={{
+                left: `${Math.random() * 100}%`,
+                top: '-10px',
+                animationDelay: `${Math.random() * 0.5}s`,
+                backgroundColor: ['#10b981', '#f59e0b', '#ef4444', '#3b82f6', '#8b5cf6'][Math.floor(Math.random() * 5)],
+                width: '8px',
+                height: '8px',
+                borderRadius: Math.random() > 0.5 ? '50%' : '0',
+              }}
+            />
+          ))}
+        </div>
+      )}
+
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <div className="absolute inset-0 opacity-[0.02]" 
           style={{
@@ -614,20 +963,56 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
       </div>
 
       <div className="relative flex flex-col h-full p-4 gap-3 overflow-y-auto">
-        <div className="flex items-center justify-center gap-2">
-          <img 
-            src="https://dd.dexscreener.com/ds-data/tokens/ethereum/0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2.png"
-            alt="ETH"
-            className="w-6 h-6 rounded-full"
-          />
-          <h1 className="text-lg font-bold tracking-tight">ETH Prediction</h1>
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <img 
+              src="https://assets.coingecko.com/coins/images/279/small/ethereum.png"
+              alt="ETH"
+              className="w-6 h-6 rounded-full"
+            />
+            <h1 className="text-lg font-bold tracking-tight">ETH Prediction</h1>
+          </div>
+          <button
+            onClick={() => { setShowHistory(true); playClick(); triggerHaptic('light'); }}
+            className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
+          >
+            <svg className="w-5 h-5 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+              <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </button>
         </div>
 
-        <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-4">
+        {/* Unclaimed Winnings Banner */}
+        {totalUnclaimed > 0 && (
+          <button
+            onClick={() => { setShowHistory(true); playClick(); triggerHaptic('medium'); }}
+            className="bg-gradient-to-r from-emerald-500/20 to-green-500/20 border border-emerald-500/30 rounded-xl p-4 animate-pulse-subtle hover:from-emerald-500/30 hover:to-green-500/30 transition-all"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center">
+                  <span className="text-xl">🎉</span>
+                </div>
+                <div className="text-left">
+                  <p className="text-sm font-semibold text-emerald-400">Claim Your Winnings!</p>
+                  <p className="text-xs text-white/50">{unclaimedMarkets.length} unclaimed round{unclaimedMarkets.length > 1 ? 's' : ''}</p>
+                </div>
+              </div>
+              <div className="text-right">
+                <p className="text-lg font-bold text-emerald-400">{totalUnclaimed.toFixed(4)}</p>
+                <p className="text-[10px] text-white/40">ETH</p>
+              </div>
+            </div>
+          </button>
+        )}
+
+        {/* Price Card */}
+        <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-4 hover:bg-white/[0.05] transition-colors">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-[10px] text-white/40 uppercase tracking-wider mb-1">ETH/USD</p>
-              <p className="text-2xl font-bold">
+              <p className="text-2xl font-bold animate-number">
                 ${currentPriceUsd.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </p>
             </div>
@@ -644,13 +1029,14 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
             <div className="mt-3 pt-3 border-t border-white/5 flex items-center justify-between text-xs text-white/40">
               <span>Start: ${startPriceUsd.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
               <span className="flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
                 Chainlink
               </span>
             </div>
           )}
         </div>
 
+        {/* Timer */}
         {hasMarket && !isResolved && !isCancelled && (
           <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-3">
             <div className="flex items-center justify-between">
@@ -659,15 +1045,16 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
               </p>
               <div className="flex items-center gap-1">
                 <TimeBlock value={timeLeft.hours} />
-                <span className="text-white/20">:</span>
+                <span className="text-white/20 animate-pulse">:</span>
                 <TimeBlock value={timeLeft.minutes} />
-                <span className="text-white/20">:</span>
+                <span className="text-white/20 animate-pulse">:</span>
                 <TimeBlock value={timeLeft.seconds} />
               </div>
             </div>
           </div>
         )}
 
+        {/* Pool */}
         {hasMarket && (
           <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-4">
             <div className="flex justify-between items-center mb-3">
@@ -680,11 +1067,11 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
 
             <div className="relative h-2 bg-white/5 rounded-full overflow-hidden mb-3">
               <div 
-                className="absolute left-0 top-0 h-full bg-gradient-to-r from-emerald-500 to-emerald-400 transition-all duration-500"
+                className="absolute left-0 top-0 h-full bg-gradient-to-r from-emerald-500 to-emerald-400 transition-all duration-700 ease-out"
                 style={{ width: `${upPercent}%` }}
               />
               <div 
-                className="absolute right-0 top-0 h-full bg-gradient-to-l from-red-500 to-red-400 transition-all duration-500"
+                className="absolute right-0 top-0 h-full bg-gradient-to-l from-red-500 to-red-400 transition-all duration-700 ease-out"
                 style={{ width: `${downPercent}%` }}
               />
             </div>
@@ -733,9 +1120,9 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
                     )}
                     {(canClaim || canRefund) && (
                       <button
-                        onClick={handleClaim}
+                        onClick={() => handleClaim()}
                         disabled={txState !== 'idle'}
-                        className="bg-gradient-to-r from-emerald-500 to-green-500 text-black text-[10px] font-bold px-3 py-1 rounded disabled:opacity-50"
+                        className="bg-gradient-to-r from-emerald-500 to-green-500 text-black text-[10px] font-bold px-3 py-1 rounded disabled:opacity-50 hover:scale-105 transition-transform"
                       >
                         {txState === 'claiming' ? '...' : canRefund ? 'Refund' : 'Claim'}
                       </button>
@@ -747,10 +1134,11 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
           </div>
         )}
 
+        {/* Betting Section */}
         {!walletAddress ? (
           <button
             onClick={connectWallet}
-            className="w-full py-4 rounded-xl bg-white/10 border border-white/20 font-semibold hover:bg-white/20 transition-colors"
+            className="w-full py-4 rounded-xl bg-white/10 border border-white/20 font-semibold hover:bg-white/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
           >
             Connect Wallet
           </button>
@@ -759,15 +1147,15 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
             <div className="grid grid-cols-2 gap-2">
               <button
                 onClick={() => handleDirectionClick('up')}
-                className={`rounded-xl p-4 transition-all ${
+                className={`rounded-xl p-4 transition-all hover:scale-[1.02] active:scale-[0.98] ${
                   selectedDirection === 'up'
                     ? 'bg-emerald-500 text-white ring-2 ring-emerald-400 ring-offset-2 ring-offset-black'
                     : 'bg-white/[0.03] border border-white/[0.08] hover:border-emerald-500/50'
                 }`}
               >
                 <div className="flex flex-col items-center gap-2">
-                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-                    selectedDirection === 'up' ? 'bg-white/20' : 'bg-emerald-500/10'
+                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all ${
+                    selectedDirection === 'up' ? 'bg-white/20 scale-110' : 'bg-emerald-500/10'
                   }`}>
                     <svg className={`w-6 h-6 ${selectedDirection === 'up' ? 'text-white' : 'text-emerald-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
                       <path d="M5 15l7-7 7 7" />
@@ -782,15 +1170,15 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
 
               <button
                 onClick={() => handleDirectionClick('down')}
-                className={`rounded-xl p-4 transition-all ${
+                className={`rounded-xl p-4 transition-all hover:scale-[1.02] active:scale-[0.98] ${
                   selectedDirection === 'down'
                     ? 'bg-red-500 text-white ring-2 ring-red-400 ring-offset-2 ring-offset-black'
                     : 'bg-white/[0.03] border border-white/[0.08] hover:border-red-500/50'
                 }`}
               >
                 <div className="flex flex-col items-center gap-2">
-                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-                    selectedDirection === 'down' ? 'bg-white/20' : 'bg-red-500/10'
+                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all ${
+                    selectedDirection === 'down' ? 'bg-white/20 scale-110' : 'bg-red-500/10'
                   }`}>
                     <svg className={`w-6 h-6 ${selectedDirection === 'down' ? 'text-white' : 'text-red-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
                       <path d="M19 9l-7 7-7-7" />
@@ -805,7 +1193,7 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
             </div>
 
             {selectedDirection && (
-              <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-4 animate-fade-in">
+              <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-4 animate-slide-up">
                 <div className="flex items-center justify-between mb-3">
                   <p className="text-[10px] text-white/40 uppercase">Tickets</p>
                   <p className="text-[10px] text-white/40">
@@ -815,8 +1203,8 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
 
                 <div className="flex items-center gap-3">
                   <button
-                    onClick={() => setTicketCount(Math.max(1, ticketCount - 1))}
-                    className="w-10 h-10 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center text-lg"
+                    onClick={() => { setTicketCount(Math.max(1, ticketCount - 1)); playClick(); triggerHaptic('light'); }}
+                    className="w-10 h-10 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center text-lg transition-all active:scale-95"
                   >
                     −
                   </button>
@@ -833,8 +1221,8 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
                   </div>
 
                   <button
-                    onClick={() => setTicketCount(ticketCount + 1)}
-                    className="w-10 h-10 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center text-lg"
+                    onClick={() => { setTicketCount(ticketCount + 1); playClick(); triggerHaptic('light'); }}
+                    className="w-10 h-10 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center text-lg transition-all active:scale-95"
                   >
                     +
                   </button>
@@ -844,9 +1232,9 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
                   {[1, 5, 10, 25].map((n) => (
                     <button
                       key={n}
-                      onClick={() => setTicketCount(n)}
-                      className={`flex-1 py-1.5 rounded-lg text-xs font-medium ${
-                        ticketCount === n ? 'bg-white/15 text-white' : 'bg-white/5 text-white/50'
+                      onClick={() => { setTicketCount(n); playClick(); triggerHaptic('light'); }}
+                      className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition-all active:scale-95 ${
+                        ticketCount === n ? 'bg-white/15 text-white' : 'bg-white/5 text-white/50 hover:bg-white/10'
                       }`}
                     >
                       {n}
@@ -867,13 +1255,21 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
               <button
                 onClick={handleBuyClick}
                 disabled={txState !== 'idle'}
-                className={`w-full py-4 rounded-xl font-bold transition-all ${
+                className={`w-full py-4 rounded-xl font-bold transition-all hover:scale-[1.02] active:scale-[0.98] ${
                   selectedDirection === 'up'
-                    ? 'bg-gradient-to-r from-emerald-500 to-green-500 text-white'
-                    : 'bg-gradient-to-r from-red-500 to-rose-500 text-white'
-                } disabled:opacity-50`}
+                    ? 'bg-gradient-to-r from-emerald-500 to-green-500 text-white shadow-lg shadow-emerald-500/20'
+                    : 'bg-gradient-to-r from-red-500 to-rose-500 text-white shadow-lg shadow-red-500/20'
+                } disabled:opacity-50 disabled:hover:scale-100`}
               >
-                {txState === 'buying' ? 'Confirming...' : 
+                {txState === 'buying' ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Confirming...
+                  </span>
+                ) : 
                  txState === 'success' ? '✓ Done!' :
                  txState === 'error' ? errorMsg || 'Failed' :
                  `Bet ${totalCostEth.toFixed(3)} ETH`}
@@ -882,12 +1278,17 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
           </div>
         )}
 
+        {/* Recent Bets */}
         {recentBets.length > 0 && (
           <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-4">
             <p className="text-[10px] text-white/40 uppercase tracking-wider mb-3">Recent Bets</p>
             <div className="space-y-2">
-              {recentBets.slice(0, 5).map((bet) => (
-                <div key={bet.id} className="flex items-center justify-between">
+              {recentBets.slice(0, 5).map((bet, i) => (
+                <div 
+                  key={bet.id} 
+                  className="flex items-center justify-between animate-fade-in"
+                  style={{ animationDelay: `${i * 0.1}s` }}
+                >
                   <div className="flex items-center gap-2">
                     <img 
                       src={bet.pfp_url || `https://api.dicebear.com/7.x/shapes/svg?seed=${bet.fid}`}
@@ -917,11 +1318,12 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
           </div>
         )}
 
+        {/* Resolved State */}
         {isResolved && (
-          <div className="flex-1 flex flex-col items-center justify-center py-6">
+          <div className="flex-1 flex flex-col items-center justify-center py-6 animate-fade-in">
             <div className={`w-16 h-16 rounded-2xl flex items-center justify-center ${
               winningDirection === 1 ? 'bg-emerald-500/20' : 'bg-red-500/20'
-            }`}>
+            } animate-bounce-subtle`}>
               {winningDirection === 1 ? (
                 <svg className="w-8 h-8 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
                   <path d="M5 15l7-7 7 7" />
@@ -941,9 +1343,10 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
           </div>
         )}
 
+        {/* Locked State */}
         {isLocked && (
-          <div className="flex-1 flex flex-col items-center justify-center py-6">
-            <div className="w-16 h-16 rounded-2xl bg-yellow-500/10 flex items-center justify-center">
+          <div className="flex-1 flex flex-col items-center justify-center py-6 animate-fade-in">
+            <div className="w-16 h-16 rounded-2xl bg-yellow-500/10 flex items-center justify-center animate-pulse">
               <span className="text-2xl">🔒</span>
             </div>
             <p className="text-white/50 text-sm mt-3">Betting Locked</p>
@@ -951,6 +1354,7 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
           </div>
         )}
 
+        {/* Footer */}
         <div className="text-center pt-2">
           <p className="text-[9px] text-white/20">
             {username ? `@${username} · ` : ''}{TICKET_PRICE_ETH} ETH/ticket · 5% fee
@@ -958,6 +1362,7 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
         </div>
       </div>
 
+      {/* Confirm Modal */}
       {showConfirmModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in">
           <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setShowConfirmModal(false)} />
@@ -980,7 +1385,7 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
 
             <label className="flex items-center gap-3 mb-4 cursor-pointer">
               <div 
-                onClick={() => setDontShowAgain(!dontShowAgain)}
+                onClick={() => { setDontShowAgain(!dontShowAgain); playClick(); }}
                 className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
                   dontShowAgain ? 'bg-white border-white' : 'border-white/30'
                 }`}
@@ -996,14 +1401,14 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
 
             <div className="grid grid-cols-2 gap-3">
               <button
-                onClick={() => setShowConfirmModal(false)}
-                className="py-3 rounded-xl bg-white/5 border border-white/10 font-semibold text-sm hover:bg-white/10 transition-colors"
+                onClick={() => { setShowConfirmModal(false); playClick(); }}
+                className="py-3 rounded-xl bg-white/5 border border-white/10 font-semibold text-sm hover:bg-white/10 transition-all active:scale-95"
               >
                 Cancel
               </button>
               <button
                 onClick={handleConfirmBuy}
-                className={`py-3 rounded-xl font-semibold text-sm transition-colors ${
+                className={`py-3 rounded-xl font-semibold text-sm transition-all active:scale-95 ${
                   selectedDirection === 'up'
                     ? 'bg-emerald-500 hover:bg-emerald-600 text-white'
                     : 'bg-red-500 hover:bg-red-600 text-white'
@@ -1025,11 +1430,42 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
           from { opacity: 0; transform: scale(0.95); }
           to { opacity: 1; transform: scale(1); }
         }
+        @keyframes slide-up {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes confetti {
+          0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+          100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+        }
+        @keyframes pulse-subtle {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.8; }
+        }
+        @keyframes bounce-subtle {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-5px); }
+        }
         .animate-fade-in {
-          animation: fade-in 0.2s ease-out;
+          animation: fade-in 0.3s ease-out forwards;
         }
         .animate-scale-in {
           animation: scale-in 0.2s ease-out;
+        }
+        .animate-slide-up {
+          animation: slide-up 0.3s ease-out;
+        }
+        .animate-confetti {
+          animation: confetti 2s ease-out forwards;
+        }
+        .animate-pulse-subtle {
+          animation: pulse-subtle 2s ease-in-out infinite;
+        }
+        .animate-bounce-subtle {
+          animation: bounce-subtle 1s ease-in-out infinite;
+        }
+        .animate-number {
+          font-variant-numeric: tabular-nums;
         }
       `}</style>
     </div>
