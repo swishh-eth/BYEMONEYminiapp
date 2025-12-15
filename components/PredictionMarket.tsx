@@ -1036,6 +1036,31 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
           )}
         </div>
 
+        {/* Resolved State - Show after price */}
+        {isResolved && (
+          <div className="flex flex-col items-center justify-center py-6 animate-fade-in bg-white/[0.03] border border-white/[0.08] rounded-xl">
+            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${
+              winningDirection === 1 ? 'bg-emerald-500/20' : 'bg-red-500/20'
+            } animate-bounce-subtle`}>
+              {winningDirection === 1 ? (
+                <svg className="w-7 h-7 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                  <path d="M5 15l7-7 7 7" />
+                </svg>
+              ) : (
+                <svg className="w-7 h-7 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                  <path d="M19 9l-7 7-7-7" />
+                </svg>
+              )}
+            </div>
+            <p className="text-white/40 text-sm mt-3">Round Complete</p>
+            <p className="text-xl font-bold">
+              ETH went <span className={winningDirection === 1 ? 'text-emerald-400' : 'text-red-400'}>
+                {winningDirection === 1 ? 'UP' : 'DOWN'}
+              </span>
+            </p>
+          </div>
+        )}
+
         {/* Timer */}
         {hasMarket && !isResolved && !isCancelled && (
           <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-3">
@@ -1144,12 +1169,9 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
           </button>
         ) : (!hasMarket || isResolved || isCancelled) ? (
           <div className="flex flex-col gap-3">
-            <div className="bg-gradient-to-r from-blue-500/10 to-purple-500/10 border border-blue-500/20 rounded-xl p-6 text-center">
-              <div className="w-14 h-14 rounded-2xl bg-blue-500/20 flex items-center justify-center mx-auto mb-3">
-                <span className="text-2xl">🚀</span>
-              </div>
-              <h3 className="text-lg font-bold mb-1">New Round Starting</h3>
-              <p className="text-sm text-white/50 mb-4">Be the first to bet and start the next 24h prediction round!</p>
+            <div className="bg-white rounded-xl p-5 text-center">
+              <h3 className="text-lg font-bold text-black mb-1">New Round Starting</h3>
+              <p className="text-sm text-black/60 mb-4">Be the first to bet and start the next 24h prediction round!</p>
               
               <div className="grid grid-cols-2 gap-2">
                 <button
@@ -1436,31 +1458,6 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
                 </div>
               ))}
             </div>
-          </div>
-        )}
-
-        {/* Resolved State */}
-        {isResolved && (
-          <div className="flex-1 flex flex-col items-center justify-center py-6 animate-fade-in">
-            <div className={`w-16 h-16 rounded-2xl flex items-center justify-center ${
-              winningDirection === 1 ? 'bg-emerald-500/20' : 'bg-red-500/20'
-            } animate-bounce-subtle`}>
-              {winningDirection === 1 ? (
-                <svg className="w-8 h-8 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                  <path d="M5 15l7-7 7 7" />
-                </svg>
-              ) : (
-                <svg className="w-8 h-8 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                  <path d="M19 9l-7 7-7-7" />
-                </svg>
-              )}
-            </div>
-            <p className="text-white/40 text-sm mt-3">Round Complete</p>
-            <p className="text-xl font-bold">
-              ETH went <span className={winningDirection === 1 ? 'text-emerald-400' : 'text-red-400'}>
-                {winningDirection === 1 ? 'UP' : 'DOWN'}
-              </span>
-            </p>
           </div>
         )}
 
