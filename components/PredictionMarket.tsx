@@ -95,6 +95,7 @@ interface RecentBet {
   timestamp: string;
   wallet_address: string;
   market_id: number;
+  price_at_bet: number | null;
 }
 
 export default function PredictionMarket({ userFid, username }: PredictionMarketProps) {
@@ -201,7 +202,9 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
     if (!marketData?.id) return;
     
     try {
-      const { data } = await supabase
+      console.log('Fetching bets for market:', Number(marketData.id));
+      
+      const { data, error } = await supabase
         .from('prediction_bets')
         .select(`
           id,
@@ -211,6 +214,7 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
           timestamp,
           wallet_address,
           market_id,
+          price_at_bet,
           prediction_users (
             username,
             pfp_url
@@ -219,6 +223,13 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
         .eq('market_id', Number(marketData.id))
         .order('timestamp', { ascending: false })
         .limit(10);
+
+      if (error) {
+        console.error('Supabase fetch error:', error);
+        return;
+      }
+
+      console.log('Fetched bets:', data);
 
       if (data) {
         const bets: RecentBet[] = data.map((bet: any) => ({
@@ -231,6 +242,7 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
           timestamp: bet.timestamp,
           wallet_address: bet.wallet_address,
           market_id: bet.market_id,
+          price_at_bet: bet.price_at_bet,
         }));
         setRecentBets(bets);
       }
@@ -418,15 +430,26 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
       await publicClient.waitForTransactionReceipt({ hash: txHash });
 
       if (userFid && marketData) {
-        await supabase.from('prediction_bets').insert({
+        const betData = {
           fid: userFid,
           wallet_address: walletAddress,
           market_id: Number(marketData.id),
           direction: selectedDirection,
           tickets: ticketCount,
           tx_hash: txHash,
+          price_at_bet: currentPriceUsd,
           timestamp: new Date().toISOString(),
-        });
+        };
+        console.log('Inserting bet:', betData);
+        
+        const { error: betError } = await supabase.from('prediction_bets').insert(betData);
+        if (betError) {
+          console.error('Failed to save bet to Supabase:', betError);
+        } else {
+          console.log('Bet saved to Supabase');
+        }
+      } else {
+        console.log('Missing userFid or marketData:', { userFid, marketId: marketData?.id });
       }
       
       setTxState('success');
@@ -515,10 +538,17 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
   const canRefund = isCancelled && !hasClaimed && userTotalTickets > 0;
 
   const totalCostEth = ticketCount * TICKET_PRICE_ETH;
+  
+  // Calculate REAL potential winnings (pool changes when you bet)
+  const newUpPool = selectedDirection === 'up' ? upPool + totalCostEth : upPool;
+  const newDownPool = selectedDirection === 'down' ? downPool + totalCostEth : downPool;
+  const newTotalPool = newUpPool + newDownPool;
+  const poolAfterFee = newTotalPool * (1 - houseFee);
+  
   const potentialWinnings = selectedDirection === 'up' 
-    ? totalCostEth * upMultiplier 
+    ? newUpPool > 0 ? (poolAfterFee * totalCostEth) / newUpPool : 0
     : selectedDirection === 'down' 
-    ? totalCostEth * downMultiplier 
+    ? newDownPool > 0 ? (poolAfterFee * totalCostEth) / newDownPool : 0
     : 0;
 
   const startPriceUsd = marketData ? Number(marketData.startPrice) / 1e8 : 0;
@@ -819,10 +849,15 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
                       alt={bet.username}
                       className="w-6 h-6 rounded-full bg-white/10"
                     />
-                    <span className="text-xs text-white/70">@{bet.username}</span>
+                    <div className="flex flex-col">
+                      <span className="text-xs text-white/70">@{bet.username}</span>
+                      {bet.price_at_bet && (
+                        <span className="text-[9px] text-white/30">${bet.price_at_bet.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                      )}
+                    </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-xs text-white/50">{bet.tickets} ticket{bet.tickets > 1 ? 's' : ''}</span>
+                    <span className="text-xs text-white/50">{bet.tickets}x</span>
                     <div className={`w-5 h-5 rounded flex items-center justify-center ${
                       bet.direction === 'up' ? 'bg-emerald-500/20' : 'bg-red-500/20'
                     }`}>
