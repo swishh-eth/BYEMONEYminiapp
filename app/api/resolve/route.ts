@@ -152,6 +152,8 @@ export async function GET(request: Request) {
 
     // Resolve the market
     const hash = await walletClient.writeContract({
+      chain: base,
+      account,
       address: CONTRACT_ADDRESS,
       abi: CONTRACT_ABI,
       functionName: 'resolveMarket',
