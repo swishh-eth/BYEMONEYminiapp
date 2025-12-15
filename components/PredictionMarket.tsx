@@ -1169,43 +1169,51 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
           </button>
         ) : (!hasMarket || isResolved || isCancelled) ? (
           <div className="flex flex-col gap-3">
-            <div className="bg-white rounded-xl p-5 text-center">
-              <h3 className="text-lg font-bold text-black mb-1">New Round Starting</h3>
-              <p className="text-sm text-black/60 mb-4">Be the first to bet and start the next 24h prediction round!</p>
-              
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  onClick={() => handleDirectionClick('up')}
-                  className={`rounded-xl p-4 transition-all hover:scale-[1.02] active:scale-[0.98] ${
-                    selectedDirection === 'up'
-                      ? 'bg-emerald-500 text-white ring-2 ring-emerald-400 ring-offset-2 ring-offset-black'
-                      : 'bg-white/[0.03] border border-white/[0.08] hover:border-emerald-500/50'
-                  }`}
-                >
-                  <div className="flex flex-col items-center gap-2">
+            <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-4 text-center">
+              <h3 className="text-lg font-bold text-white mb-1">New Round Starting</h3>
+              <p className="text-sm text-white/50 mb-4">Be the first to bet and start the next 24h prediction round!</p>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                onClick={() => handleDirectionClick('up')}
+                className={`rounded-xl p-4 transition-all hover:scale-[1.02] active:scale-[0.98] ${
+                  selectedDirection === 'up'
+                    ? 'bg-emerald-500 text-white ring-2 ring-emerald-400 ring-offset-2 ring-offset-black'
+                    : 'bg-white/[0.03] border border-white/[0.08] hover:border-emerald-500/50'
+                }`}
+              >
+                <div className="flex flex-col items-center gap-2">
+                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all ${
+                    selectedDirection === 'up' ? 'bg-white/20 scale-110' : 'bg-emerald-500/10'
+                  }`}>
                     <svg className={`w-6 h-6 ${selectedDirection === 'up' ? 'text-white' : 'text-emerald-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
                       <path d="M5 15l7-7 7 7" />
                     </svg>
-                    <span className="font-bold text-sm">PUMP</span>
                   </div>
-                </button>
+                  <span className="font-bold text-sm">PUMP</span>
+                </div>
+              </button>
 
-                <button
-                  onClick={() => handleDirectionClick('down')}
-                  className={`rounded-xl p-4 transition-all hover:scale-[1.02] active:scale-[0.98] ${
-                    selectedDirection === 'down'
-                      ? 'bg-red-500 text-white ring-2 ring-red-400 ring-offset-2 ring-offset-black'
-                      : 'bg-white/[0.03] border border-white/[0.08] hover:border-red-500/50'
-                  }`}
-                >
-                  <div className="flex flex-col items-center gap-2">
+              <button
+                onClick={() => handleDirectionClick('down')}
+                className={`rounded-xl p-4 transition-all hover:scale-[1.02] active:scale-[0.98] ${
+                  selectedDirection === 'down'
+                    ? 'bg-red-500 text-white ring-2 ring-red-400 ring-offset-2 ring-offset-black'
+                    : 'bg-white/[0.03] border border-white/[0.08] hover:border-red-500/50'
+                }`}
+              >
+                <div className="flex flex-col items-center gap-2">
+                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all ${
+                    selectedDirection === 'down' ? 'bg-white/20 scale-110' : 'bg-red-500/10'
+                  }`}>
                     <svg className={`w-6 h-6 ${selectedDirection === 'down' ? 'text-white' : 'text-red-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
                       <path d="M19 9l-7 7-7-7" />
                     </svg>
-                    <span className="font-bold text-sm">DUMP</span>
                   </div>
-                </button>
-              </div>
+                  <span className="font-bold text-sm">DUMP</span>
+                </div>
+              </button>
             </div>
 
             {selectedDirection && (
