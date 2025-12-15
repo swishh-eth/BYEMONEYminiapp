@@ -77,7 +77,7 @@ const CONTRACT_ABI = [
 
 const publicClient = createPublicClient({
   chain: base,
-  transport: http('https://mainnet.base.org'),
+  transport: http('https://base-mainnet.g.alchemy.com/v2/jKHNMnfb18wYA1HfaHxo5'),
 });
 
 interface PredictionMarketProps {
@@ -323,7 +323,7 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
 
   useEffect(() => {
     fetchMarketData();
-    const interval = setInterval(fetchMarketData, 15000);
+    const interval = setInterval(fetchMarketData, 30000);
     return () => clearInterval(interval);
   }, [fetchMarketData]);
 
@@ -333,13 +333,13 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
 
   useEffect(() => {
     fetchBalance();
-    const interval = setInterval(fetchBalance, 30000);
+    const interval = setInterval(fetchBalance, 60000);
     return () => clearInterval(interval);
   }, [fetchBalance]);
 
   useEffect(() => {
     fetchRecentBets();
-    const interval = setInterval(fetchRecentBets, 20000);
+    const interval = setInterval(fetchRecentBets, 45000);
     return () => clearInterval(interval);
   }, [fetchRecentBets]);
 
