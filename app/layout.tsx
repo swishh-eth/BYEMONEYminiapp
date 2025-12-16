@@ -3,20 +3,20 @@ import './globals.css';
 
 export const metadata: Metadata = {
   title: '$BYEMONEY - Price Prediction Game',
-  description: 'Predict crypto prices and burn your favorite coins with $BYEMONEY! Say goodbye to your money.',
+  description: 'Predict crypto prices and burn your favorite coins with BYEMONEY. Say goodbye to your money.',
   
   // OpenGraph
   openGraph: {
     title: '$BYEMONEY - Price Prediction Game',
-    description: 'Predict crypto prices and burn your favorite coins with $BYEMONEY! Say goodbye to your money!',
+    description: 'Predict crypto prices and burn your favorite coins with BYEMONEY. Say goodbye to your money.',
     url: 'https://byemoney.vercel.app',
-    siteName: '$BYEMONEY',
+    siteName: 'BYEMONEY',
     images: [
       {
         url: 'https://byemoney.vercel.app/og-image.png',
         width: 1200,
         height: 630,
-        alt: '$BYEMONEY PricePrediction Game',
+        alt: 'BYEMONEY Price Prediction Game',
       },
     ],
     locale: 'en_US',
@@ -27,7 +27,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: '$BYEMONEY - Price Prediction Game',
-    description: 'Predict crypto prices and burn your favorite coins with $BYEMONEY! Say goodbye to your money.',
+    description: 'Predict crypto prices and burn your favorite coins with BYEMONEY. Say goodbye to your money.',
     images: ['https://byemoney.vercel.app/og-image.png'],
   },
   
@@ -35,9 +35,15 @@ export const metadata: Metadata = {
   other: {
     'fc:frame': 'vNext',
     'fc:frame:image': 'https://byemoney.vercel.app/og-image.png',
-    'fc:frame:button:1': 'Say Goodbye to Your Money!',
+    'fc:frame:image:aspect_ratio': '1.91:1',
+    'fc:frame:button:1': 'Launch App',
     'fc:frame:button:1:action': 'launch_frame',
     'fc:frame:button:1:target': 'https://byemoney.vercel.app',
+    'of:version': 'vNext',
+    'of:image': 'https://byemoney.vercel.app/og-image.png',
+    'of:button:1': 'Launch App',
+    'of:button:1:action': 'launch_frame',
+    'of:button:1:target': 'https://byemoney.vercel.app',
   },
   
   // Icons
@@ -54,14 +60,6 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <head>
-        {/* Farcaster Mini App Meta Tags */}
-        <meta name="fc:frame" content="vNext" />
-        <meta name="fc:frame:image" content="https://byemoney.vercel.app/og-image.png" />
-        <meta name="fc:frame:button:1" content="Say Goodbye to Your Money!" />
-        <meta name="fc:frame:button:1:action" content="launch_frame" />
-        <meta name="fc:frame:button:1:target" content="https://byemoney.vercel.app" />
-      </head>
       <body className="bg-black text-white min-h-screen">
         {children}
       </body>
