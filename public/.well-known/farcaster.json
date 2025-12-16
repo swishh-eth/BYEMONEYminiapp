@@ -17,6 +17,20 @@
     "requiredCapabilities": [
       "actions.signIn",
       "wallet.getEthereumProvider"
-    ]
+    ],
+    "webhookUrl": "https://byemoney.vercel.app/api/webhook",
+    "subtitle": "Price Prediction Game",
+    "description": "Predict crypto prices and burn your favorite coins with $BYEMONEY! Say goodbye to your money!",
+    "screenshotUrls": [
+      "https://byemoney.vercel.app/screenshot1.png",
+      "https://byemoney.vercel.app/screenshot2.png"
+    ],
+    "primaryCategory": "games",
+    "tags": ["crypto", "prediction", "betting", "defi", "base"],
+    "heroImageUrl": "https://byemoney.vercel.app/og-image.png",
+    "tagline": "Predict. Bet. Burn. Say Goodbye to Your Money! 💸",
+    "ogTitle": "$BYEMONEY - Price Prediction Game",
+    "ogDescription": "Predict crypto prices and burn your favorite coins with $BYEMONEY! Say goodbye to your money!",
+    "ogImageUrl": "https://byemoney.vercel.app/og-image.png"
   }
 }
