@@ -1277,10 +1277,10 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
                   </svg>
                 </div>
                 <span className="font-semibold text-white">{upPercent.toFixed(0)}%</span>
-                <span className="text-white/30 text-[10px]">{upMultiplier.toFixed(2)}x</span>
+                <span className="text-white/30 text-[10px]">{displayUpMultiplier.toFixed(2)}x</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-white/30 text-[10px]">{downMultiplier.toFixed(2)}x</span>
+                <span className="text-white/30 text-[10px]">{displayDownMultiplier.toFixed(2)}x</span>
                 <span className="font-semibold text-red-400">{downPercent.toFixed(0)}%</span>
                 <div className="w-5 h-5 rounded bg-red-500/20 flex items-center justify-center">
                   <svg className="w-3 h-3 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}>
