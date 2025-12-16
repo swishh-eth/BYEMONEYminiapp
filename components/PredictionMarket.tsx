@@ -673,10 +673,11 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
     if (selectedDirection === direction) {
       // Same button clicked - close with animation
       setTicketSectionClosing(true);
+      // Wait for animation to complete (300ms) before removing
       setTimeout(() => {
         setSelectedDirection(null);
         setTicketSectionClosing(false);
-      }, 250);
+      }, 300);
     } else if (selectedDirection && selectedDirection !== direction) {
       // Switching direction - just swap, no close animation needed
       setSelectedDirection(direction);
@@ -1912,20 +1913,18 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
           animation: slide-up 0.4s cubic-bezier(0.16, 1, 0.3, 1);
         }
         .animate-slide-in {
-          animation: slide-in 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-          overflow: hidden;
+          animation: slide-in 0.3s ease-out forwards;
         }
         @keyframes slide-in {
-          from { opacity: 0; transform: translateY(-15px) scaleY(0.95); }
-          to { opacity: 1; transform: translateY(0) scaleY(1); }
+          from { opacity: 0; transform: translateY(-20px); }
+          to { opacity: 1; transform: translateY(0); }
         }
         .animate-slide-out {
-          animation: slide-out 0.25s ease-out forwards;
-          overflow: hidden;
+          animation: slide-out 0.25s ease-in forwards;
         }
         @keyframes slide-out {
-          from { opacity: 1; transform: translateY(0) scaleY(1); }
-          to { opacity: 0; transform: translateY(-15px) scaleY(0.95); }
+          from { opacity: 1; transform: translateY(0); }
+          to { opacity: 0; transform: translateY(-20px); }
         }
         .animate-slide-down {
           animation: slide-down 0.3s ease-in forwards;
