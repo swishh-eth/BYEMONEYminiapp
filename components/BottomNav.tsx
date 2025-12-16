@@ -44,8 +44,11 @@ export default function BottomNav({ activeIndex, onNavigate }: BottomNavProps) {
   };
 
   return (
-    <nav className="bg-black flex-shrink-0 border-t border-white/10">
-      <div className="flex justify-around items-center py-3 px-4">
+    <nav className="flex-shrink-0 relative">
+      {/* Fade gradient overlay */}
+      <div className="absolute inset-x-0 -top-8 h-8 bg-gradient-to-t from-black to-transparent pointer-events-none" />
+      
+      <div className="bg-black flex justify-around items-center py-3 px-4">
         {PAGES.map((page, index) => {
           const isActive = activeIndex === index;
           return (
