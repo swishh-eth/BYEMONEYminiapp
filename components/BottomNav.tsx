@@ -21,9 +21,10 @@ const Icons: Record<string, JSX.Element> = {
     </svg>
   ),
   info: (
-    <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+    <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
       <circle cx="12" cy="12" r="10" />
-      <path d="M12 16v-4M12 8h.01" />
+      <line x1="12" y1="16" x2="12" y2="12" />
+      <circle cx="12" cy="8" r="0.5" fill="currentColor" />
     </svg>
   ),
 };
