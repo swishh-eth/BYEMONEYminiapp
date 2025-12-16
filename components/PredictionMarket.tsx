@@ -310,17 +310,22 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
     if (!walletAddress || !supabase) return;
     
     try {
-      // Get user's bet history from Supabase
+      // Get user's bet history from Supabase - limit to last 10 markets
       const { data: bets } = await supabase
         .from('prediction_bets')
         .select('market_id, direction, tickets, price_at_bet, timestamp')
         .eq('wallet_address', walletAddress.toLowerCase())
-        .order('timestamp', { ascending: false });
+        .order('timestamp', { ascending: false })
+        .limit(50);
 
-      if (!bets || bets.length === 0) return;
+      if (!bets || bets.length === 0) {
+        setHistory([]);
+        setUnclaimedMarkets([]);
+        return;
+      }
 
-      // Get unique market IDs
-      const marketIds = [...new Set(bets.map(b => b.market_id))];
+      // Get unique market IDs - limit to last 5 to avoid rate limits
+      const marketIds = [...new Set(bets.map(b => b.market_id))].slice(0, 5);
       
       const unclaimed: UnclaimedMarket[] = [];
       const historyItems: HistoryItem[] = [];
@@ -528,10 +533,15 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
         result: market[8],
         totalTickets: market[9],
       });
-      setCurrentPrice(price);
+      
+      // Only update price if we got a valid value
+      if (price && price > 0n) {
+        setCurrentPrice(price);
+      }
       setIsBettingOpen(betting);
     } catch (error) {
       console.error('Failed to fetch market:', error);
+      // Don't reset state on error - keep existing values
     }
   }, []);
 
