@@ -1,6 +1,25 @@
 import type { Metadata } from 'next';
 import './globals.css';
 
+const appDomain = "https://byemoney.vercel.app";
+const frameImageUrl = `${appDomain}/frame-image.png`;
+const splashImageUrl = `${appDomain}/splash.png`;
+
+const miniAppEmbed = {
+  version: "1",
+  imageUrl: frameImageUrl,
+  button: {
+    title: "Say Goodbye to Your Money",
+    action: {
+      type: "launch_miniapp" as const,
+      name: "$BYEMONEY",
+      url: appDomain,
+      splashImageUrl,
+      splashBackgroundColor: "#000000",
+    },
+  },
+};
+
 export const metadata: Metadata = {
   title: '$BYEMONEY - Price Prediction Game',
   description: 'Predict crypto prices and burn your favorite coins with BYEMONEY. Say goodbye to your money.',
@@ -8,23 +27,23 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'BYEMONEY - Price Prediction Game',
     description: 'Predict crypto prices and burn your favorite coins with BYEMONEY. Say goodbye to your money.',
-    url: 'https://byemoney.vercel.app',
-    siteName: 'BYEMONEY',
+    url: appDomain,
     images: [
       {
-        url: 'https://byemoney.vercel.app/frame-image.png',
-        width: 1200,
-        height: 630,
+        url: frameImageUrl,
       },
     ],
-    type: 'website',
   },
   
   twitter: {
     card: 'summary_large_image',
     title: 'BYEMONEY - Price Prediction Game',
     description: 'Predict crypto prices and burn your favorite coins with BYEMONEY.',
-    images: ['https://byemoney.vercel.app/frame-image.png'],
+    images: [frameImageUrl],
+  },
+  
+  other: {
+    'fc:miniapp': JSON.stringify(miniAppEmbed),
   },
   
   icons: {
@@ -40,15 +59,6 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <head>
-        {/* Farcaster Frame - using property attribute */}
-        <meta property="fc:frame" content="vNext" />
-        <meta property="fc:frame:image" content="https://byemoney.vercel.app/frame-image.png" />
-        <meta property="fc:frame:image:aspect_ratio" content="1.91:1" />
-        <meta property="fc:frame:button:1" content="Launch App" />
-        <meta property="fc:frame:button:1:action" content="launch_frame" />
-        <meta property="fc:frame:button:1:target" content="https://byemoney.vercel.app" />
-      </head>
       <body className="bg-black text-white min-h-screen">
         {children}
       </body>
