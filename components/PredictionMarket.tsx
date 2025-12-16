@@ -353,52 +353,77 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
           const downPool = Number(formatEther(marketInfo[6]));
           const totalPool = upPool + downPool;
 
-          // Find bet info
+          // Find bets for this market
           const userBets = bets.filter(b => b.market_id === marketId);
-          const betDirection = userBets[0]?.direction as 'up' | 'down';
-          const totalTickets = userBets.reduce((sum, b) => sum + b.tickets, 0);
-          const priceAtBet = userBets[0]?.price_at_bet || 0;
+          
+          // Group by direction
+          const upBets = userBets.filter(b => b.direction === 'up');
+          const downBets = userBets.filter(b => b.direction === 'down');
 
-          // Calculate winnings
-          let winnings = 0;
-          if (status === 1) { // Resolved
-            if (result === 0) { // Tie - refund
-              winnings = totalTickets * TICKET_PRICE_ETH;
-            } else if (result === 1 && upTickets > 0) { // UP won
-              const poolAfterFee = totalPool * 0.95;
-              winnings = (poolAfterFee * upTickets * TICKET_PRICE_ETH) / upPool;
-            } else if (result === 2 && downTickets > 0) { // DOWN won
-              const poolAfterFee = totalPool * 0.95;
-              winnings = (poolAfterFee * downTickets * TICKET_PRICE_ETH) / downPool;
+          // Calculate winnings per direction
+          const calculateWinnings = (tickets: number, direction: 'up' | 'down') => {
+            if (status === 1) { // Resolved
+              if (result === 0) { // Tie - refund
+                return tickets * TICKET_PRICE_ETH;
+              } else if (result === 1 && direction === 'up') { // UP won
+                const poolAfterFee = totalPool * 0.95;
+                return (poolAfterFee * tickets * TICKET_PRICE_ETH) / upPool;
+              } else if (result === 2 && direction === 'down') { // DOWN won
+                const poolAfterFee = totalPool * 0.95;
+                return (poolAfterFee * tickets * TICKET_PRICE_ETH) / downPool;
+              }
+            } else if (status === 2) { // Cancelled - refund
+              return tickets * TICKET_PRICE_ETH;
             }
-          } else if (status === 2) { // Cancelled - refund
-            winnings = totalTickets * TICKET_PRICE_ETH;
-          }
+            return 0;
+          };
 
-          // Add to history
-          if (totalTickets > 0) {
+          // Add UP bets to history
+          if (upBets.length > 0) {
+            const totalUpTickets = upBets.reduce((sum, b) => sum + b.tickets, 0);
+            const upWinnings = calculateWinnings(totalUpTickets, 'up');
             historyItems.push({
               marketId,
-              direction: betDirection,
-              tickets: totalTickets,
+              direction: 'up',
+              tickets: totalUpTickets,
               result,
               status,
               claimed,
-              winnings,
-              timestamp: userBets[0]?.timestamp || '',
-              priceAtBet,
+              winnings: upWinnings,
+              timestamp: upBets[0]?.timestamp || '',
+              priceAtBet: upBets[0]?.price_at_bet || 0,
             });
           }
 
+          // Add DOWN bets to history
+          if (downBets.length > 0) {
+            const totalDownTickets = downBets.reduce((sum, b) => sum + b.tickets, 0);
+            const downWinnings = calculateWinnings(totalDownTickets, 'down');
+            historyItems.push({
+              marketId,
+              direction: 'down',
+              tickets: totalDownTickets,
+              result,
+              status,
+              claimed,
+              winnings: downWinnings,
+              timestamp: downBets[0]?.timestamp || '',
+              priceAtBet: downBets[0]?.price_at_bet || 0,
+            });
+          }
+
+          // Calculate total winnings for unclaimed check
+          const totalWinnings = calculateWinnings(upTickets, 'up') + calculateWinnings(downTickets, 'down');
+
           // Check if unclaimed and has winnings
-          if (!claimed && winnings > 0 && status !== 0) {
+          if (!claimed && totalWinnings > 0 && status !== 0) {
             unclaimed.push({
               marketId,
               upTickets,
               downTickets,
               result,
               status,
-              estimatedWinnings: winnings,
+              estimatedWinnings: totalWinnings,
               upPool,
               downPool,
             });
@@ -407,6 +432,9 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
           console.log('Error fetching market', marketId, e);
         }
       }
+
+      // Sort by timestamp descending
+      historyItems.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 
       setUnclaimedMarkets(unclaimed);
       setHistory(historyItems);
@@ -909,41 +937,53 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
                 <p>No betting history yet</p>
               </div>
             ) : (
-              history.map((item) => (
+              history.map((item, index) => (
                 <div 
-                  key={item.marketId} 
+                  key={`${item.marketId}-${item.direction}-${index}`} 
                   className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-4 animate-fade-in"
                 >
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
                         item.direction === 'up' ? 'bg-white/20' : 'bg-red-500/20'
                       }`}>
-                        <svg className={`w-4 h-4 ${item.direction === 'up' ? 'text-white' : 'text-red-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                        <svg className={`w-5 h-5 ${item.direction === 'up' ? 'text-white' : 'text-red-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
                           <path d={item.direction === 'up' ? 'M5 15l7-7 7 7' : 'M19 9l-7 7-7-7'} />
                         </svg>
                       </div>
                       <div>
-                        <p className="text-sm font-medium">Round #{item.marketId}</p>
-                        <p className="text-[10px] text-white/40">{item.tickets} ticket{item.tickets > 1 ? 's' : ''} @ ${item.priceAtBet?.toFixed(2)}</p>
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm font-semibold">Round #{item.marketId}</p>
+                          <span className={`text-[10px] px-1.5 py-0.5 rounded ${
+                            item.direction === 'up' ? 'bg-white/10 text-white' : 'bg-red-500/20 text-red-400'
+                          }`}>
+                            {item.direction === 'up' ? 'PUMP' : 'DUMP'}
+                          </span>
+                        </div>
+                        <p className="text-[10px] text-white/40">
+                          {item.tickets} ticket{item.tickets > 1 ? 's' : ''} @ ${item.priceAtBet?.toFixed(2)}
+                        </p>
                       </div>
                     </div>
                     <div className="text-right">
                       {item.status === 0 ? (
-                        <span className="text-xs text-yellow-400">Active</span>
+                        <span className="text-xs text-yellow-400 font-medium">Active</span>
                       ) : item.status === 2 ? (
-                        <span className="text-xs text-orange-400">Cancelled</span>
+                        <span className="text-xs text-orange-400 font-medium">Cancelled</span>
                       ) : item.result === (item.direction === 'up' ? 1 : 2) ? (
-                        <span className="text-xs text-white">Won</span>
+                        <span className="text-xs text-white font-medium">Won ✓</span>
                       ) : item.result === 0 ? (
-                        <span className="text-xs text-white/40">Tie</span>
+                        <span className="text-xs text-white/40 font-medium">Tie</span>
                       ) : (
-                        <span className="text-xs text-red-400">Lost</span>
+                        <span className="text-xs text-red-400 font-medium">Lost</span>
                       )}
-                      {item.winnings > 0 && (
-                        <p className={`text-sm font-bold ${item.claimed ? 'text-white/40' : 'text-white'}`}>
-                          {item.claimed ? 'Claimed' : `+${item.winnings.toFixed(4)} ETH`}
+                      {item.winnings > 0 && !item.claimed && (
+                        <p className="text-sm font-bold text-white">
+                          +{item.winnings.toFixed(4)} ETH
                         </p>
+                      )}
+                      {item.claimed && (
+                        <p className="text-xs text-white/30">Claimed</p>
                       )}
                     </div>
                   </div>
@@ -993,29 +1033,29 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
         <div className="flex items-center justify-between">
           <button 
             onClick={() => { setShowCoinSelector(true); playClick(); triggerHaptic('light'); }}
-            className="flex items-center gap-2 group"
+            className="flex items-center gap-1 group w-10"
           >
             <div className="relative">
               <img 
                 src={AVAILABLE_COINS[selectedCoinIndex].icon}
                 alt={AVAILABLE_COINS[selectedCoinIndex].symbol}
-                className="w-7 h-7 rounded-full ring-2 ring-white/20 group-hover:ring-white/40 transition-all"
+                className="w-8 h-8 rounded-full ring-2 ring-white/20 group-hover:ring-white/40 transition-all"
               />
-              <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-black rounded-full flex items-center justify-center">
+              <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-black rounded-full flex items-center justify-center border border-white/20">
                 <svg className="w-2 h-2 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}>
                   <path d="M19 9l-7 7-7-7" />
                 </svg>
               </div>
             </div>
-            <div className="flex flex-col items-start">
-              <span className="text-lg font-bold tracking-tight group-hover:text-white/80 transition-colors">
-                {AVAILABLE_COINS[selectedCoinIndex].symbol} Prediction
-              </span>
-            </div>
           </button>
+          
+          <h1 className="text-lg font-bold tracking-tight">
+            {AVAILABLE_COINS[selectedCoinIndex].symbol} Prediction
+          </h1>
+          
           <button
             onClick={() => { setShowHistory(true); playClick(); triggerHaptic('light'); }}
-            className="p-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-all hover:scale-105 active:scale-95"
+            className="w-10 h-10 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center transition-all hover:scale-105 active:scale-95"
           >
             <svg className="w-5 h-5 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
               <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -1254,13 +1294,9 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
                 }`}
               >
                 <div className="flex flex-col items-center gap-2">
-                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all ${
-                    selectedDirection === 'up' ? 'bg-white/20 scale-110' : 'bg-white/10'
-                  }`}>
-                    <svg className={`w-6 h-6 ${selectedDirection === 'up' ? 'text-black' : 'text-white'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
-                      <path d="M5 15l7-7 7 7" />
-                    </svg>
-                  </div>
+                  <svg className={`w-8 h-8 ${selectedDirection === 'up' ? 'text-black' : 'text-white'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                    <path d="M5 15l7-7 7 7" />
+                  </svg>
                   <span className="font-bold text-sm">PUMP</span>
                 </div>
               </button>
@@ -1274,13 +1310,9 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
                 }`}
               >
                 <div className="flex flex-col items-center gap-2">
-                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all ${
-                    selectedDirection === 'down' ? 'bg-white/20 scale-110' : 'bg-red-500/10'
-                  }`}>
-                    <svg className={`w-6 h-6 ${selectedDirection === 'down' ? 'text-white' : 'text-red-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
-                      <path d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </div>
+                  <svg className={`w-8 h-8 ${selectedDirection === 'down' ? 'text-white' : 'text-red-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                    <path d="M19 9l-7 7-7-7" />
+                  </svg>
                   <span className="font-bold text-sm">DUMP</span>
                 </div>
               </button>
@@ -1375,15 +1407,11 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
                 }`}
               >
                 <div className="flex flex-col items-center gap-2">
-                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all ${
-                    selectedDirection === 'up' ? 'bg-white/20 scale-110' : 'bg-white/10'
-                  }`}>
-                    <svg className={`w-6 h-6 ${selectedDirection === 'up' ? 'text-black' : 'text-white'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
-                      <path d="M5 15l7-7 7 7" />
-                    </svg>
-                  </div>
+                  <svg className={`w-8 h-8 ${selectedDirection === 'up' ? 'text-black' : 'text-white'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                    <path d="M5 15l7-7 7 7" />
+                  </svg>
                   <span className="font-bold text-sm">PUMP</span>
-                  <span className={`text-[10px] ${selectedDirection === 'up' ? 'text-white/70' : 'text-white/40'}`}>
+                  <span className={`text-[10px] ${selectedDirection === 'up' ? 'text-black/60' : 'text-white/40'}`}>
                     {displayUpMultiplier.toFixed(2)}x
                   </span>
                 </div>
@@ -1398,13 +1426,9 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
                 }`}
               >
                 <div className="flex flex-col items-center gap-2">
-                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all ${
-                    selectedDirection === 'down' ? 'bg-white/20 scale-110' : 'bg-red-500/10'
-                  }`}>
-                    <svg className={`w-6 h-6 ${selectedDirection === 'down' ? 'text-white' : 'text-red-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
-                      <path d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </div>
+                  <svg className={`w-8 h-8 ${selectedDirection === 'down' ? 'text-white' : 'text-red-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                    <path d="M19 9l-7 7-7-7" />
+                  </svg>
                   <span className="font-bold text-sm">DUMP</span>
                   <span className={`text-[10px] ${selectedDirection === 'down' ? 'text-white/70' : 'text-white/40'}`}>
                     {displayDownMultiplier.toFixed(2)}x
