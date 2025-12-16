@@ -174,8 +174,8 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
   const [showCoinSelector, setShowCoinSelector] = useState(false);
   const [coinSelectorClosing, setCoinSelectorClosing] = useState(false);
   const [selectedCoinIndex, setSelectedCoinIndex] = useState(0);
-  const [isInitialLoading, setIsInitialLoading] = useState(true);
-  const [showContent, setShowContent] = useState(false);
+  const [isInitialLoading, setIsInitialLoading] = useState(false);
+  const [showContent, setShowContent] = useState(true);
   const [showInfo, setShowInfo] = useState(false);
   const [ticketSectionClosing, setTicketSectionClosing] = useState(false);
   
@@ -1052,20 +1052,8 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
     );
   }
 
-  // Initial loading screen
-  if (isInitialLoading) {
-    return (
-      <div className="flex flex-col h-full bg-black text-white items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-10 h-10 border-2 border-red-500/30 border-t-red-500 rounded-full animate-spin" />
-          <p className="text-white/50 text-sm">Loading $BYEMONEY markets...</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className={`flex flex-col h-full bg-black text-white overflow-hidden transition-opacity duration-500 ${showContent ? 'opacity-100' : 'opacity-0'}`}>
+    <div className="flex flex-col h-full bg-black text-white overflow-hidden">
       {/* Confetti */}
       {showConfetti && (
         <div className="fixed inset-0 pointer-events-none z-50">
@@ -1142,15 +1130,17 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
         {totalUnclaimed > 0 && (
           <button
             onClick={() => { setShowHistory(true); playClick(); triggerHaptic('medium'); }}
-            className="bg-gradient-to-r from-white/20 to-white/20 border border-white/30 rounded-xl p-4 animate-pulse-subtle hover:from-white/30 hover:to-white/30 transition-all"
+            className="bg-gradient-to-r from-white/10 to-white/5 border border-white/20 rounded-xl p-4 hover:from-white/15 hover:to-white/10 transition-all"
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
-                  <span className="text-xl">🎉</span>
+                <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center">
+                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                    <path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
                 </div>
                 <div className="text-left">
-                  <p className="text-sm font-semibold text-white">Claim Your Winnings!</p>
+                  <p className="text-sm font-semibold text-white">Claim Your Winnings</p>
                   <p className="text-xs text-white/50">{unclaimedMarkets.length} unclaimed round{unclaimedMarkets.length > 1 ? 's' : ''}</p>
                 </div>
               </div>
@@ -1611,6 +1601,19 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
           </div>
         ) : null}
 
+        {/* Locked State - Above Recent Bets */}
+        {isLocked && (
+          <div className="flex flex-col items-center justify-center py-6 bg-white/[0.03] border border-white/[0.08] rounded-xl">
+            <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center">
+              <svg className="w-7 h-7 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                <path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+            </div>
+            <p className="text-white/50 text-sm mt-3">Betting Locked</p>
+            <p className="text-white/30 text-xs">Waiting for resolution</p>
+          </div>
+        )}
+
         {/* Recent Bets */}
         {recentBets.length > 0 && (
           <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-4">
@@ -1648,19 +1651,6 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
                 </div>
               ))}
             </div>
-          </div>
-        )}
-
-        {/* Locked State */}
-        {isLocked && (
-          <div className="flex-1 flex flex-col items-center justify-center py-6 animate-fade-in">
-            <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center">
-              <svg className="w-8 h-8 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                <path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-              </svg>
-            </div>
-            <p className="text-white/50 text-sm mt-3">Betting Locked</p>
-            <p className="text-white/30 text-xs">Waiting for resolution</p>
           </div>
         )}
 
