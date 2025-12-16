@@ -12,7 +12,7 @@ export const metadata: Metadata = {
     siteName: 'BYEMONEY',
     images: [
       {
-        url: 'https://byemoney.vercel.app/og-image.png',
+        url: 'https://byemoney.vercel.app/frame-image.png',
         width: 1200,
         height: 630,
       },
@@ -24,7 +24,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'BYEMONEY - Price Prediction Game',
     description: 'Predict crypto prices and burn your favorite coins with BYEMONEY.',
-    images: ['https://byemoney.vercel.app/og-image.png'],
+    images: ['https://byemoney.vercel.app/frame-image.png'],
   },
   
   icons: {
@@ -43,7 +43,7 @@ export default function RootLayout({
       <head>
         {/* Farcaster Frame - using property attribute */}
         <meta property="fc:frame" content="vNext" />
-        <meta property="fc:frame:image" content="https://byemoney.vercel.app/og-image.png" />
+        <meta property="fc:frame:image" content="https://byemoney.vercel.app/frame-image.png" />
         <meta property="fc:frame:image:aspect_ratio" content="1.91:1" />
         <meta property="fc:frame:button:1" content="Launch App" />
         <meta property="fc:frame:button:1:action" content="launch_frame" />

@@ -9,7 +9,7 @@
     "name": "$BYEMONEY",
     "iconUrl": "https://byemoney.vercel.app/icon.png",
     "homeUrl": "https://byemoney.vercel.app/",
-    "imageUrl": "https://byemoney.vercel.app/og-image.png",
+    "imageUrl": "https://byemoney.vercel.app/frame-image.png",
     "buttonTitle": "SAY GOODBYE TO YOUR MONEY",
     "splashImageUrl": "https://byemoney.vercel.app/splash.png",
     "splashBackgroundColor": "#000000",
@@ -27,10 +27,10 @@
     ],
     "primaryCategory": "games",
     "tags": ["crypto", "prediction", "betting", "defi", "base"],
-    "heroImageUrl": "https://byemoney.vercel.app/og-image.png",
+    "heroImageUrl": "https://byemoney.vercel.app/frame-image.png",
     "tagline": "Predict and Say Bye to Money",
     "ogTitle": "BYEMONEY Prediction Game",
     "ogDescription": "Predict crypto prices and burn your favorite coins with BYEMONEY. Say goodbye to your money.",
-    "ogImageUrl": "https://byemoney.vercel.app/og-image.png"
+    "ogImageUrl": "https://byemoney.vercel.app/frame-image.png"
   }
 }
