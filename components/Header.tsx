@@ -45,7 +45,7 @@ export default function Header({ userFid, username, pfpUrl, onConnect }: HeaderP
   const isConnected = userFid || displayName || userPfp;
 
   return (
-    <header className="relative flex-shrink-0 z-10">
+    <header className="relative flex-shrink-0 z-20">
       <div className="px-4 py-2 flex items-center justify-between bg-black">
         {/* Logo Tile */}
         <div className="w-10 h-10 bg-black rounded-xl flex items-center justify-center overflow-hidden">
@@ -86,7 +86,7 @@ export default function Header({ userFid, username, pfpUrl, onConnect }: HeaderP
       </div>
       
       {/* Fade gradient overlay */}
-      <div className="absolute inset-x-0 -bottom-4 h-6 bg-gradient-to-b from-black to-transparent pointer-events-none z-10" />
+      <div className="absolute inset-x-0 top-full h-12 bg-gradient-to-b from-black via-black/50 to-transparent pointer-events-none z-20" />
     </header>
   );
 }
