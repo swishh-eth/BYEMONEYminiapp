@@ -12,11 +12,22 @@ interface HeaderProps {
 export default function Header({ userFid, username, pfpUrl, onConnect }: HeaderProps) {
   const [userPfp, setUserPfp] = useState<string | null>(pfpUrl || null);
   const [displayName, setDisplayName] = useState<string>(username || '');
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     if (pfpUrl) setUserPfp(pfpUrl);
     if (username) setDisplayName(username);
-  }, [pfpUrl, username]);
+    // Once we have user info, stop loading
+    if (userFid || username || pfpUrl) {
+      setIsLoading(false);
+    }
+  }, [pfpUrl, username, userFid]);
+
+  // Give SDK time to initialize before showing Connect
+  useEffect(() => {
+    const timer = setTimeout(() => setIsLoading(false), 1500);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Fetch user data if we have fid but no pfp
   useEffect(() => {
@@ -56,6 +67,8 @@ export default function Header({ userFid, username, pfpUrl, onConnect }: HeaderP
             className="w-8 h-8 rounded-full ring-2 ring-white/20"
           />
         </div>
+      ) : isLoading ? (
+        <div className="w-8 h-8 rounded-full bg-white/5 animate-pulse" />
       ) : (
         <button 
           onClick={onConnect}

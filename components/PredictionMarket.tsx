@@ -1052,28 +1052,25 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
       <div className="relative flex flex-col h-full p-4 gap-3 overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between">
+          {/* Coin Selector Tab */}
           <button 
             onClick={() => { setShowCoinSelector(true); playClick(); triggerHaptic('light'); }}
-            className="flex items-center gap-1 group w-10"
+            className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all group"
           >
-            <div className="relative">
-              <img 
-                src={selectedCoin.icon}
-                alt={selectedCoin.symbol}
-                className="w-8 h-8 rounded-full ring-2 ring-white/20 group-hover:ring-white/40 transition-all"
-              />
-              <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-black rounded-full flex items-center justify-center border border-white/20">
-                <svg className="w-2 h-2 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}>
-                  <path d="M19 9l-7 7-7-7" />
-                </svg>
-              </div>
-            </div>
+            <img 
+              src={selectedCoin.icon}
+              alt={selectedCoin.symbol}
+              className="w-6 h-6 rounded-full"
+            />
+            <span className="text-sm font-semibold text-white">
+              {selectedCoin.symbol} Prediction
+            </span>
+            <svg className="w-3 h-3 text-white/40 group-hover:text-white/60 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}>
+              <path d="M19 9l-7 7-7-7" />
+            </svg>
           </button>
           
-          <h1 className="text-lg font-bold tracking-tight">
-            {selectedCoin.symbol} Prediction
-          </h1>
-          
+          {/* History Button */}
           <button
             onClick={() => { setShowHistory(true); playClick(); triggerHaptic('light'); }}
             className="w-10 h-10 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center transition-all hover:scale-105 active:scale-95"
