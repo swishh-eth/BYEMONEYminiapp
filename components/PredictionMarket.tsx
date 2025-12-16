@@ -852,9 +852,9 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
           </div>
 
           {unclaimedMarkets.length > 0 && (
-            <div className="bg-gradient-to-r from-emerald-500/20 to-green-500/20 border border-emerald-500/30 rounded-xl p-4 animate-pulse-subtle">
-              <p className="text-[10px] text-emerald-400 uppercase tracking-wider mb-2">Unclaimed Winnings</p>
-              <p className="text-2xl font-bold text-emerald-400">{totalUnclaimed.toFixed(4)} ETH</p>
+            <div className="bg-gradient-to-r from-white/20 to-white/20 border border-white/30 rounded-xl p-4 animate-pulse-subtle">
+              <p className="text-[10px] text-white uppercase tracking-wider mb-2">Unclaimed Winnings</p>
+              <p className="text-2xl font-bold text-white">{totalUnclaimed.toFixed(4)} ETH</p>
               <div className="mt-3 space-y-2">
                 {unclaimedMarkets.map((m) => (
                   <div key={m.marketId} className="flex items-center justify-between bg-black/30 rounded-lg p-3">
@@ -867,7 +867,7 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
                     <button
                       onClick={() => handleClaim(m.marketId)}
                       disabled={claimingMarketId === m.marketId}
-                      className="bg-emerald-500 hover:bg-emerald-600 text-black text-xs font-bold px-4 py-2 rounded-lg transition-all disabled:opacity-50"
+                      className="bg-white hover:bg-white text-black text-xs font-bold px-4 py-2 rounded-lg transition-all disabled:opacity-50"
                     >
                       {claimingMarketId === m.marketId ? 'Claiming...' : `Claim ${m.estimatedWinnings.toFixed(4)}`}
                     </button>
@@ -891,9 +891,9 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
                       <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                        item.direction === 'up' ? 'bg-emerald-500/20' : 'bg-red-500/20'
+                        item.direction === 'up' ? 'bg-white/20' : 'bg-red-500/20'
                       }`}>
-                        <svg className={`w-4 h-4 ${item.direction === 'up' ? 'text-emerald-400' : 'text-red-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                        <svg className={`w-4 h-4 ${item.direction === 'up' ? 'text-white' : 'text-red-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
                           <path d={item.direction === 'up' ? 'M5 15l7-7 7 7' : 'M19 9l-7 7-7-7'} />
                         </svg>
                       </div>
@@ -908,14 +908,14 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
                       ) : item.status === 2 ? (
                         <span className="text-xs text-orange-400">Cancelled</span>
                       ) : item.result === (item.direction === 'up' ? 1 : 2) ? (
-                        <span className="text-xs text-emerald-400">Won</span>
+                        <span className="text-xs text-white">Won</span>
                       ) : item.result === 0 ? (
                         <span className="text-xs text-white/40">Tie</span>
                       ) : (
                         <span className="text-xs text-red-400">Lost</span>
                       )}
                       {item.winnings > 0 && (
-                        <p className={`text-sm font-bold ${item.claimed ? 'text-white/40' : 'text-emerald-400'}`}>
+                        <p className={`text-sm font-bold ${item.claimed ? 'text-white/40' : 'text-white'}`}>
                           {item.claimed ? 'Claimed' : `+${item.winnings.toFixed(4)} ETH`}
                         </p>
                       )}
@@ -987,20 +987,20 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
         {totalUnclaimed > 0 && (
           <button
             onClick={() => { setShowHistory(true); playClick(); triggerHaptic('medium'); }}
-            className="bg-gradient-to-r from-emerald-500/20 to-green-500/20 border border-emerald-500/30 rounded-xl p-4 animate-pulse-subtle hover:from-emerald-500/30 hover:to-green-500/30 transition-all"
+            className="bg-gradient-to-r from-white/20 to-white/20 border border-white/30 rounded-xl p-4 animate-pulse-subtle hover:from-white/30 hover:to-white/30 transition-all"
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center">
+                <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
                   <span className="text-xl">🎉</span>
                 </div>
                 <div className="text-left">
-                  <p className="text-sm font-semibold text-emerald-400">Claim Your Winnings!</p>
+                  <p className="text-sm font-semibold text-white">Claim Your Winnings!</p>
                   <p className="text-xs text-white/50">{unclaimedMarkets.length} unclaimed round{unclaimedMarkets.length > 1 ? 's' : ''}</p>
                 </div>
               </div>
               <div className="text-right">
-                <p className="text-lg font-bold text-emerald-400">{totalUnclaimed.toFixed(4)}</p>
+                <p className="text-lg font-bold text-white">{totalUnclaimed.toFixed(4)}</p>
                 <p className="text-[10px] text-white/40">ETH</p>
               </div>
             </div>
@@ -1019,7 +1019,7 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
             {hasMarket && !isResolved && (
               <div className="text-right">
                 <p className="text-[10px] text-white/40 mb-1">Since Start</p>
-                <p className={`text-lg font-semibold ${priceChange >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                <p className={`text-lg font-semibold ${priceChange >= 0 ? 'text-white' : 'text-red-400'}`}>
                   {priceChange >= 0 ? '+' : ''}{priceChange.toFixed(2)}%
                 </p>
               </div>
@@ -1029,7 +1029,7 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
             <div className="mt-3 pt-3 border-t border-white/5 flex items-center justify-between text-xs text-white/40">
               <span>Start: ${startPriceUsd.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
               <span className="flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
+                <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
                 Chainlink
               </span>
             </div>
@@ -1040,10 +1040,10 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
         {isResolved && (
           <div className="flex flex-col items-center justify-center py-6 animate-fade-in bg-white/[0.03] border border-white/[0.08] rounded-xl">
             <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${
-              winningDirection === 1 ? 'bg-emerald-500/20' : 'bg-red-500/20'
+              winningDirection === 1 ? 'bg-white/20' : 'bg-red-500/20'
             } animate-bounce-subtle`}>
               {winningDirection === 1 ? (
-                <svg className="w-7 h-7 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
                   <path d="M5 15l7-7 7 7" />
                 </svg>
               ) : (
@@ -1054,7 +1054,7 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
             </div>
             <p className="text-white/40 text-sm mt-3">Round Complete</p>
             <p className="text-xl font-bold">
-              ETH went <span className={winningDirection === 1 ? 'text-emerald-400' : 'text-red-400'}>
+              ETH went <span className={winningDirection === 1 ? 'text-white' : 'text-red-400'}>
                 {winningDirection === 1 ? 'UP' : 'DOWN'}
               </span>
             </p>
@@ -1070,9 +1070,9 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
               </p>
               <div className="flex items-center gap-1">
                 <TimeBlock value={timeLeft.hours} />
-                <span className="text-white/20 animate-pulse">:</span>
+                <span className="text-black animate-pulse">:</span>
                 <TimeBlock value={timeLeft.minutes} />
-                <span className="text-white/20 animate-pulse">:</span>
+                <span className="text-black animate-pulse">:</span>
                 <TimeBlock value={timeLeft.seconds} />
               </div>
             </div>
@@ -1092,7 +1092,7 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
 
             <div className="relative h-2 bg-white/5 rounded-full overflow-hidden mb-3">
               <div 
-                className="absolute left-0 top-0 h-full bg-gradient-to-r from-emerald-500 to-emerald-400 transition-all duration-700 ease-out"
+                className="absolute left-0 top-0 h-full bg-gradient-to-r from-white to-white transition-all duration-700 ease-out"
                 style={{ width: `${upPercent}%` }}
               />
               <div 
@@ -1103,12 +1103,12 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
 
             <div className="flex justify-between text-xs">
               <div className="flex items-center gap-2">
-                <div className="w-5 h-5 rounded bg-emerald-500/20 flex items-center justify-center">
-                  <svg className="w-3 h-3 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}>
+                <div className="w-5 h-5 rounded bg-white/20 flex items-center justify-center">
+                  <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}>
                     <path d="M5 15l7-7 7 7" />
                   </svg>
                 </div>
-                <span className="font-semibold text-emerald-400">{upPercent.toFixed(0)}%</span>
+                <span className="font-semibold text-white">{upPercent.toFixed(0)}%</span>
                 <span className="text-white/30 text-[10px]">{upMultiplier.toFixed(2)}x</span>
               </div>
               <div className="flex items-center gap-2">
@@ -1128,11 +1128,11 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
                   <p className="text-[10px] text-white/40 uppercase">Your Tickets</p>
                   <div className="flex items-center gap-2">
                     {userUpTickets > 0 && (
-                      <div className="flex items-center gap-1 bg-emerald-500/10 border border-emerald-500/20 rounded px-2 py-0.5">
-                        <svg className="w-2.5 h-2.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}>
+                      <div className="flex items-center gap-1 bg-white/10 border border-white/20 rounded px-2 py-0.5">
+                        <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}>
                           <path d="M5 15l7-7 7 7" />
                         </svg>
-                        <span className="text-[10px] font-semibold text-emerald-400">{userUpTickets}</span>
+                        <span className="text-[10px] font-semibold text-white">{userUpTickets}</span>
                       </div>
                     )}
                     {userDownTickets > 0 && (
@@ -1147,7 +1147,7 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
                       <button
                         onClick={() => handleClaim()}
                         disabled={txState !== 'idle'}
-                        className="bg-gradient-to-r from-emerald-500 to-green-500 text-black text-[10px] font-bold px-3 py-1 rounded disabled:opacity-50 hover:scale-105 transition-transform"
+                        className="bg-gradient-to-r from-white to-white text-black text-[10px] font-bold px-3 py-1 rounded disabled:opacity-50 hover:scale-105 transition-transform"
                       >
                         {txState === 'claiming' ? '...' : canRefund ? 'Refund' : 'Claim'}
                       </button>
@@ -1179,15 +1179,15 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
                 onClick={() => handleDirectionClick('up')}
                 className={`rounded-xl p-4 transition-all hover:scale-[1.02] active:scale-[0.98] ${
                   selectedDirection === 'up'
-                    ? 'bg-emerald-500 text-white ring-2 ring-emerald-400 ring-offset-2 ring-offset-black'
-                    : 'bg-white/[0.03] border border-white/[0.08] hover:border-emerald-500/50'
+                    ? 'bg-white text-black ring-2 ring-white ring-offset-2 ring-offset-black'
+                    : 'bg-white/[0.03] border border-white/[0.08] hover:border-white/50'
                 }`}
               >
                 <div className="flex flex-col items-center gap-2">
                   <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all ${
-                    selectedDirection === 'up' ? 'bg-white/20 scale-110' : 'bg-emerald-500/10'
+                    selectedDirection === 'up' ? 'bg-white/20 scale-110' : 'bg-white/10'
                   }`}>
-                    <svg className={`w-6 h-6 ${selectedDirection === 'up' ? 'text-white' : 'text-emerald-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                    <svg className={`w-6 h-6 ${selectedDirection === 'up' ? 'text-black' : 'text-white'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
                       <path d="M5 15l7-7 7 7" />
                     </svg>
                   </div>
@@ -1274,7 +1274,7 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
                 disabled={txState !== 'idle'}
                 className={`w-full py-4 rounded-xl font-bold transition-all hover:scale-[1.02] active:scale-[0.98] ${
                   selectedDirection === 'up'
-                    ? 'bg-gradient-to-r from-emerald-500 to-green-500 text-white shadow-lg shadow-emerald-500/20'
+                    ? 'bg-gradient-to-r from-white to-white text-black shadow-lg shadow-white/20'
                     : 'bg-gradient-to-r from-red-500 to-rose-500 text-white shadow-lg shadow-red-500/20'
                 } disabled:opacity-50 disabled:hover:scale-100`}
               >
@@ -1300,15 +1300,15 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
                 onClick={() => handleDirectionClick('up')}
                 className={`rounded-xl p-4 transition-all hover:scale-[1.02] active:scale-[0.98] ${
                   selectedDirection === 'up'
-                    ? 'bg-emerald-500 text-white ring-2 ring-emerald-400 ring-offset-2 ring-offset-black'
-                    : 'bg-white/[0.03] border border-white/[0.08] hover:border-emerald-500/50'
+                    ? 'bg-white text-black ring-2 ring-white ring-offset-2 ring-offset-black'
+                    : 'bg-white/[0.03] border border-white/[0.08] hover:border-white/50'
                 }`}
               >
                 <div className="flex flex-col items-center gap-2">
                   <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all ${
-                    selectedDirection === 'up' ? 'bg-white/20 scale-110' : 'bg-emerald-500/10'
+                    selectedDirection === 'up' ? 'bg-white/20 scale-110' : 'bg-white/10'
                   }`}>
-                    <svg className={`w-6 h-6 ${selectedDirection === 'up' ? 'text-white' : 'text-emerald-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                    <svg className={`w-6 h-6 ${selectedDirection === 'up' ? 'text-black' : 'text-white'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
                       <path d="M5 15l7-7 7 7" />
                     </svg>
                   </div>
@@ -1395,7 +1395,7 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
 
                 <div className="mt-3 pt-3 border-t border-white/5 flex justify-between">
                   <span className="text-xs text-white/40">Potential Win</span>
-                  <span className={`text-sm font-bold ${selectedDirection === 'up' ? 'text-emerald-400' : 'text-red-400'}`}>
+                  <span className={`text-sm font-bold ${selectedDirection === 'up' ? 'text-white' : 'text-red-400'}`}>
                     {potentialWinnings.toFixed(4)} ETH
                   </span>
                 </div>
@@ -1408,7 +1408,7 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
                 disabled={txState !== 'idle'}
                 className={`w-full py-4 rounded-xl font-bold transition-all hover:scale-[1.02] active:scale-[0.98] ${
                   selectedDirection === 'up'
-                    ? 'bg-gradient-to-r from-emerald-500 to-green-500 text-white shadow-lg shadow-emerald-500/20'
+                    ? 'bg-gradient-to-r from-white to-white text-black shadow-lg shadow-white/20'
                     : 'bg-gradient-to-r from-red-500 to-rose-500 text-white shadow-lg shadow-red-500/20'
                 } disabled:opacity-50 disabled:hover:scale-100`}
               >
@@ -1456,9 +1456,9 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-white/50">{bet.tickets}x</span>
                     <div className={`w-5 h-5 rounded flex items-center justify-center ${
-                      bet.direction === 'up' ? 'bg-emerald-500/20' : 'bg-red-500/20'
+                      bet.direction === 'up' ? 'bg-white/20' : 'bg-red-500/20'
                     }`}>
-                      <svg className={`w-3 h-3 ${bet.direction === 'up' ? 'text-emerald-400' : 'text-red-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}>
+                      <svg className={`w-3 h-3 ${bet.direction === 'up' ? 'text-white' : 'text-red-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}>
                         <path d={bet.direction === 'up' ? 'M5 15l7-7 7 7' : 'M19 9l-7 7-7-7'} />
                       </svg>
                     </div>
@@ -1482,7 +1482,7 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
 
         {/* Footer */}
         <div className="text-center pt-2">
-          <p className="text-[9px] text-white/20">
+          <p className="text-[9px] text-black">
             {username ? `@${username} · ` : ''}{TICKET_PRICE_ETH} ETH/ticket · 5% fee
           </p>
         </div>
@@ -1500,7 +1500,7 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
             <h3 className="text-lg font-bold text-center mb-2">Confirm Your Bet</h3>
             
             <p className="text-sm text-white/60 text-center mb-4">
-              You&apos;re about to bet <span className="text-white font-semibold">{totalCostEth.toFixed(3)} ETH</span> on <span className={`font-semibold ${selectedDirection === 'up' ? 'text-emerald-400' : 'text-red-400'}`}>{selectedDirection === 'up' ? 'PUMP' : 'DUMP'}</span>
+              You&apos;re about to bet <span className="text-white font-semibold">{totalCostEth.toFixed(3)} ETH</span> on <span className={`font-semibold ${selectedDirection === 'up' ? 'text-white' : 'text-red-400'}`}>{selectedDirection === 'up' ? 'PUMP' : 'DUMP'}</span>
             </p>
 
             <div className="bg-white/5 rounded-xl p-3 mb-4">
@@ -1536,7 +1536,7 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
                 onClick={handleConfirmBuy}
                 className={`py-3 rounded-xl font-semibold text-sm transition-all active:scale-95 ${
                   selectedDirection === 'up'
-                    ? 'bg-emerald-500 hover:bg-emerald-600 text-white'
+                    ? 'bg-white hover:bg-white text-white'
                     : 'bg-red-500 hover:bg-red-600 text-white'
                 }`}
               >
