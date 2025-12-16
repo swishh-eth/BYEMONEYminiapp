@@ -669,21 +669,26 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
   const handleDirectionClick = (direction: 'up' | 'down') => {
     playClick();
     triggerHaptic('light');
+    
     if (selectedDirection === direction) {
-      // Close with animation
+      // Same button clicked - close with animation
       setTicketSectionClosing(true);
       setTimeout(() => {
         setSelectedDirection(null);
         setTicketSectionClosing(false);
       }, 250);
+    } else if (selectedDirection && selectedDirection !== direction) {
+      // Switching direction - just swap, no close animation needed
+      setSelectedDirection(direction);
     } else {
+      // Opening fresh
       setSelectedDirection(direction);
       // Smooth scroll to buy button after it renders
       setTimeout(() => {
         if (buyButtonRef.current) {
           buyButtonRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
-      }, 300);
+      }, 350);
     }
   };
 
@@ -1918,17 +1923,19 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
         }
         .animate-slide-in {
           animation: slide-in 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+          overflow: hidden;
         }
         @keyframes slide-in {
-          from { opacity: 0; transform: translateY(-10px); max-height: 0; }
-          to { opacity: 1; transform: translateY(0); max-height: 200px; }
+          from { opacity: 0; transform: translateY(-15px) scaleY(0.95); }
+          to { opacity: 1; transform: translateY(0) scaleY(1); }
         }
         .animate-slide-out {
-          animation: slide-out 0.25s ease-in forwards;
+          animation: slide-out 0.25s ease-out forwards;
+          overflow: hidden;
         }
         @keyframes slide-out {
-          from { opacity: 1; transform: translateY(0); max-height: 200px; }
-          to { opacity: 0; transform: translateY(-10px); max-height: 0; }
+          from { opacity: 1; transform: translateY(0) scaleY(1); }
+          to { opacity: 0; transform: translateY(-15px) scaleY(0.95); }
         }
         .animate-slide-down {
           animation: slide-down 0.3s ease-in forwards;
