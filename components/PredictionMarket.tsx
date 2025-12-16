@@ -870,8 +870,9 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
     : 0;
 
   const startPriceUsd = marketData ? Number(marketData.startPrice) / 1e8 : 0;
-  const currentPriceUsd = currentPrice ? Number(currentPrice) / 1e8 : startPriceUsd;
+  const currentPriceUsd = currentPrice ? Number(currentPrice) / 1e8 : startPriceUsd || 0;
   const priceChange = startPriceUsd > 0 ? ((currentPriceUsd - startPriceUsd) / startPriceUsd) * 100 : 0;
+  const hasPriceData = currentPriceUsd > 0;
 
   const isLocked = hasMarket && !isResolved && !isCancelled && !isBettingOpen;
 
@@ -1105,14 +1106,16 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
               </div>
               <div className="flex items-baseline gap-1">
                 <span className="text-3xl font-bold tracking-tight">
-                  ${Math.floor(currentPriceUsd).toLocaleString()}
+                  ${currentPriceUsd > 0 ? Math.floor(currentPriceUsd).toLocaleString() : '---'}
                 </span>
-                <span className="text-xl font-bold text-white/60">
-                  .{(currentPriceUsd % 1).toFixed(2).slice(2)}
-                </span>
+                {currentPriceUsd > 0 && (
+                  <span className="text-xl font-bold text-white/60">
+                    .{(currentPriceUsd % 1).toFixed(2).slice(2)}
+                  </span>
+                )}
               </div>
             </div>
-            {hasMarket && !isResolved && (
+            {hasMarket && !isResolved && priceChange !== 0 && (
               <div className="text-right">
                 <p className="text-[10px] text-white/40 mb-1">Since Start</p>
                 <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg ${
@@ -1128,7 +1131,7 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
               </div>
             )}
           </div>
-          {hasMarket && (
+          {hasMarket && startPriceUsd > 0 && (
             <div className="relative mt-3 pt-3 border-t border-white/5 flex items-center justify-between text-xs text-white/40">
               <span className="flex items-center gap-1">
                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
@@ -1234,35 +1237,51 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
 
             {userTotalTickets > 0 && (
               <div className="mt-3 pt-3 border-t border-white/5">
-                <div className="flex items-center justify-between">
-                  <p className="text-[10px] text-white/40 uppercase">Your Tickets</p>
-                  <div className="flex items-center gap-2">
-                    {userUpTickets > 0 && (
-                      <div className="flex items-center gap-1 bg-white/10 border border-white/20 rounded px-2 py-0.5">
-                        <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}>
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-[10px] text-white/40 uppercase">Your Position</p>
+                  {(canClaim || canRefund) && (
+                    <button
+                      onClick={() => handleClaim()}
+                      disabled={txState !== 'idle'}
+                      className="bg-gradient-to-r from-white to-white text-black text-[10px] font-bold px-3 py-1 rounded disabled:opacity-50 hover:scale-105 transition-transform"
+                    >
+                      {txState === 'claiming' ? '...' : canRefund ? 'Refund' : 'Claim'}
+                    </button>
+                  )}
+                </div>
+                <div className="space-y-1.5">
+                  {userUpTickets > 0 && (
+                    <div className="flex items-center justify-between bg-white/5 rounded-lg px-3 py-2">
+                      <div className="flex items-center gap-2">
+                        <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
                           <path d="M5 15l7-7 7 7" />
                         </svg>
-                        <span className="text-[10px] font-semibold text-white">{userUpTickets}</span>
+                        <span className="text-xs text-white">{userUpTickets} ticket{userUpTickets > 1 ? 's' : ''}</span>
                       </div>
-                    )}
-                    {userDownTickets > 0 && (
-                      <div className="flex items-center gap-1 bg-red-500/10 border border-red-500/20 rounded px-2 py-0.5">
-                        <svg className="w-2.5 h-2.5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}>
+                      <div className="text-right">
+                        <span className="text-xs text-white/40">to win </span>
+                        <span className="text-xs font-bold text-white">
+                          {((totalPool * 0.95 / upPool) * userUpTickets * TICKET_PRICE_ETH).toFixed(4)} ETH
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                  {userDownTickets > 0 && (
+                    <div className="flex items-center justify-between bg-red-500/10 rounded-lg px-3 py-2">
+                      <div className="flex items-center gap-2">
+                        <svg className="w-4 h-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
                           <path d="M19 9l-7 7-7-7" />
                         </svg>
-                        <span className="text-[10px] font-semibold text-red-400">{userDownTickets}</span>
+                        <span className="text-xs text-red-400">{userDownTickets} ticket{userDownTickets > 1 ? 's' : ''}</span>
                       </div>
-                    )}
-                    {(canClaim || canRefund) && (
-                      <button
-                        onClick={() => handleClaim()}
-                        disabled={txState !== 'idle'}
-                        className="bg-gradient-to-r from-white to-white text-black text-[10px] font-bold px-3 py-1 rounded disabled:opacity-50 hover:scale-105 transition-transform"
-                      >
-                        {txState === 'claiming' ? '...' : canRefund ? 'Refund' : 'Claim'}
-                      </button>
-                    )}
-                  </div>
+                      <div className="text-right">
+                        <span className="text-xs text-white/40">to win </span>
+                        <span className="text-xs font-bold text-red-400">
+                          {((totalPool * 0.95 / downPool) * userDownTickets * TICKET_PRICE_ETH).toFixed(4)} ETH
+                        </span>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
