@@ -107,6 +107,14 @@ const publicClient = createPublicClient({
   transport: http('https://base-mainnet.g.alchemy.com/v2/jKHNMnfb18wYA1HfaHxo5'),
 });
 
+const AVAILABLE_COINS = [
+  { symbol: 'ETH', name: 'Ethereum', icon: 'https://assets.coingecko.com/coins/images/279/small/ethereum.png', active: true },
+  { symbol: 'BTC', name: 'Bitcoin', icon: 'https://assets.coingecko.com/coins/images/1/small/bitcoin.png', active: false },
+  { symbol: 'SOL', name: 'Solana', icon: 'https://assets.coingecko.com/coins/images/4128/small/solana.png', active: false },
+  { symbol: 'DOGE', name: 'Dogecoin', icon: 'https://assets.coingecko.com/coins/images/5/small/dogecoin.png', active: false },
+  { symbol: 'PEPE', name: 'Pepe', icon: 'https://assets.coingecko.com/coins/images/29850/small/pepe-token.jpeg', active: false },
+];
+
 interface PredictionMarketProps {
   userFid?: number;
   username?: string;
@@ -165,6 +173,8 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [showConfetti, setShowConfetti] = useState(false);
   const [claimingMarketId, setClaimingMarketId] = useState<number | null>(null);
+  const [showCoinSelector, setShowCoinSelector] = useState(false);
+  const [selectedCoinIndex, setSelectedCoinIndex] = useState(0);
   
   const [marketData, setMarketData] = useState<{
     id: bigint;
@@ -981,17 +991,31 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
       <div className="relative flex flex-col h-full p-4 gap-3 overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <img 
-              src="https://assets.coingecko.com/coins/images/279/small/ethereum.png"
-              alt="ETH"
-              className="w-6 h-6 rounded-full"
-            />
-            <h1 className="text-lg font-bold tracking-tight">ETH Prediction</h1>
-          </div>
+          <button 
+            onClick={() => { setShowCoinSelector(true); playClick(); triggerHaptic('light'); }}
+            className="flex items-center gap-2 group"
+          >
+            <div className="relative">
+              <img 
+                src={AVAILABLE_COINS[selectedCoinIndex].icon}
+                alt={AVAILABLE_COINS[selectedCoinIndex].symbol}
+                className="w-7 h-7 rounded-full ring-2 ring-white/20 group-hover:ring-white/40 transition-all"
+              />
+              <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-black rounded-full flex items-center justify-center">
+                <svg className="w-2 h-2 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}>
+                  <path d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+            </div>
+            <div className="flex flex-col items-start">
+              <span className="text-lg font-bold tracking-tight group-hover:text-white/80 transition-colors">
+                {AVAILABLE_COINS[selectedCoinIndex].symbol} Prediction
+              </span>
+            </div>
+          </button>
           <button
             onClick={() => { setShowHistory(true); playClick(); triggerHaptic('light'); }}
-            className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
+            className="p-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-all hover:scale-105 active:scale-95"
           >
             <svg className="w-5 h-5 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
               <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -1023,30 +1047,60 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
           </button>
         )}
 
-        {/* Price Card */}
-        <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-4 hover:bg-white/[0.05] transition-colors">
-          <div className="flex items-center justify-between">
+        {/* Price Card - Enhanced */}
+        <div className="relative overflow-hidden bg-gradient-to-br from-white/[0.05] to-transparent border border-white/[0.08] rounded-2xl p-4 hover:border-white/20 transition-all group">
+          {/* Animated background glow */}
+          <div className={`absolute -top-20 -right-20 w-40 h-40 rounded-full blur-3xl transition-opacity duration-1000 ${
+            priceChange >= 0 ? 'bg-white/10' : 'bg-red-500/10'
+          } opacity-0 group-hover:opacity-100`} />
+          
+          <div className="relative flex items-center justify-between">
             <div>
-              <p className="text-[10px] text-white/40 uppercase tracking-wider mb-1">ETH/USD</p>
-              <p className="text-2xl font-bold animate-number">
-                ${currentPriceUsd.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-              </p>
+              <div className="flex items-center gap-2 mb-1">
+                <p className="text-[10px] text-white/40 uppercase tracking-wider">{AVAILABLE_COINS[selectedCoinIndex].symbol}/USD</p>
+                <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-white/5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
+                  <span className="text-[8px] text-white/40">LIVE</span>
+                </div>
+              </div>
+              <div className="flex items-baseline gap-1">
+                <span className="text-3xl font-bold tracking-tight">
+                  ${Math.floor(currentPriceUsd).toLocaleString()}
+                </span>
+                <span className="text-xl font-bold text-white/60">
+                  .{(currentPriceUsd % 1).toFixed(2).slice(2)}
+                </span>
+              </div>
             </div>
             {hasMarket && !isResolved && (
               <div className="text-right">
                 <p className="text-[10px] text-white/40 mb-1">Since Start</p>
-                <p className={`text-lg font-semibold ${priceChange >= 0 ? 'text-white' : 'text-red-400'}`}>
-                  {priceChange >= 0 ? '+' : ''}{priceChange.toFixed(2)}%
-                </p>
+                <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg ${
+                  priceChange >= 0 ? 'bg-white/10' : 'bg-red-500/20'
+                }`}>
+                  <svg className={`w-3 h-3 ${priceChange >= 0 ? 'text-white rotate-0' : 'text-red-400 rotate-180'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}>
+                    <path d="M5 15l7-7 7 7" />
+                  </svg>
+                  <span className={`text-lg font-bold ${priceChange >= 0 ? 'text-white' : 'text-red-400'}`}>
+                    {Math.abs(priceChange).toFixed(2)}%
+                  </span>
+                </div>
               </div>
             )}
           </div>
           {hasMarket && (
-            <div className="mt-3 pt-3 border-t border-white/5 flex items-center justify-between text-xs text-white/40">
-              <span>Start: ${startPriceUsd.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+            <div className="relative mt-3 pt-3 border-t border-white/5 flex items-center justify-between text-xs text-white/40">
               <span className="flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
-                Chainlink
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                  <path d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                </svg>
+                Start: ${startPriceUsd.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </span>
+              <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-orange-500/10 text-orange-400">
+                <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                </svg>
+                <span className="text-[10px] font-medium">Chainlink</span>
               </span>
             </div>
           )}
@@ -1504,6 +1558,82 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
         </div>
       </div>
 
+      {/* Coin Selector Modal */}
+      {showCoinSelector && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center animate-fade-in">
+          <div 
+            className="absolute inset-0 bg-black/90 backdrop-blur-md" 
+            onClick={() => setShowCoinSelector(false)} 
+          />
+          <div className="relative w-full max-w-md bg-gradient-to-t from-black via-black/95 to-transparent pt-20 pb-8 px-4 animate-slide-up">
+            <div className="text-center mb-6">
+              <h3 className="text-xl font-bold text-white mb-1">Select Market</h3>
+              <p className="text-sm text-white/40">Choose a coin to predict</p>
+            </div>
+            
+            {/* Coin Carousel */}
+            <div className="flex gap-3 overflow-x-auto pb-4 px-2 snap-x snap-mandatory scrollbar-hide">
+              {AVAILABLE_COINS.map((coin, index) => (
+                <button
+                  key={coin.symbol}
+                  onClick={() => {
+                    if (coin.active) {
+                      setSelectedCoinIndex(index);
+                      setShowCoinSelector(false);
+                      playClick();
+                      triggerHaptic('medium');
+                    } else {
+                      triggerHaptic('error');
+                    }
+                  }}
+                  className={`flex-shrink-0 snap-center w-28 rounded-2xl p-4 transition-all ${
+                    coin.active 
+                      ? selectedCoinIndex === index
+                        ? 'bg-white text-black scale-105 shadow-lg shadow-white/20'
+                        : 'bg-white/10 border border-white/20 hover:bg-white/20 hover:scale-102'
+                      : 'bg-white/5 border border-white/10 opacity-50'
+                  }`}
+                >
+                  <div className="flex flex-col items-center gap-2">
+                    <div className={`relative w-12 h-12 rounded-full overflow-hidden ${
+                      !coin.active && 'grayscale'
+                    }`}>
+                      <img 
+                        src={coin.icon} 
+                        alt={coin.symbol}
+                        className="w-full h-full object-cover"
+                      />
+                      {!coin.active && (
+                        <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                          <svg className="w-5 h-5 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                            <path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                          </svg>
+                        </div>
+                      )}
+                    </div>
+                    <div className="text-center">
+                      <p className={`font-bold text-sm ${
+                        coin.active && selectedCoinIndex === index ? 'text-black' : 'text-white'
+                      }`}>{coin.symbol}</p>
+                      <p className={`text-[10px] ${
+                        coin.active 
+                          ? selectedCoinIndex === index ? 'text-black/60' : 'text-white/40'
+                          : 'text-white/30'
+                      }`}>
+                        {coin.active ? coin.name : 'Coming Soon'}
+                      </p>
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+            
+            {/* Close hint */}
+            <p className="text-center text-white/30 text-xs mt-4">Tap outside to close</p>
+          </div>
+        </div>
+      )}
+
       {/* Confirm Modal */}
       {showConfirmModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in">
@@ -1585,7 +1715,7 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
           to { opacity: 1; transform: scale(1); }
         }
         @keyframes slide-up {
-          from { opacity: 0; transform: translateY(10px); }
+          from { opacity: 0; transform: translateY(100%); }
           to { opacity: 1; transform: translateY(0); }
         }
         @keyframes confetti {
@@ -1600,6 +1730,10 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
           0%, 100% { transform: translateY(0); }
           50% { transform: translateY(-5px); }
         }
+        @keyframes glow {
+          0%, 100% { box-shadow: 0 0 20px rgba(255,255,255,0.1); }
+          50% { box-shadow: 0 0 40px rgba(255,255,255,0.2); }
+        }
         .animate-fade-in {
           animation: fade-in 0.3s ease-out forwards;
         }
@@ -1607,7 +1741,7 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
           animation: scale-in 0.2s ease-out;
         }
         .animate-slide-up {
-          animation: slide-up 0.3s ease-out;
+          animation: slide-up 0.4s cubic-bezier(0.16, 1, 0.3, 1);
         }
         .animate-confetti {
           animation: confetti 2s ease-out forwards;
@@ -1617,6 +1751,16 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
         }
         .animate-bounce-subtle {
           animation: bounce-subtle 1s ease-in-out infinite;
+        }
+        .animate-glow {
+          animation: glow 2s ease-in-out infinite;
+        }
+        .scrollbar-hide {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+        .scrollbar-hide::-webkit-scrollbar {
+          display: none;
         }
         .animate-number {
           font-variant-numeric: tabular-nums;
