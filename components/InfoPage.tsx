@@ -218,19 +218,11 @@ export default function InfoPage() {
         ].map((stat) => (
           <div 
             key={stat.label}
-            className="relative bg-white/[0.03] border border-white/[0.08] rounded-2xl p-3 text-center overflow-hidden animate-fade-in"
+            className="bg-white/[0.03] border border-white/[0.08] rounded-2xl p-3 text-center animate-fade-in"
             style={{ animationDelay: stat.delay }}
           >
-            <div className="absolute inset-0 opacity-[0.03]" 
-              style={{
-                backgroundImage: `radial-gradient(circle at 1px 1px, white 1px, transparent 0)`,
-                backgroundSize: '16px 16px',
-              }}
-            />
-            <div className="relative">
-              <p className="text-[9px] text-white/40 uppercase tracking-wider">Chain</p>
-              <p className="font-bold text-white text-sm mt-1">{stat.value}</p>
-            </div>
+            <p className="text-[9px] text-white/40 uppercase tracking-wider">{stat.label}</p>
+            <p className="font-bold text-white text-sm mt-1">{stat.value}</p>
           </div>
         ))}
       </div>

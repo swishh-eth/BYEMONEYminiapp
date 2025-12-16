@@ -969,7 +969,7 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
               <div className="mt-3 space-y-2">
                 {unclaimedMarkets.map((m) => (
                   <div key={m.marketId} className="flex items-center justify-between bg-black/30 rounded-lg p-3">
-                    <div>
+                    <div className="flex-shrink-0">
                       <p className="text-sm text-white/70">Round #{m.marketId}</p>
                       <p className="text-xs text-white/40">
                         {m.status === 2 ? 'Cancelled' : m.result === 1 ? 'UP won' : 'DOWN won'}
@@ -978,7 +978,7 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
                     <button
                       onClick={() => handleClaim(m.marketId)}
                       disabled={claimingMarketId === m.marketId}
-                      className="bg-white hover:bg-white text-black text-xs font-bold px-4 py-2 rounded-lg transition-all disabled:opacity-50"
+                      className="bg-white hover:bg-white/90 text-black text-xs font-bold px-4 py-2 rounded-lg transition-all disabled:opacity-50 whitespace-nowrap ml-3"
                     >
                       {claimingMarketId === m.marketId ? 'Claiming...' : `Claim ${m.estimatedWinnings.toFixed(4)}`}
                     </button>

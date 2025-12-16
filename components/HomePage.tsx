@@ -337,26 +337,18 @@ export default function HomePage() {
           { label: 'Volume 24h', value: priceData ? formatNumber(priceData.volume24h) : '$0', delay: '150ms' },
           { label: 'Liquidity', value: priceData ? formatNumber(priceData.liquidity) : '$0', delay: '200ms' },
           { label: 'Market Cap', value: priceData ? formatNumber(priceData.marketCap) : '$0', delay: '250ms' },
-        ].map((stat, i) => (
+        ].map((stat) => (
           <div 
             key={stat.label}
-            className="relative bg-white/[0.03] border border-white/[0.08] rounded-2xl p-3 text-center overflow-hidden animate-fade-in"
+            className="bg-white/[0.03] border border-white/[0.08] rounded-2xl p-3 text-center animate-fade-in"
             style={{ animationDelay: stat.delay }}
           >
-            <div className="absolute inset-0 opacity-[0.03]" 
-              style={{
-                backgroundImage: `radial-gradient(circle at 1px 1px, white 1px, transparent 0)`,
-                backgroundSize: '16px 16px',
-              }}
-            />
-            <div className="relative">
-              <p className="text-[9px] text-white/40 uppercase tracking-wider mb-1">{stat.label}</p>
-              <p className="font-bold text-white text-sm">
-                {loading ? (
-                  <span className="inline-block w-12 h-4 bg-white/5 rounded animate-pulse" />
-                ) : stat.value}
-              </p>
-            </div>
+            <p className="text-[9px] text-white/40 uppercase tracking-wider mb-1">{stat.label}</p>
+            <p className="font-bold text-white text-sm">
+              {loading ? (
+                <span className="inline-block w-12 h-4 bg-white/5 rounded animate-pulse" />
+              ) : stat.value}
+            </p>
           </div>
         ))}
       </div>
