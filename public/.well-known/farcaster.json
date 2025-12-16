@@ -1,13 +1,18 @@
 {
+  "accountAssociation": {
+    "header": "YOUR_HEADER_FROM_WARPCAST",
+    "payload": "YOUR_PAYLOAD_FROM_WARPCAST",
+    "signature": "YOUR_SIGNATURE_FROM_WARPCAST"
+  },
   "miniapp": {
     "version": "1",
     "name": "$BYEMONEY",
-    "iconUrl": "https://YOUR_DOMAIN/icon.png",
-    "homeUrl": "https://YOUR_DOMAIN/",
-    "imageUrl": "https://YOUR_DOMAIN/og-image.png",
-    "buttonTitle": "💸 Launch",
-    "splashImageUrl": "https://YOUR_DOMAIN/splash.png",
-    "splashBackgroundColor": "#0A0A0F",
+    "iconUrl": "https://byemoney.vercel.app/icon.png",
+    "homeUrl": "https://byemoney.vercel.app/",
+    "imageUrl": "https://byemoney.vercel.app/og-image.png",
+    "buttonTitle": "SAY GOODBYE TO YOUR MONEY",
+    "splashImageUrl": "https://byemoney.vercel.app/splash.png",
+    "splashBackgroundColor": "#000000",
     "requiredChains": ["eip155:8453"],
     "requiredCapabilities": [
       "actions.signIn",
