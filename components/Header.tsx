@@ -6,9 +6,10 @@ interface HeaderProps {
   userFid?: number;
   username?: string;
   pfpUrl?: string;
+  onConnect?: () => void;
 }
 
-export default function Header({ userFid, username, pfpUrl }: HeaderProps) {
+export default function Header({ userFid, username, pfpUrl, onConnect }: HeaderProps) {
   const [userPfp, setUserPfp] = useState<string | null>(pfpUrl || null);
   const [displayName, setDisplayName] = useState<string>(username || '');
 
@@ -30,19 +31,21 @@ export default function Header({ userFid, username, pfpUrl }: HeaderProps) {
     }
   }, [userFid, userPfp]);
 
+  const isConnected = userFid || displayName || userPfp;
+
   return (
     <header className="px-4 py-3 flex items-center justify-between bg-black border-b border-white/10">
       {/* Logo Tile */}
-      <div className="w-10 h-10 bg-black rounded-xl border border-white/10 flex items-center justify-center">
+      <div className="w-10 h-10 bg-black rounded-xl border border-white/10 flex items-center justify-center overflow-hidden">
         <img 
           src="/logo.png" 
           alt="BYEMONEY" 
-          className="w-6 h-6 object-contain"
+          className="w-full h-full object-cover"
         />
       </div>
       
-      {/* User Profile */}
-      {(userPfp || displayName) ? (
+      {/* User Profile or Connect */}
+      {isConnected ? (
         <div className="flex items-center gap-2">
           <span className="text-sm text-white/60 font-medium">
             @{displayName}
@@ -54,13 +57,17 @@ export default function Header({ userFid, username, pfpUrl }: HeaderProps) {
           />
         </div>
       ) : (
-        <div className="flex items-center gap-2 px-3 py-1.5 bg-white/5 border border-white/10 rounded-full">
-          <span className="relative flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+        <button 
+          onClick={onConnect}
+          className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+        >
+          <span className="text-sm text-white/60 font-medium">
+            Connect
           </span>
-          <span className="text-xs text-white/60 font-medium">LIVE</span>
-        </div>
+          <div className="w-8 h-8 rounded-full bg-white/10 border border-white/20 flex items-center justify-center">
+            <span className="text-white/40 text-lg font-bold">?</span>
+          </div>
+        </button>
       )}
     </header>
   );
