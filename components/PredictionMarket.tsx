@@ -1492,19 +1492,25 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
       {showConfirmModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in">
           <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setShowConfirmModal(false)} />
-          <div className="relative bg-[#111] border border-white/10 rounded-2xl p-6 max-w-sm w-full animate-scale-in">
-            <div className="w-12 h-12 rounded-xl bg-yellow-500/10 flex items-center justify-center mx-auto mb-4">
-              <span className="text-2xl">⚠️</span>
+          <div className={`relative border rounded-2xl p-6 max-w-sm w-full animate-scale-in ${
+            selectedDirection === 'up' 
+              ? 'bg-white border-white/20' 
+              : 'bg-red-500 border-red-400/20'
+          }`}>
+            <div className="w-12 h-12 rounded-xl bg-black flex items-center justify-center mx-auto mb-4">
+              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
             </div>
             
-            <h3 className="text-lg font-bold text-center mb-2">Confirm Your Bet</h3>
+            <h3 className={`text-lg font-bold text-center mb-2 ${selectedDirection === 'up' ? 'text-black' : 'text-white'}`}>Confirm Your Bet</h3>
             
-            <p className="text-sm text-white/60 text-center mb-4">
-              You&apos;re about to bet <span className="text-white font-semibold">{totalCostEth.toFixed(3)} ETH</span> on <span className={`font-semibold ${selectedDirection === 'up' ? 'text-white' : 'text-red-400'}`}>{selectedDirection === 'up' ? 'PUMP' : 'DUMP'}</span>
+            <p className={`text-sm text-center mb-4 ${selectedDirection === 'up' ? 'text-black/60' : 'text-white/80'}`}>
+              You&apos;re about to bet <span className={`font-semibold ${selectedDirection === 'up' ? 'text-black' : 'text-white'}`}>{totalCostEth.toFixed(3)} ETH</span> on <span className="font-semibold">{selectedDirection === 'up' ? 'PUMP' : 'DUMP'}</span>
             </p>
 
-            <div className="bg-white/5 rounded-xl p-3 mb-4">
-              <p className="text-xs text-white/50 text-center">
+            <div className={`rounded-xl p-3 mb-4 ${selectedDirection === 'up' ? 'bg-black/5' : 'bg-black/20'}`}>
+              <p className={`text-xs text-center ${selectedDirection === 'up' ? 'text-black/50' : 'text-white/70'}`}>
                 All sales are final. Bets cannot be refunded or reversed once placed. Only bet what you can afford to lose.
               </p>
             </div>
@@ -1513,22 +1519,28 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
               <div 
                 onClick={() => { setDontShowAgain(!dontShowAgain); playClick(); }}
                 className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
-                  dontShowAgain ? 'bg-white border-white' : 'border-white/30'
+                  dontShowAgain 
+                    ? selectedDirection === 'up' ? 'bg-black border-black' : 'bg-white border-white'
+                    : selectedDirection === 'up' ? 'border-black/30' : 'border-white/30'
                 }`}
               >
                 {dontShowAgain && (
-                  <svg className="w-3 h-3 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}>
+                  <svg className={`w-3 h-3 ${selectedDirection === 'up' ? 'text-white' : 'text-red-500'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}>
                     <path d="M5 13l4 4L19 7" />
                   </svg>
                 )}
               </div>
-              <span className="text-xs text-white/50">Don&apos;t show this again</span>
+              <span className={`text-xs ${selectedDirection === 'up' ? 'text-black/50' : 'text-white/70'}`}>Don&apos;t show this again</span>
             </label>
 
             <div className="grid grid-cols-2 gap-3">
               <button
                 onClick={() => { setShowConfirmModal(false); playClick(); }}
-                className="py-3 rounded-xl bg-white/5 border border-white/10 font-semibold text-sm hover:bg-white/10 transition-all active:scale-95"
+                className={`py-3 rounded-xl font-semibold text-sm transition-all active:scale-95 ${
+                  selectedDirection === 'up'
+                    ? 'bg-black/10 border border-black/20 text-black hover:bg-black/20'
+                    : 'bg-white/10 border border-white/20 text-white hover:bg-white/20'
+                }`}
               >
                 Cancel
               </button>
@@ -1536,8 +1548,8 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
                 onClick={handleConfirmBuy}
                 className={`py-3 rounded-xl font-semibold text-sm transition-all active:scale-95 ${
                   selectedDirection === 'up'
-                    ? 'bg-white hover:bg-white text-white'
-                    : 'bg-red-500 hover:bg-red-600 text-white'
+                    ? 'bg-black hover:bg-black/80 text-white'
+                    : 'bg-white hover:bg-white/90 text-red-500'
                 }`}
               >
                 Confirm Bet
