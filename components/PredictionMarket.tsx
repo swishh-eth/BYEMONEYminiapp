@@ -798,16 +798,32 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
 
   const totalCostEth = ticketCount * TICKET_PRICE_ETH;
   
-  const newUpPool = upPool + (selectedDirection === 'up' ? totalCostEth : 0);
-  const newDownPool = downPool + (selectedDirection === 'down' ? totalCostEth : 0);
-  const newTotalPool = newUpPool + newDownPool;
-  const poolAfterFee = newTotalPool * (1 - houseFee);
+  // Always calculate what you'd ACTUALLY get if you bet
+  // For unselected buttons, show odds for 1 ticket
+  const oneTicketCost = TICKET_PRICE_ETH;
   
-  const realUpMultiplier = newUpPool > 0 ? poolAfterFee / newUpPool : 1.9;
-  const realDownMultiplier = newDownPool > 0 ? poolAfterFee / newDownPool : 1.9;
+  // Preview multiplier for UP (what you'd get betting 1 ticket on UP)
+  const previewUpPool = upPool + oneTicketCost;
+  const previewUpTotal = previewUpPool + downPool;
+  const previewUpMultiplier = previewUpPool > 0 ? (previewUpTotal * (1 - houseFee)) / previewUpPool : 1.9;
   
-  const displayUpMultiplier = selectedDirection === 'up' ? realUpMultiplier : upMultiplier;
-  const displayDownMultiplier = selectedDirection === 'down' ? realDownMultiplier : downMultiplier;
+  // Preview multiplier for DOWN (what you'd get betting 1 ticket on DOWN)
+  const previewDownPool = downPool + oneTicketCost;
+  const previewDownTotal = upPool + previewDownPool;
+  const previewDownMultiplier = previewDownPool > 0 ? (previewDownTotal * (1 - houseFee)) / previewDownPool : 1.9;
+  
+  // When selected, recalculate with actual ticket count
+  const selectedUpPool = upPool + (selectedDirection === 'up' ? totalCostEth : 0);
+  const selectedDownPool = downPool + (selectedDirection === 'down' ? totalCostEth : 0);
+  const selectedTotalPool = selectedUpPool + selectedDownPool;
+  const selectedPoolAfterFee = selectedTotalPool * (1 - houseFee);
+  
+  const realUpMultiplier = selectedUpPool > 0 ? selectedPoolAfterFee / selectedUpPool : 1.9;
+  const realDownMultiplier = selectedDownPool > 0 ? selectedPoolAfterFee / selectedDownPool : 1.9;
+  
+  // Show preview when not selected, real when selected
+  const displayUpMultiplier = selectedDirection === 'up' ? realUpMultiplier : previewUpMultiplier;
+  const displayDownMultiplier = selectedDirection === 'down' ? realDownMultiplier : previewDownMultiplier;
   
   const potentialWinnings = selectedDirection === 'up' 
     ? totalCostEth * realUpMultiplier
