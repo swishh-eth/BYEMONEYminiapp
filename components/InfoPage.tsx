@@ -228,28 +228,17 @@ export default function InfoPage() {
       </div>
       
       {/* Links */}
-      <div className="relative bg-white/[0.03] border border-white/[0.08] rounded-2xl p-4 overflow-hidden animate-fade-in" style={{ animationDelay: '250ms' }}>
-        <div className="absolute inset-0 opacity-[0.03]" 
-          style={{
-            backgroundImage: `radial-gradient(circle at 1px 1px, white 1px, transparent 0)`,
-            backgroundSize: '20px 20px',
-          }}
-        />
-        <div className="relative">
-          <p className="text-[10px] text-white/40 uppercase tracking-wider mb-3">Links</p>
-          <div className="grid grid-cols-2 gap-2">
-            {links.map((link, i) => (
-              <button
-                key={link.id}
-                onClick={() => handleLinkClick(link)}
-                className="flex items-center justify-center gap-2 bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.05] hover:border-white/[0.1] rounded-xl py-3 text-sm text-white/60 hover:text-white transition-all active:scale-95"
-              >
-                <LinkIcon type={link.icon} />
-                <span>{link.name}</span>
-              </button>
-            ))}
-          </div>
-        </div>
+      <div className="grid grid-cols-2 gap-2 animate-fade-in" style={{ animationDelay: '250ms' }}>
+        {links.map((link) => (
+          <button
+            key={link.id}
+            onClick={() => handleLinkClick(link)}
+            className="flex items-center justify-center gap-2 bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.08] hover:border-white/[0.12] rounded-2xl py-3.5 text-sm text-white/60 hover:text-white transition-all active:scale-95"
+          >
+            <LinkIcon type={link.icon} />
+            <span>{link.name}</span>
+          </button>
+        ))}
       </div>
       
       {/* Buy Button */}
@@ -258,7 +247,7 @@ export default function InfoPage() {
         className="bg-gradient-to-r from-red-500 to-rose-500 rounded-2xl py-4 text-center font-bold text-white shadow-lg shadow-red-500/20 hover:shadow-red-500/30 transition-all hover:scale-[1.02] active:scale-[0.98] animate-fade-in"
         style={{ animationDelay: '300ms' }}
       >
-        Buy $BYEMONEY
+        Get $BYEMONEY
       </button>
       
       {/* Disclaimer */}
