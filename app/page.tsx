@@ -12,6 +12,7 @@ export default function App() {
   const [activeIndex, setActiveIndex] = useState(1);
   const [userFid, setUserFid] = useState<number | undefined>();
   const [username, setUsername] = useState<string | undefined>();
+  const [pfpUrl, setPfpUrl] = useState<string | undefined>();
 
   useEffect(() => {
     const initSDK = async () => {
@@ -22,6 +23,7 @@ export default function App() {
         if (context?.user) {
           setUserFid(context.user.fid);
           setUsername(context.user.username);
+          setPfpUrl(context.user.pfpUrl);
         }
         console.log('Mini App SDK initialized');
       } catch (error) {
@@ -37,7 +39,11 @@ export default function App() {
 
   return (
     <div className="h-full flex flex-col">
-      <Header />
+      <Header 
+        userFid={userFid} 
+        username={username} 
+        pfpUrl={pfpUrl}
+      />
       
       <SwipeContainer activeIndex={activeIndex} onNavigate={handleNavigate}>
         <PredictionMarket userFid={userFid} username={username} />

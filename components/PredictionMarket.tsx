@@ -108,7 +108,7 @@ const publicClient = createPublicClient({
 });
 
 const AVAILABLE_COINS = [
-  { symbol: 'ETH', name: 'Ethereum', icon: '/eth.png', active: true },
+  { symbol: 'ETH', name: 'Ethereum', icon: 'https://assets.coingecko.com/coins/images/279/small/ethereum.png', active: true },
   { symbol: 'BYEMONEY', name: 'ByeMoney', icon: '/logo.png', active: false },
   { symbol: 'CLANKER', name: 'Clanker', icon: '/clanker.png', active: false },
 ];
@@ -1641,11 +1641,11 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
                       triggerHaptic('error');
                     }
                   }}
-                  className={`flex-shrink-0 snap-center w-28 rounded-2xl p-4 transition-all ${
+                  className={`flex-shrink-0 snap-center w-28 rounded-2xl p-4 transition-all overflow-hidden ${
                     coin.active 
                       ? selectedCoinIndex === index
-                        ? 'bg-white text-black scale-105 shadow-lg shadow-white/20'
-                        : 'bg-white/10 border border-white/20 hover:bg-white/20 hover:scale-102'
+                        ? 'bg-white text-black ring-2 ring-white ring-offset-2 ring-offset-black'
+                        : 'bg-white/10 border border-white/20 hover:bg-white/20'
                       : 'bg-white/5 border border-white/10 opacity-50'
                   }`}
                 >

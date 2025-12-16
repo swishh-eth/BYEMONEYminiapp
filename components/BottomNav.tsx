@@ -28,7 +28,21 @@ const Icons: Record<string, JSX.Element> = {
   ),
 };
 
+const triggerHaptic = async (type: 'light' | 'medium' | 'heavy' | 'error' | 'success') => {
+  try {
+    const { sdk } = await import('@farcaster/miniapp-sdk');
+    sdk.haptics.impactOccurred(type === 'error' ? 'heavy' : type === 'success' ? 'medium' : type);
+  } catch {
+    // Haptics not available
+  }
+};
+
 export default function BottomNav({ activeIndex, onNavigate }: BottomNavProps) {
+  const handlePress = (index: number) => {
+    triggerHaptic('light');
+    onNavigate(index);
+  };
+
   return (
     <nav className="bg-black flex-shrink-0 border-t border-white/10">
       <div className="flex justify-around items-center py-3 px-4">
@@ -37,15 +51,12 @@ export default function BottomNav({ activeIndex, onNavigate }: BottomNavProps) {
           return (
             <button
               key={page.id}
-              onClick={() => onNavigate(index)}
-              className={`p-2 transition-all duration-300 ${
+              onClick={() => handlePress(index)}
+              className={`p-2 transition-all duration-200 ${
                 isActive 
-                  ? 'text-white scale-125' 
+                  ? 'text-white scale-110' 
                   : 'text-red-500 hover:text-red-400 scale-100'
               }`}
-              style={{
-                filter: isActive ? 'drop-shadow(0 0 8px rgba(255,255,255,0.8)) drop-shadow(0 0 20px rgba(255,255,255,0.5))' : 'none'
-              }}
             >
               {Icons[page.id]}
             </button>
