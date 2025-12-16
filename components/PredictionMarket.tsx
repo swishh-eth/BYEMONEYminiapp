@@ -177,9 +177,11 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [showContent, setShowContent] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
+  const [ticketSectionClosing, setTicketSectionClosing] = useState(false);
   
   const ticketSectionRef = useRef<HTMLDivElement>(null);
   const mainContainerRef = useRef<HTMLDivElement>(null);
+  const buyButtonRef = useRef<HTMLButtonElement>(null);
   
   const closeCoinSelector = () => {
     setCoinSelectorClosing(true);
@@ -668,21 +670,20 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
     playClick();
     triggerHaptic('light');
     if (selectedDirection === direction) {
-      setSelectedDirection(null);
+      // Close with animation
+      setTicketSectionClosing(true);
+      setTimeout(() => {
+        setSelectedDirection(null);
+        setTicketSectionClosing(false);
+      }, 250);
     } else {
       setSelectedDirection(direction);
-      // Smooth scroll to ticket purchase section after it renders
+      // Smooth scroll to buy button after it renders
       setTimeout(() => {
-        if (ticketSectionRef.current && mainContainerRef.current) {
-          const container = mainContainerRef.current;
-          const element = ticketSectionRef.current;
-          const elementTop = element.offsetTop - container.offsetTop;
-          container.scrollTo({
-            top: elementTop - 100,
-            behavior: 'smooth'
-          });
+        if (buyButtonRef.current) {
+          buyButtonRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
-      }, 150);
+      }, 300);
     }
   };
 
@@ -1395,8 +1396,8 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
               </button>
             </div>
 
-            {selectedDirection && (
-              <div ref={ticketSectionRef} className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-4 animate-slide-up">
+            {(selectedDirection || ticketSectionClosing) && (
+              <div ref={ticketSectionRef} className={`bg-white/[0.03] border border-white/[0.08] rounded-xl p-4 ${ticketSectionClosing ? 'animate-slide-out' : 'animate-slide-in'}`}>
                 <div className="flex items-center justify-between mb-3">
                   <p className="text-[10px] text-white/40 uppercase">Tickets</p>
                   <p className="text-[10px] text-white/40">
@@ -1451,11 +1452,12 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
               </div>
             )}
 
-            {selectedDirection && (
+            {(selectedDirection || ticketSectionClosing) && (
               <button
+                ref={buyButtonRef}
                 onClick={handleBuyClick}
                 disabled={txState !== 'idle'}
-                className={`w-full py-4 rounded-xl font-bold transition-all hover:scale-[1.02] active:scale-[0.98] ${
+                className={`w-full py-4 rounded-xl font-bold transition-all hover:scale-[1.02] active:scale-[0.98] ${ticketSectionClosing ? 'animate-slide-out' : 'animate-slide-in'} ${
                   selectedDirection === 'up'
                     ? 'bg-gradient-to-r from-white to-white text-black shadow-lg shadow-white/20'
                     : 'bg-gradient-to-r from-red-500 to-rose-500 text-white shadow-lg shadow-red-500/20'
@@ -1701,7 +1703,7 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
                 <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
                   <span className="text-xs font-bold">3</span>
                 </div>
-                <p><span className="text-white font-medium">Wait</span> - Each round lasts 24 hours. Price is checked via Chainlink oracle 5 minute cutoff.</p>
+                <p><span className="text-white font-medium">Wait</span> - Each round lasts 1 hour. Price is checked via Chainlink oracle</p>
               </div>
               
               <div className="flex gap-3">
@@ -1913,6 +1915,20 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
         }
         .animate-slide-up {
           animation: slide-up 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .animate-slide-in {
+          animation: slide-in 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        @keyframes slide-in {
+          from { opacity: 0; transform: translateY(-10px); max-height: 0; }
+          to { opacity: 1; transform: translateY(0); max-height: 200px; }
+        }
+        .animate-slide-out {
+          animation: slide-out 0.25s ease-in forwards;
+        }
+        @keyframes slide-out {
+          from { opacity: 1; transform: translateY(0); max-height: 200px; }
+          to { opacity: 0; transform: translateY(-10px); max-height: 0; }
         }
         .animate-slide-down {
           animation: slide-down 0.3s ease-in forwards;
