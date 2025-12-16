@@ -176,8 +176,10 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
   const [selectedCoinIndex, setSelectedCoinIndex] = useState(0);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [showContent, setShowContent] = useState(false);
+  const [showInfo, setShowInfo] = useState(false);
   
   const ticketSectionRef = useRef<HTMLDivElement>(null);
+  const mainContainerRef = useRef<HTMLDivElement>(null);
   
   const closeCoinSelector = () => {
     setCoinSelectorClosing(true);
@@ -669,10 +671,18 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
       setSelectedDirection(null);
     } else {
       setSelectedDirection(direction);
-      // Smooth scroll to ticket purchase section
+      // Smooth scroll to ticket purchase section after it renders
       setTimeout(() => {
-        ticketSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }, 100);
+        if (ticketSectionRef.current && mainContainerRef.current) {
+          const container = mainContainerRef.current;
+          const element = ticketSectionRef.current;
+          const elementTop = element.offsetTop - container.offsetTop;
+          container.scrollTo({
+            top: elementTop - 100,
+            behavior: 'smooth'
+          });
+        }
+      }, 150);
     }
   };
 
@@ -1080,7 +1090,7 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
         />
       </div>
 
-      <div className="relative flex flex-col h-full p-4 gap-3 overflow-y-auto scrollbar-hide">
+      <div ref={mainContainerRef} className="relative flex flex-col h-full p-4 gap-3 overflow-y-auto scrollbar-hide">
         {/* Header */}
         <div className="flex items-center justify-between">
           {/* Coin Selector Tab */}
@@ -1101,15 +1111,25 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
             </svg>
           </button>
           
-          {/* History Button */}
-          <button
-            onClick={() => { setShowHistory(true); playClick(); triggerHaptic('light'); }}
-            className="w-10 h-10 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center transition-all hover:scale-105 active:scale-95"
-          >
-            <svg className="w-5 h-5 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-              <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          </button>
+          {/* Info & History Buttons */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => { setShowInfo(true); playClick(); triggerHaptic('light'); }}
+              className="w-10 h-10 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center transition-all hover:scale-105 active:scale-95"
+            >
+              <svg className="w-5 h-5 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                <path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </button>
+            <button
+              onClick={() => { setShowHistory(true); playClick(); triggerHaptic('light'); }}
+              className="w-10 h-10 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center transition-all hover:scale-105 active:scale-95"
+            >
+              <svg className="w-5 h-5 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </button>
+          </div>
         </div>
 
         {/* Unclaimed Winnings Banner */}
@@ -1384,45 +1404,49 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
                   </p>
                 </div>
 
-                <div className="flex items-center gap-3">
+                <div className="flex items-center justify-center gap-1">
+                  <button
+                    onClick={() => { setTicketCount(Math.max(1, ticketCount - 10)); playClick(); triggerHaptic('light'); }}
+                    className="w-10 h-10 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center text-xs font-medium transition-all active:scale-95"
+                  >
+                    -10
+                  </button>
+                  <button
+                    onClick={() => { setTicketCount(Math.max(1, ticketCount - 5)); playClick(); triggerHaptic('light'); }}
+                    className="w-9 h-10 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center text-xs font-medium transition-all active:scale-95"
+                  >
+                    -5
+                  </button>
                   <button
                     onClick={() => { setTicketCount(Math.max(1, ticketCount - 1)); playClick(); triggerHaptic('light'); }}
-                    className="w-10 h-10 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center text-lg transition-all active:scale-95"
+                    className="w-8 h-10 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center text-sm transition-all active:scale-95"
                   >
                     −
                   </button>
                   
-                  <div className="flex-1 text-center">
-                    <input
-                      type="number"
-                      value={ticketCount}
-                      onChange={(e) => setTicketCount(Math.max(1, parseInt(e.target.value) || 1))}
-                      className="w-full bg-transparent text-center text-2xl font-bold outline-none"
-                      min={1}
-                    />
-                    <p className="text-[10px] text-white/40">{(ticketCount * TICKET_PRICE_ETH).toFixed(3)} ETH</p>
+                  <div className="w-16 text-center px-2">
+                    <p className="text-2xl font-bold">{ticketCount}</p>
+                    <p className="text-[9px] text-white/40">{(ticketCount * TICKET_PRICE_ETH).toFixed(3)} ETH</p>
                   </div>
 
                   <button
                     onClick={() => { setTicketCount(ticketCount + 1); playClick(); triggerHaptic('light'); }}
-                    className="w-10 h-10 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center text-lg transition-all active:scale-95"
+                    className="w-8 h-10 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center text-sm transition-all active:scale-95"
                   >
                     +
                   </button>
-                </div>
-
-                <div className="flex gap-2 mt-3">
-                  {[1, 5, 10, 25].map((n) => (
-                    <button
-                      key={n}
-                      onClick={() => { setTicketCount(n); playClick(); triggerHaptic('light'); }}
-                      className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition-all active:scale-95 ${
-                        ticketCount === n ? 'bg-white/15 text-white' : 'bg-white/5 text-white/50 hover:bg-white/10'
-                      }`}
-                    >
-                      {n}
-                    </button>
-                  ))}
+                  <button
+                    onClick={() => { setTicketCount(ticketCount + 5); playClick(); triggerHaptic('light'); }}
+                    className="w-9 h-10 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center text-xs font-medium transition-all active:scale-95"
+                  >
+                    +5
+                  </button>
+                  <button
+                    onClick={() => { setTicketCount(ticketCount + 10); playClick(); triggerHaptic('light'); }}
+                    className="w-10 h-10 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center text-xs font-medium transition-all active:scale-95"
+                  >
+                    +10
+                  </button>
                 </div>
               </div>
             )}
@@ -1640,6 +1664,62 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
           </p>
         </div>
       </div>
+
+      {/* Info Modal */}
+      {showInfo && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in">
+          <div className="absolute inset-0 bg-black/90 backdrop-blur-md" onClick={() => setShowInfo(false)} />
+          <div className="relative w-full max-w-sm bg-black border border-white/10 rounded-2xl p-5 animate-scale-in">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-bold">How It Works</h2>
+              <button 
+                onClick={() => setShowInfo(false)}
+                className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center hover:bg-white/10 transition-all"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                  <path d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            <div className="space-y-4 text-sm text-white/70">
+              <div className="flex gap-3">
+                <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
+                  <span className="text-xs font-bold">1</span>
+                </div>
+                <p><span className="text-white font-medium">Predict</span> - Choose PUMP (price up) or DUMP (price down) before the round ends</p>
+              </div>
+              
+              <div className="flex gap-3">
+                <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
+                  <span className="text-xs font-bold">2</span>
+                </div>
+                <p><span className="text-white font-medium">Bet</span> - Buy tickets at 0.001 ETH each. More tickets = bigger potential win</p>
+              </div>
+              
+              <div className="flex gap-3">
+                <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
+                  <span className="text-xs font-bold">3</span>
+                </div>
+                <p><span className="text-white font-medium">Wait</span> - Each round lasts 24 hours. Price is checked via Chainlink oracle 5 minute cutoff.</p>
+              </div>
+              
+              <div className="flex gap-3">
+                <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
+                  <span className="text-xs font-bold">4</span>
+                </div>
+                <p><span className="text-white font-medium">Win</span> - If you predicted correctly, claim your share of the losing pool!</p>
+              </div>
+              
+              <div className="mt-4 p-3 bg-white/5 rounded-xl text-xs">
+                <p className="text-white/50">
+                  <span className="text-red-400">5% fee</span> is taken from the pool. Winnings are split proportionally based on your tickets.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Coin Selector Modal */}
       {showCoinSelector && (
