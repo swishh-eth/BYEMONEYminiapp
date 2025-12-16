@@ -1192,7 +1192,7 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
           {hasMarket && startPriceUsd > 0 && (
             <div className="mt-3 pt-3 border-t border-white/5 flex items-center justify-between text-xs text-white/40">
               <span>Start: ${startPriceUsd.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-              <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-orange-500/10 text-orange-400">
+              <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-white/5 text-white/60">
                 <span className="text-[10px] font-medium">Chainlink</span>
               </span>
             </div>
