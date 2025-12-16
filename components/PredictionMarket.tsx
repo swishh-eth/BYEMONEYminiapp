@@ -108,11 +108,9 @@ const publicClient = createPublicClient({
 });
 
 const AVAILABLE_COINS = [
-  { symbol: 'ETH', name: 'Ethereum', icon: 'https://assets.coingecko.com/coins/images/279/small/ethereum.png', active: true },
-  { symbol: 'BTC', name: 'Bitcoin', icon: 'https://assets.coingecko.com/coins/images/1/small/bitcoin.png', active: false },
-  { symbol: 'SOL', name: 'Solana', icon: 'https://assets.coingecko.com/coins/images/4128/small/solana.png', active: false },
-  { symbol: 'DOGE', name: 'Dogecoin', icon: 'https://assets.coingecko.com/coins/images/5/small/dogecoin.png', active: false },
-  { symbol: 'PEPE', name: 'Pepe', icon: 'https://assets.coingecko.com/coins/images/29850/small/pepe-token.jpeg', active: false },
+  { symbol: 'ETH', name: 'Ethereum', icon: '/eth.png', active: true },
+  { symbol: 'BYEMONEY', name: 'ByeMoney', icon: '/logo.png', active: false },
+  { symbol: 'CLANKER', name: 'Clanker', icon: '/clanker.png', active: false },
 ];
 
 interface PredictionMarketProps {
@@ -174,7 +172,16 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
   const [showConfetti, setShowConfetti] = useState(false);
   const [claimingMarketId, setClaimingMarketId] = useState<number | null>(null);
   const [showCoinSelector, setShowCoinSelector] = useState(false);
+  const [coinSelectorClosing, setCoinSelectorClosing] = useState(false);
   const [selectedCoinIndex, setSelectedCoinIndex] = useState(0);
+  
+  const closeCoinSelector = () => {
+    setCoinSelectorClosing(true);
+    setTimeout(() => {
+      setShowCoinSelector(false);
+      setCoinSelectorClosing(false);
+    }, 300);
+  };
   
   // Safe access to selected coin
   const selectedCoin = AVAILABLE_COINS[selectedCoinIndex] || AVAILABLE_COINS[0];
@@ -1174,9 +1181,16 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
         {hasMarket && !isResolved && !isCancelled && (
           <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-3">
             <div className="flex items-center justify-between">
-              <p className="text-[10px] text-white/40 uppercase tracking-wider">
-                {isLocked ? '🔒 Locked' : 'Ends In'}
-              </p>
+              <div className="flex items-center gap-1.5">
+                {isLocked && (
+                  <svg className="w-3 h-3 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                    <path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                )}
+                <p className="text-[10px] text-white/40 uppercase tracking-wider">
+                  {isLocked ? 'Locked' : 'Ends In'}
+                </p>
+              </div>
               <div className="flex items-center gap-1">
                 <TimeBlock value={timeLeft.hours} />
                 <span className="text-black animate-pulse">:</span>
@@ -1581,8 +1595,10 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
         {/* Locked State */}
         {isLocked && (
           <div className="flex-1 flex flex-col items-center justify-center py-6 animate-fade-in">
-            <div className="w-16 h-16 rounded-2xl bg-yellow-500/10 flex items-center justify-center animate-pulse">
-              <span className="text-2xl">🔒</span>
+            <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center">
+              <svg className="w-8 h-8 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                <path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
             </div>
             <p className="text-white/50 text-sm mt-3">Betting Locked</p>
             <p className="text-white/30 text-xs">Waiting for resolution</p>
@@ -1599,26 +1615,26 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
 
       {/* Coin Selector Modal */}
       {showCoinSelector && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center animate-fade-in">
+        <div className={`fixed inset-0 z-50 flex items-end justify-center ${coinSelectorClosing ? 'animate-fade-out' : 'animate-fade-in'}`}>
           <div 
             className="absolute inset-0 bg-black/90 backdrop-blur-md" 
-            onClick={() => setShowCoinSelector(false)} 
+            onClick={closeCoinSelector} 
           />
-          <div className="relative w-full max-w-md bg-gradient-to-t from-black via-black/95 to-transparent pt-20 pb-8 px-4 animate-slide-up">
+          <div className={`relative w-full max-w-md bg-gradient-to-t from-black via-black/95 to-transparent pt-20 pb-8 px-4 ${coinSelectorClosing ? 'animate-slide-down' : 'animate-slide-up'}`}>
             <div className="text-center mb-6">
               <h3 className="text-xl font-bold text-white mb-1">Select Market</h3>
               <p className="text-sm text-white/40">Choose a coin to predict</p>
             </div>
             
             {/* Coin Carousel */}
-            <div className="flex gap-3 overflow-x-auto pb-4 px-2 snap-x snap-mandatory scrollbar-hide">
+            <div className="flex gap-3 overflow-x-auto pb-4 px-2 snap-x snap-mandatory scrollbar-hide justify-center">
               {AVAILABLE_COINS.map((coin, index) => (
                 <button
                   key={coin.symbol}
                   onClick={() => {
                     if (coin.active) {
                       setSelectedCoinIndex(index);
-                      setShowCoinSelector(false);
+                      closeCoinSelector();
                       playClick();
                       triggerHaptic('medium');
                     } else {
@@ -1776,11 +1792,25 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
         .animate-fade-in {
           animation: fade-in 0.3s ease-out forwards;
         }
+        .animate-fade-out {
+          animation: fade-out 0.3s ease-out forwards;
+        }
+        @keyframes fade-out {
+          from { opacity: 1; }
+          to { opacity: 0; }
+        }
         .animate-scale-in {
           animation: scale-in 0.2s ease-out;
         }
         .animate-slide-up {
           animation: slide-up 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .animate-slide-down {
+          animation: slide-down 0.3s ease-in forwards;
+        }
+        @keyframes slide-down {
+          from { opacity: 1; transform: translateY(0); }
+          to { opacity: 0; transform: translateY(100%); }
         }
         .animate-confetti {
           animation: confetti 2s ease-out forwards;
