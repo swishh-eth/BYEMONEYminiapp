@@ -208,11 +208,19 @@ export default function InfoPage() {
         ].map((stat) => (
           <div 
             key={stat.label}
-            className="bg-white/[0.03] border border-white/[0.08] rounded-2xl p-3 text-center animate-fade-in"
+            className="relative bg-white/[0.03] border border-white/[0.08] rounded-2xl p-3 text-center overflow-hidden animate-fade-in"
             style={{ animationDelay: stat.delay }}
           >
-            <p className="text-[9px] text-white/40 uppercase tracking-wider">{stat.label}</p>
-            <p className="font-bold text-white text-sm mt-1">{stat.value}</p>
+            <div className="absolute inset-0 opacity-[0.03]" 
+              style={{
+                backgroundImage: `radial-gradient(circle at 1px 1px, white 1px, transparent 0)`,
+                backgroundSize: '20px 20px',
+              }}
+            />
+            <div className="relative">
+              <p className="text-[9px] text-white/40 uppercase tracking-wider">{stat.label}</p>
+              <p className="font-bold text-white text-sm mt-1">{stat.value}</p>
+            </div>
           </div>
         ))}
       </div>
@@ -223,10 +231,18 @@ export default function InfoPage() {
           <button
             key={link.id}
             onClick={() => handleLinkClick(link)}
-            className="flex items-center justify-center gap-2 bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.08] hover:border-white/[0.12] rounded-2xl py-3.5 text-sm text-white/60 hover:text-white transition-all active:scale-95"
+            className="relative flex items-center justify-center gap-2 bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.08] hover:border-white/[0.12] rounded-2xl py-3.5 text-sm text-white/60 hover:text-white transition-all active:scale-95 overflow-hidden"
           >
-            <LinkIcon type={link.icon} />
-            <span>{link.name}</span>
+            <div className="absolute inset-0 opacity-[0.03]" 
+              style={{
+                backgroundImage: `radial-gradient(circle at 1px 1px, white 1px, transparent 0)`,
+                backgroundSize: '20px 20px',
+              }}
+            />
+            <div className="relative flex items-center gap-2">
+              <LinkIcon type={link.icon} />
+              <span>{link.name}</span>
+            </div>
           </button>
         ))}
       </div>
@@ -234,7 +250,7 @@ export default function InfoPage() {
       {/* Buy Button */}
       <button 
         onClick={handleBuyClick}
-        className="bg-white rounded-2xl py-4 text-center font-bold text-black shadow-lg shadow-white/20 hover:shadow-white/30 transition-all hover:scale-[1.02] active:scale-[0.98] animate-fade-in"
+        className="bg-white rounded-2xl py-4 text-center font-bold text-black transition-all hover:scale-[1.02] active:scale-[0.98] animate-fade-in"
         style={{ animationDelay: '300ms' }}
       >
         GET $BYEMONEY
