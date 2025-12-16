@@ -176,6 +176,9 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
   const [showCoinSelector, setShowCoinSelector] = useState(false);
   const [selectedCoinIndex, setSelectedCoinIndex] = useState(0);
   
+  // Safe access to selected coin
+  const selectedCoin = AVAILABLE_COINS[selectedCoinIndex] || AVAILABLE_COINS[0];
+  
   const [marketData, setMarketData] = useState<{
     id: bigint;
     startPrice: bigint;
@@ -1048,8 +1051,8 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
           >
             <div className="relative">
               <img 
-                src={AVAILABLE_COINS[selectedCoinIndex].icon}
-                alt={AVAILABLE_COINS[selectedCoinIndex].symbol}
+                src={selectedCoin.icon}
+                alt={selectedCoin.symbol}
                 className="w-8 h-8 rounded-full ring-2 ring-white/20 group-hover:ring-white/40 transition-all"
               />
               <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-black rounded-full flex items-center justify-center border border-white/20">
@@ -1061,7 +1064,7 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
           </button>
           
           <h1 className="text-lg font-bold tracking-tight">
-            {AVAILABLE_COINS[selectedCoinIndex].symbol} Prediction
+            {selectedCoin.symbol} Prediction
           </h1>
           
           <button
@@ -1098,40 +1101,31 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
           </button>
         )}
 
-        {/* Price Card - Enhanced */}
-        <div className="relative overflow-hidden bg-gradient-to-br from-white/[0.05] to-transparent border border-white/[0.08] rounded-2xl p-4 hover:border-white/20 transition-all group">
-          {/* Animated background glow */}
-          <div className={`absolute -top-20 -right-20 w-40 h-40 rounded-full blur-3xl transition-opacity duration-1000 ${
-            priceChange >= 0 ? 'bg-white/10' : 'bg-red-500/10'
-          } opacity-0 group-hover:opacity-100`} />
-          
-          <div className="relative flex items-center justify-between">
+        {/* Price Card */}
+        <div className="bg-white/[0.03] border border-white/[0.08] rounded-2xl p-4">
+          <div className="flex items-center justify-between">
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <p className="text-[10px] text-white/40 uppercase tracking-wider">{AVAILABLE_COINS[selectedCoinIndex].symbol}/USD</p>
+                <p className="text-[10px] text-white/40 uppercase tracking-wider">{selectedCoin.symbol}/USD</p>
                 <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-white/5">
                   <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
                   <span className="text-[8px] text-white/40">LIVE</span>
                 </div>
               </div>
-              <div className="flex items-baseline gap-1">
-                <span className="text-3xl font-bold tracking-tight">
-                  ${currentPriceUsd > 0 ? Math.floor(currentPriceUsd).toLocaleString() : '---'}
-                </span>
-                {currentPriceUsd > 0 && (
-                  <span className="text-xl font-bold text-white/60">
-                    .{(currentPriceUsd % 1).toFixed(2).slice(2)}
-                  </span>
-                )}
-              </div>
+              <p className="text-3xl font-bold tracking-tight">
+                {currentPriceUsd > 0 
+                  ? `$${currentPriceUsd.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                  : '$---'
+                }
+              </p>
             </div>
-            {hasMarket && !isResolved && priceChange !== 0 && (
+            {hasMarket && !isResolved && startPriceUsd > 0 && (
               <div className="text-right">
                 <p className="text-[10px] text-white/40 mb-1">Since Start</p>
                 <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg ${
                   priceChange >= 0 ? 'bg-white/10' : 'bg-red-500/20'
                 }`}>
-                  <svg className={`w-3 h-3 ${priceChange >= 0 ? 'text-white rotate-0' : 'text-red-400 rotate-180'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}>
+                  <svg className={`w-3 h-3 ${priceChange >= 0 ? 'text-white' : 'text-red-400 rotate-180'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}>
                     <path d="M5 15l7-7 7 7" />
                   </svg>
                   <span className={`text-lg font-bold ${priceChange >= 0 ? 'text-white' : 'text-red-400'}`}>
@@ -1142,17 +1136,9 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
             )}
           </div>
           {hasMarket && startPriceUsd > 0 && (
-            <div className="relative mt-3 pt-3 border-t border-white/5 flex items-center justify-between text-xs text-white/40">
-              <span className="flex items-center gap-1">
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                  <path d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                </svg>
-                Start: ${startPriceUsd.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-              </span>
+            <div className="mt-3 pt-3 border-t border-white/5 flex items-center justify-between text-xs text-white/40">
+              <span>Start: ${startPriceUsd.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
               <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-orange-500/10 text-orange-400">
-                <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
-                </svg>
                 <span className="text-[10px] font-medium">Chainlink</span>
               </span>
             </div>
