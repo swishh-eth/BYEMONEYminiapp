@@ -244,10 +244,10 @@ export default function InfoPage() {
       {/* Buy Button */}
       <button 
         onClick={handleBuyClick}
-        className="bg-gradient-to-r from-red-500 to-rose-500 rounded-2xl py-4 text-center font-bold text-white shadow-lg shadow-red-500/20 hover:shadow-red-500/30 transition-all hover:scale-[1.02] active:scale-[0.98] animate-fade-in"
+        className="bg-white rounded-2xl py-4 text-center font-bold text-black shadow-lg shadow-white/20 hover:shadow-white/30 transition-all hover:scale-[1.02] active:scale-[0.98] animate-fade-in"
         style={{ animationDelay: '300ms' }}
       >
-        Get $BYEMONEY
+        GET $BYEMONEY
       </button>
       
       {/* Disclaimer */}
