@@ -123,17 +123,7 @@ export default function InfoPage() {
   };
 
   return (
-    <div className="flex flex-col h-full overflow-y-auto scrollbar-hide p-4 gap-3 relative">
-      {/* Dot pattern background */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute inset-0 opacity-[0.02]" 
-          style={{
-            backgroundImage: `radial-gradient(circle at 1px 1px, white 1px, transparent 0)`,
-            backgroundSize: '24px 24px',
-          }}
-        />
-      </div>
-
+    <div className="flex flex-col h-full overflow-y-auto scrollbar-hide p-4 gap-3">
       {/* Video Header */}
       <div className="relative bg-white/[0.03] border border-white/[0.08] rounded-2xl overflow-hidden aspect-video animate-fade-in">
         <div className="absolute inset-0 opacity-[0.03]" 
@@ -192,7 +182,7 @@ export default function InfoPage() {
         <div className="relative">
           <p className="text-[10px] text-white/40 uppercase tracking-wider mb-3">Contract Address</p>
           <div className="flex items-center gap-2">
-            <code className="flex-1 text-xs text-white/60 bg-white/[0.03] border border-white/[0.05] rounded-xl px-3 py-2.5 font-mono truncate">
+            <code className="flex-1 text-xs text-white/60 bg-black/50 rounded-xl px-3 py-2.5 font-mono truncate">
               {TOKEN.address}
             </code>
             <button 
