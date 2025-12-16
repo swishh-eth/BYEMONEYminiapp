@@ -174,6 +174,10 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
   const [showCoinSelector, setShowCoinSelector] = useState(false);
   const [coinSelectorClosing, setCoinSelectorClosing] = useState(false);
   const [selectedCoinIndex, setSelectedCoinIndex] = useState(0);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [showContent, setShowContent] = useState(false);
+  
+  const ticketSectionRef = useRef<HTMLDivElement>(null);
   
   const closeCoinSelector = () => {
     setCoinSelectorClosing(true);
@@ -549,11 +553,22 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
         setCurrentPrice(price);
       }
       setIsBettingOpen(betting);
+      
+      // Mark initial loading complete
+      if (isInitialLoading) {
+        setIsInitialLoading(false);
+        setTimeout(() => setShowContent(true), 100);
+      }
     } catch (error) {
       console.error('Failed to fetch market:', error);
       // Don't reset state on error - keep existing values
+      // Still stop loading on error
+      if (isInitialLoading) {
+        setIsInitialLoading(false);
+        setTimeout(() => setShowContent(true), 100);
+      }
     }
-  }, []);
+  }, [isInitialLoading]);
 
   const fetchUserPosition = useCallback(async () => {
     if (!walletAddress || !marketData || marketData.id === 0n) return;
@@ -654,6 +669,10 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
       setSelectedDirection(null);
     } else {
       setSelectedDirection(direction);
+      // Smooth scroll to ticket purchase section
+      setTimeout(() => {
+        ticketSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 100);
     }
   };
 
@@ -911,7 +930,7 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
           />
         </div>
 
-        <div className="relative flex flex-col h-full p-4 gap-3 overflow-y-auto">
+        <div className="relative flex flex-col h-full p-4 gap-3 overflow-y-auto scrollbar-hide">
           <div className="flex items-center justify-between mb-2">
             <button 
               onClick={() => { setShowHistory(false); playClick(); triggerHaptic('light'); }}
@@ -1017,8 +1036,20 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
     );
   }
 
+  // Initial loading screen
+  if (isInitialLoading) {
+    return (
+      <div className="flex flex-col h-full bg-black text-white items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-10 h-10 border-2 border-red-500/30 border-t-red-500 rounded-full animate-spin" />
+          <p className="text-white/50 text-sm">Loading $BYEMONEY markets...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex flex-col h-full bg-black text-white overflow-hidden">
+    <div className={`flex flex-col h-full bg-black text-white overflow-hidden transition-opacity duration-500 ${showContent ? 'opacity-100' : 'opacity-0'}`}>
       {/* Confetti */}
       {showConfetti && (
         <div className="fixed inset-0 pointer-events-none z-50">
@@ -1049,7 +1080,7 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
         />
       </div>
 
-      <div className="relative flex flex-col h-full p-4 gap-3 overflow-y-auto">
+      <div className="relative flex flex-col h-full p-4 gap-3 overflow-y-auto scrollbar-hide">
         {/* Header */}
         <div className="flex items-center justify-between">
           {/* Coin Selector Tab */}
@@ -1345,7 +1376,7 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
             </div>
 
             {selectedDirection && (
-              <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-4 animate-slide-up">
+              <div ref={ticketSectionRef} className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-4 animate-slide-up">
                 <div className="flex items-center justify-between mb-3">
                   <p className="text-[10px] text-white/40 uppercase">Tickets</p>
                   <p className="text-[10px] text-white/40">
@@ -1638,16 +1669,17 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
                       triggerHaptic('error');
                     }
                   }}
-                  className={`flex-shrink-0 snap-center w-28 rounded-2xl p-4 transition-all overflow-hidden ${
+                  style={{ animationDelay: `${index * 50}ms` }}
+                  className={`flex-shrink-0 snap-center w-24 rounded-xl p-3 transition-all animate-pop-in ${
                     coin.active 
                       ? selectedCoinIndex === index
-                        ? 'bg-white text-black ring-2 ring-white ring-offset-2 ring-offset-black'
+                        ? 'bg-white text-black'
                         : 'bg-white/10 border border-white/20 hover:bg-white/20'
                       : 'bg-white/5 border border-white/10 opacity-50'
                   }`}
                 >
                   <div className="flex flex-col items-center gap-2">
-                    <div className={`relative w-12 h-12 rounded-full overflow-hidden ${
+                    <div className={`relative w-10 h-10 rounded-full overflow-hidden ${
                       !coin.active && 'grayscale'
                     }`}>
                       <img 
@@ -1657,17 +1689,17 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
                       />
                       {!coin.active && (
                         <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                          <svg className="w-5 h-5 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                          <svg className="w-4 h-4 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
                             <path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                           </svg>
                         </div>
                       )}
                     </div>
                     <div className="text-center">
-                      <p className={`font-bold text-sm ${
+                      <p className={`font-bold text-xs ${
                         coin.active && selectedCoinIndex === index ? 'text-black' : 'text-white'
                       }`}>{coin.symbol}</p>
-                      <p className={`text-[10px] ${
+                      <p className={`text-[9px] ${
                         coin.active 
                           ? selectedCoinIndex === index ? 'text-black/60' : 'text-white/40'
                           : 'text-white/30'
@@ -1808,6 +1840,15 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
         @keyframes slide-down {
           from { opacity: 1; transform: translateY(0); }
           to { opacity: 0; transform: translateY(100%); }
+        }
+        .animate-pop-in {
+          animation: pop-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+          opacity: 0;
+          transform: scale(0.8);
+        }
+        @keyframes pop-in {
+          from { opacity: 0; transform: scale(0.8); }
+          to { opacity: 1; transform: scale(1); }
         }
         .animate-confetti {
           animation: confetti 2s ease-out forwards;
