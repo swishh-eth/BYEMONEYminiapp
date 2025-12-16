@@ -1,8 +1,8 @@
 {
   "accountAssociation": {
-    "header": "YOUR_HEADER_FROM_WARPCAST",
-    "payload": "YOUR_PAYLOAD_FROM_WARPCAST",
-    "signature": "YOUR_SIGNATURE_FROM_WARPCAST"
+    "header": "eyJmaWQiOjIwOTk1MSwidHlwZSI6ImF1dGgiLCJrZXkiOiIweEZkNjRmNjMyYzdiNzk1NDgzNkExOWM1QzA2RTY1QjM5QTE4NzZCNjgifQ",
+    "payload": "eyJkb21haW4iOiJieWVtb25leS52ZXJjZWwuYXBwIn0",
+    "signature": "dT6Kjssm5rDcSkbUeHBPGHErRsTAbNxzlwZ6F0tTFiF6Ftfwr248NsUoh4UEcs8zstNs93UghniYKigi1YLOWhw="
   },
   "miniapp": {
     "version": "1",
