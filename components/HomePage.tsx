@@ -245,17 +245,7 @@ export default function HomePage() {
   ];
 
   return (
-    <div className="flex flex-col h-full p-4 gap-3 overflow-y-auto scrollbar-hide relative">
-      {/* Dot pattern background */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute inset-0 opacity-[0.02]" 
-          style={{
-            backgroundImage: `radial-gradient(circle at 1px 1px, white 1px, transparent 0)`,
-            backgroundSize: '24px 24px',
-          }}
-        />
-      </div>
-
+    <div className="flex flex-col h-full p-4 pt-16 gap-3 overflow-y-auto scrollbar-hide">
       {/* Price Header */}
       <div className="relative bg-white/[0.03] border border-white/[0.08] rounded-2xl p-4 overflow-hidden animate-fade-in">
         <div className="absolute inset-0 opacity-[0.03]" 
@@ -317,7 +307,7 @@ export default function HomePage() {
 
       {/* Chart */}
       <div className="relative flex-1 bg-white/[0.03] border border-white/[0.08] rounded-2xl overflow-hidden flex flex-col min-h-[200px] animate-fade-in" style={{ animationDelay: '100ms' }}>
-        <div className="absolute inset-0 opacity-[0.02]" 
+        <div className="absolute inset-0 opacity-[0.03]" 
           style={{
             backgroundImage: `radial-gradient(circle at 1px 1px, white 1px, transparent 0)`,
             backgroundSize: '20px 20px',

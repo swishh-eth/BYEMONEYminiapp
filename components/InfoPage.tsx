@@ -66,13 +66,33 @@ export default function InfoPage() {
   const [copied, setCopied] = useState(false);
   const [muted, setMuted] = useState(true);
   const [videoLoaded, setVideoLoaded] = useState(false);
+  const [showControls, setShowControls] = useState(true);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     if (videoRef.current) {
       videoRef.current.volume = 0.3;
     }
   }, [videoLoaded]);
+
+  // Auto-hide controls after 3 seconds
+  useEffect(() => {
+    if (showControls && videoLoaded) {
+      controlsTimeoutRef.current = setTimeout(() => {
+        setShowControls(false);
+      }, 3000);
+    }
+    return () => {
+      if (controlsTimeoutRef.current) {
+        clearTimeout(controlsTimeoutRef.current);
+      }
+    };
+  }, [showControls, videoLoaded]);
+
+  const handleVideoClick = () => {
+    setShowControls(true);
+  };
   
   const copyAddress = async () => {
     playClick();
@@ -123,7 +143,7 @@ export default function InfoPage() {
   };
 
   return (
-    <div className="flex flex-col h-full overflow-y-auto scrollbar-hide p-4 gap-3">
+    <div className="flex flex-col h-full overflow-y-auto scrollbar-hide p-4 pt-16 gap-3">
       {/* Video Header */}
       <div className="relative bg-white/[0.03] border border-white/[0.08] rounded-2xl overflow-hidden aspect-video animate-fade-in">
         <div className="absolute inset-0 opacity-[0.03]" 
@@ -138,8 +158,9 @@ export default function InfoPage() {
           loop
           muted={muted}
           playsInline
+          onClick={handleVideoClick}
           onCanPlay={() => setVideoLoaded(true)}
-          className="relative w-full h-full object-cover transition-opacity duration-500"
+          className="relative w-full h-full object-cover transition-opacity duration-500 cursor-pointer"
           style={{ opacity: videoLoaded ? 1 : 0 }}
         >
           <source src="/video.mp4" type="video/mp4" />
@@ -154,8 +175,10 @@ export default function InfoPage() {
         
         {/* Mute Toggle */}
         <button
-          onClick={toggleMute}
-          className="absolute bottom-3 right-3 p-2.5 bg-black/60 hover:bg-black/80 rounded-xl transition-all backdrop-blur-sm active:scale-95"
+          onClick={(e) => { e.stopPropagation(); toggleMute(); }}
+          className={`absolute bottom-3 right-3 p-2.5 bg-black/60 hover:bg-black/80 rounded-xl backdrop-blur-sm active:scale-95 transition-all duration-300 ${
+            showControls ? 'opacity-100' : 'opacity-0 pointer-events-none'
+          }`}
         >
           {muted ? (
             <svg className="w-4 h-4 text-white/80" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>

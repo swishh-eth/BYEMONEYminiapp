@@ -947,7 +947,7 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
           />
         </div>
 
-        <div className="relative flex flex-col h-full p-4 gap-3 overflow-y-auto scrollbar-hide">
+        <div className="relative flex flex-col h-full p-4 pt-16 gap-3 overflow-y-auto scrollbar-hide">
           <div className="flex items-center justify-between mb-2">
             <button 
               onClick={() => { setShowHistory(false); playClick(); triggerHaptic('light'); }}
@@ -1085,7 +1085,7 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
         />
       </div>
 
-      <div ref={mainContainerRef} className="relative flex flex-col h-full p-4 gap-3 overflow-y-auto scrollbar-hide">
+      <div ref={mainContainerRef} className="relative flex flex-col h-full p-4 pt-16 gap-3 overflow-y-auto scrollbar-hide">
         {/* Header */}
         <div className="flex items-center justify-between">
           {/* Coin Selector Tab */}
