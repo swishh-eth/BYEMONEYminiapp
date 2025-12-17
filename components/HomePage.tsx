@@ -66,6 +66,7 @@ export default function HomePage({ predictionData, onNavigate }: HomePageProps) 
   const [currentMarketIndex, setCurrentMarketIndex] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [burnCount, setBurnCount] = useState(1034262); // Starting value, will fetch real value later
+  const [betScrollIndex, setBetScrollIndex] = useState(0);
 
   // Auto-rotate markets every 4 seconds
   useEffect(() => {
@@ -78,6 +79,17 @@ export default function HomePage({ predictionData, onNavigate }: HomePageProps) 
     }, 4000);
     return () => clearInterval(interval);
   }, []);
+
+  // Auto-rotate bets in sync with markets
+  useEffect(() => {
+    const bets = predictionData?.recentWins || [];
+    if (bets.length === 0) return;
+    
+    const interval = setInterval(() => {
+      setBetScrollIndex((prev) => prev + 1);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [predictionData?.recentWins]);
 
   // Animated burn counter - ticks up slowly throughout the day
   useEffect(() => {
@@ -343,47 +355,52 @@ export default function HomePage({ predictionData, onNavigate }: HomePageProps) 
 
           {predictionData?.recentWins && predictionData.recentWins.length > 0 ? (
             <div className="relative h-[108px] overflow-hidden">
-              {/* Gradient overlays for wheel effect */}
-              <div className="absolute top-0 left-0 right-0 h-8 bg-gradient-to-b from-black to-transparent z-10 pointer-events-none" />
-              <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-black to-transparent z-10 pointer-events-none" />
-              
               <div 
-                className={`transition-transform duration-300 ${isTransitioning ? 'opacity-50' : 'opacity-100'}`}
+                className="transition-transform duration-500 ease-out"
                 style={{ 
-                  transform: `translateY(-${(currentMarketIndex % Math.max(1, predictionData.recentWins.length)) * 36}px)`,
+                  transform: `translateY(-${(betScrollIndex % predictionData.recentWins.length) * 36}px)`,
                 }}
               >
-                {/* Render 3x the list for seamless infinite scroll */}
-                {[...predictionData.recentWins, ...predictionData.recentWins, ...predictionData.recentWins].map((bet, i) => {
-                  const positionInView = i - (currentMarketIndex % predictionData.recentWins.length);
-                  const isMiddle = positionInView === 1;
+                {/* Render list 4x for seamless infinite scroll */}
+                {[...predictionData.recentWins, ...predictionData.recentWins, ...predictionData.recentWins, ...predictionData.recentWins].map((bet, i) => {
+                  const betsLength = predictionData.recentWins.length;
+                  const currentPos = betScrollIndex % betsLength;
+                  const itemPos = i % betsLength;
+                  
+                  // Calculate distance from center (position 1 in view)
+                  let relativePos = i - currentPos - 1;
+                  if (relativePos < -betsLength) relativePos += betsLength * 4;
+                  
+                  // 0 = middle, 1/-1 = adjacent, 2/-2 = far
+                  const isMiddle = relativePos === 0;
+                  const isAdjacent = Math.abs(relativePos) === 1;
+                  const opacity = isMiddle ? 1 : isAdjacent ? 0.5 : 0.25;
                   
                   return (
                     <div 
                       key={i}
-                      className={`flex items-center justify-between px-1 h-[36px] transition-all duration-300 ${
-                        isMiddle ? 'opacity-100' : 'opacity-40'
-                      }`}
+                      className="flex items-center justify-between px-1 h-[36px] transition-all duration-500"
+                      style={{ opacity }}
                     >
                       <div className="flex items-center gap-2">
                         <img 
                           src={bet.pfp || `https://api.dicebear.com/7.x/shapes/svg?seed=${bet.username}`}
                           alt={bet.username}
-                          className={`rounded-full bg-white/10 transition-all duration-300 ${
+                          className={`rounded-full bg-white/10 transition-all duration-500 ${
                             isMiddle ? 'w-7 h-7' : 'w-5 h-5'
                           }`}
                         />
-                        <span className={`text-white transition-all duration-300 ${
+                        <span className={`text-white transition-all duration-500 ${
                           isMiddle ? 'text-sm font-medium' : 'text-xs'
                         }`}>@{bet.username}</span>
                       </div>
                       <div className="flex items-center gap-1.5">
-                        <span className={`font-bold transition-all duration-300 ${
+                        <span className={`font-bold transition-all duration-500 ${
                           isMiddle ? 'text-sm' : 'text-xs'
                         } ${bet.direction === 'up' ? 'text-white' : 'text-red-400'}`}>
                           {bet.amount.toFixed(3)} ETH
                         </span>
-                        <div className={`rounded flex items-center justify-center transition-all duration-300 ${
+                        <div className={`rounded flex items-center justify-center transition-all duration-500 ${
                           isMiddle ? 'w-5 h-5' : 'w-4 h-4'
                         } ${bet.direction === 'up' ? 'bg-white/20' : 'bg-red-500/20'}`}>
                           <svg className={`${isMiddle ? 'w-3 h-3' : 'w-2.5 h-2.5'} ${bet.direction === 'up' ? 'text-white' : 'text-red-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}>
