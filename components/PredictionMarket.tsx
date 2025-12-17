@@ -174,8 +174,7 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
   const [showCoinSelector, setShowCoinSelector] = useState(false);
   const [coinSelectorClosing, setCoinSelectorClosing] = useState(false);
   const [selectedCoinIndex, setSelectedCoinIndex] = useState(0);
-  const [isInitialLoading, setIsInitialLoading] = useState(false);
-  const [showContent, setShowContent] = useState(true);
+  const [pageReady, setPageReady] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
   const [ticketSectionClosing, setTicketSectionClosing] = useState(false);
   
@@ -280,6 +279,8 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
       } catch (error) {
         console.log('SDK init error:', error);
       }
+      // Small delay to ensure smooth animation
+      setTimeout(() => setPageReady(true), 100);
     };
     initSDK();
   }, []);
@@ -558,21 +559,11 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
       }
       setIsBettingOpen(betting);
       
-      // Mark initial loading complete
-      if (isInitialLoading) {
-        setIsInitialLoading(false);
-        setTimeout(() => setShowContent(true), 100);
-      }
     } catch (error) {
       console.error('Failed to fetch market:', error);
       // Don't reset state on error - keep existing values
-      // Still stop loading on error
-      if (isInitialLoading) {
-        setIsInitialLoading(false);
-        setTimeout(() => setShowContent(true), 100);
-      }
     }
-  }, [isInitialLoading]);
+  }, []);
 
   const fetchUserPosition = useCallback(async () => {
     if (!walletAddress || !marketData || marketData.id === 0n) return;
@@ -1085,7 +1076,19 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
         />
       </div>
 
-      <div ref={mainContainerRef} className="relative flex flex-col h-full p-4 pt-16 gap-3 overflow-y-auto scrollbar-hide">
+      {/* Loading Skeleton - shown briefly while SDK initializes */}
+      {!pageReady ? (
+        <div className="relative flex flex-col h-full p-4 pt-16 gap-3 overflow-y-auto scrollbar-hide">
+          <div className="bg-white/[0.03] border border-white/[0.08] rounded-2xl p-4 h-28 animate-pulse" />
+          <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-3 h-12 animate-pulse" />
+          <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-4 h-32 animate-pulse" />
+          <div className="grid grid-cols-2 gap-2">
+            <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-4 h-28 animate-pulse" />
+            <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-4 h-28 animate-pulse" />
+          </div>
+        </div>
+      ) : (
+        <div ref={mainContainerRef} className="relative flex flex-col h-full p-4 pt-16 gap-3 overflow-y-auto scrollbar-hide">
 
         {/* Unclaimed Winnings Banner */}
         {totalUnclaimed > 0 && (
@@ -1690,6 +1693,7 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
           </p>
         </div>
       </div>
+      )}
 
       {/* Info Modal */}
       {showInfo && (
@@ -1897,8 +1901,8 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
 
       <style jsx>{`
         @keyframes fade-in {
-          from { opacity: 0; }
-          to { opacity: 1; }
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
         }
         @keyframes scale-in {
           from { opacity: 0; transform: scale(0.95); }
@@ -1925,7 +1929,7 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
           50% { box-shadow: 0 0 40px rgba(255,255,255,0.2); }
         }
         .animate-fade-in {
-          animation: fade-in 0.3s ease-out forwards;
+          animation: fade-in 0.4s ease-out both;
         }
         .animate-fade-out {
           animation: fade-out 0.3s ease-out forwards;
