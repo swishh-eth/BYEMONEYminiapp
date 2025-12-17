@@ -43,6 +43,7 @@ export default function App() {
         userFid={userFid} 
         username={username} 
         pfpUrl={pfpUrl}
+        activePageIndex={activeIndex}
       />
       
       <SwipeContainer activeIndex={activeIndex} onNavigate={handleNavigate}>
