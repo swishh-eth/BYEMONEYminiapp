@@ -161,7 +161,7 @@ export default function HomePage({ predictionData, onNavigate }: HomePageProps) 
   };
 
   return (
-    <div className="flex flex-col h-full p-4 pt-16 gap-2 overflow-y-auto scrollbar-hide">
+    <div className="flex flex-col h-full p-4 pt-20 gap-2 overflow-y-auto scrollbar-hide">
       
       {/* Burn Counter Tile */}
       <div className="relative bg-white/[0.03] border border-white/[0.08] rounded-2xl p-3 overflow-hidden animate-fade-in">

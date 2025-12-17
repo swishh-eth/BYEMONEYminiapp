@@ -1102,7 +1102,7 @@ export default function PredictionMarket({ userFid, username, initialData, onDat
 
       {/* Loading Skeleton - shown briefly while SDK initializes */}
       {!pageReady ? (
-        <div className="relative flex flex-col h-full p-4 pt-16 gap-3 overflow-y-auto scrollbar-hide">
+        <div className="relative flex flex-col h-full p-4 pt-20 gap-3 overflow-y-auto scrollbar-hide">
           <div className="bg-white/[0.03] border border-white/[0.08] rounded-2xl p-4 h-28 animate-pulse" />
           <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-3 h-12 animate-pulse" />
           <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-4 h-32 animate-pulse" />
@@ -1112,7 +1112,7 @@ export default function PredictionMarket({ userFid, username, initialData, onDat
           </div>
         </div>
       ) : (
-        <div ref={mainContainerRef} className="relative flex flex-col h-full p-4 pt-16 gap-3 overflow-y-auto scrollbar-hide">
+        <div ref={mainContainerRef} className="relative flex flex-col h-full p-4 pt-20 gap-3 overflow-y-auto scrollbar-hide">
 
         {/* Unclaimed Winnings Banner */}
         {totalUnclaimed > 0 && (
