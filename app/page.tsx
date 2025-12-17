@@ -253,6 +253,14 @@ export default function App() {
         <PredictionMarket 
           userFid={userFid} 
           username={username} 
+          initialData={predictionData ? {
+            marketId: predictionData.marketId,
+            timeRemaining: predictionData.timeRemaining,
+            totalPool: predictionData.totalPool,
+            upPool: predictionData.upPool,
+            downPool: predictionData.downPool,
+            ethPrice: predictionData.ethPrice,
+          } : undefined}
           onDataUpdate={handlePredictionDataUpdate}
         />
         <HomePage 

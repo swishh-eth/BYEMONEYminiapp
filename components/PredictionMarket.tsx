@@ -116,6 +116,14 @@ const AVAILABLE_COINS = [
 interface PredictionMarketProps {
   userFid?: number;
   username?: string;
+  initialData?: {
+    marketId: number;
+    timeRemaining: number;
+    totalPool: number;
+    upPool: number;
+    downPool: number;
+    ethPrice: number;
+  };
   onDataUpdate?: (data: {
     marketId: number;
     timeRemaining: number;
@@ -168,12 +176,22 @@ interface HistoryItem {
   priceAtBet: number;
 }
 
-export default function PredictionMarket({ userFid, username, onDataUpdate }: PredictionMarketProps) {
+export default function PredictionMarket({ userFid, username, initialData, onDataUpdate }: PredictionMarketProps) {
   const [walletAddress, setWalletAddress] = useState<`0x${string}` | null>(null);
   const [ethBalance, setEthBalance] = useState<string>('0');
   const [ticketCount, setTicketCount] = useState(1);
   const [selectedDirection, setSelectedDirection] = useState<'up' | 'down' | null>(null);
-  const [timeLeft, setTimeLeft] = useState({ hours: 0, minutes: 0, seconds: 0 });
+  const [timeLeft, setTimeLeft] = useState(() => {
+    if (initialData?.timeRemaining) {
+      const seconds = initialData.timeRemaining;
+      return {
+        hours: Math.floor(seconds / 3600),
+        minutes: Math.floor((seconds % 3600) / 60),
+        seconds: seconds % 60
+      };
+    }
+    return { hours: 0, minutes: 0, seconds: 0 };
+  });
   const [txState, setTxState] = useState<'idle' | 'buying' | 'claiming' | 'success' | 'error'>('idle');
   const [errorMsg, setErrorMsg] = useState('');
   const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -192,7 +210,7 @@ export default function PredictionMarket({ userFid, username, onDataUpdate }: Pr
   const [coinSelectorClosing, setCoinSelectorClosing] = useState(false);
   const [coinSelectorMounted, setCoinSelectorMounted] = useState(false);
   const [selectedCoinIndex, setSelectedCoinIndex] = useState(0);
-  const [pageReady, setPageReady] = useState(false);
+  const [pageReady, setPageReady] = useState(!!initialData); // Ready immediately if we have initial data
   const [showInfo, setShowInfo] = useState(false);
   const [infoClosing, setInfoClosing] = useState(false);
   const [infoMounted, setInfoMounted] = useState(false);
@@ -286,7 +304,12 @@ export default function PredictionMarket({ userFid, username, onDataUpdate }: Pr
     claimed: boolean;
   } | null>(null);
   
-  const [currentPrice, setCurrentPrice] = useState<bigint | null>(null);
+  const [currentPrice, setCurrentPrice] = useState<bigint | null>(() => {
+    if (initialData?.ethPrice) {
+      return BigInt(Math.floor(initialData.ethPrice * 1e8));
+    }
+    return null;
+  });
   const [isBettingOpen, setIsBettingOpen] = useState(true);
   const [sdk, setSdk] = useState<any>(null);
 
@@ -353,8 +376,10 @@ export default function PredictionMarket({ userFid, username, onDataUpdate }: Pr
       } catch (error) {
         console.log('SDK init error:', error);
       }
-      // Small delay to ensure smooth animation
-      setTimeout(() => setPageReady(true), 50);
+      // Only set pageReady if not already set from initialData
+      if (!initialData) {
+        setTimeout(() => setPageReady(true), 50);
+      }
     };
     initSDK();
   }, []);
