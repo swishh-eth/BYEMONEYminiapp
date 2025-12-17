@@ -358,27 +358,23 @@ export default function HomePage({ predictionData, onNavigate }: HomePageProps) 
               <div 
                 className="transition-transform duration-500 ease-out"
                 style={{ 
-                  transform: `translateY(-${(betScrollIndex % predictionData.recentWins.length) * 36}px)`,
+                  transform: `translateY(-${36}px)`,
                 }}
               >
-                {/* Render list 4x for seamless infinite scroll */}
-                {[...predictionData.recentWins, ...predictionData.recentWins, ...predictionData.recentWins, ...predictionData.recentWins].map((bet, i) => {
-                  const betsLength = predictionData.recentWins.length;
-                  const currentPos = betScrollIndex % betsLength;
-                  const itemPos = i % betsLength;
+                {/* Show 5 items: 2 above visible, 3 visible area, creates buffer for smooth scroll */}
+                {[0, 1, 2, 3, 4].map((offset) => {
+                  const bets = predictionData.recentWins;
+                  const index = (betScrollIndex + offset) % bets.length;
+                  const bet = bets[index];
                   
-                  // Calculate distance from center (position 1 in view)
-                  let relativePos = i - currentPos - 1;
-                  if (relativePos < -betsLength) relativePos += betsLength * 4;
-                  
-                  // 0 = middle, 1/-1 = adjacent, 2/-2 = far
-                  const isMiddle = relativePos === 0;
-                  const isAdjacent = Math.abs(relativePos) === 1;
-                  const opacity = isMiddle ? 1 : isAdjacent ? 0.5 : 0.25;
+                  // Position 0,1 = above/faded, 2 = middle/highlighted, 3,4 = below/faded
+                  const isMiddle = offset === 2;
+                  const isAdjacent = offset === 1 || offset === 3;
+                  const opacity = isMiddle ? 1 : isAdjacent ? 0.5 : 0.2;
                   
                   return (
                     <div 
-                      key={i}
+                      key={`${betScrollIndex}-${offset}`}
                       className="flex items-center justify-between px-1 h-[36px] transition-all duration-500"
                       style={{ opacity }}
                     >
