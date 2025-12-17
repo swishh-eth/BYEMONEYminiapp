@@ -146,6 +146,38 @@ export default function HomePage({ predictionData, onNavigate }: HomePageProps) 
         </div>
       </div>
 
+      {/* Quick Actions - Chart & Buy */}
+      <div className="grid grid-cols-2 gap-2 animate-fade-in" style={{ animationDelay: '25ms' }}>
+        <button
+          onClick={() => {
+            playClick();
+            triggerHaptic('light');
+            window.open('https://dexscreener.com/base/0xa12a532b0b7024b1d01ae66a3b8ba3c30eb8f5ef', '_blank');
+          }}
+          className="flex items-center justify-center gap-2 bg-white rounded-2xl p-3 text-xs font-bold text-black transition-all hover:scale-[1.02] active:scale-95"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+            <path d="M3 13h4v8H3v-8zm7-10h4v18h-4V3zm7 5h4v13h-4V8z" />
+          </svg>
+          Chart
+        </button>
+        <button
+          onClick={async () => {
+            playClick();
+            triggerHaptic('medium');
+            try {
+              const { sdk } = await import('@farcaster/miniapp-sdk');
+              await sdk.actions.viewToken({ token: `eip155:8453/erc20:0xb33ff54b9f7242ef1593d2c9bcd8f9df46c77935` });
+            } catch {
+              window.open('https://dexscreener.com/base/0xa12a532b0b7024b1d01ae66a3b8ba3c30eb8f5ef', '_blank');
+            }
+          }}
+          className="flex items-center justify-center gap-2 bg-white rounded-2xl p-3 text-xs font-bold text-black transition-all hover:scale-[1.02] active:scale-95"
+        >
+          Buy $BYEMONEY
+        </button>
+      </div>
+
       {/* Market Carousel Tile */}
       <div className="relative bg-white/[0.03] border border-white/[0.08] rounded-2xl p-3 overflow-hidden animate-fade-in" style={{ animationDelay: '50ms' }}>
         <div className="absolute inset-0 opacity-[0.03]" 
@@ -333,41 +365,6 @@ export default function HomePage({ predictionData, onNavigate }: HomePageProps) 
             </div>
           )}
         </div>
-      </div>
-
-      {/* Spacer */}
-      <div className="flex-grow min-h-2" />
-
-      {/* Quick Actions */}
-      <div className="grid grid-cols-2 gap-2 animate-fade-in" style={{ animationDelay: '200ms' }}>
-        <button
-          onClick={() => {
-            playClick();
-            triggerHaptic('light');
-            window.open('https://dexscreener.com/base/0xa12a532b0b7024b1d01ae66a3b8ba3c30eb8f5ef', '_blank');
-          }}
-          className="flex items-center justify-center gap-2 bg-white/[0.03] border border-white/[0.08] rounded-2xl py-2.5 text-xs text-white/60 hover:text-white hover:bg-white/[0.06] transition-all active:scale-95"
-        >
-          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-            <path d="M3 13h4v8H3v-8zm7-10h4v18h-4V3zm7 5h4v13h-4V8z" />
-          </svg>
-          Chart
-        </button>
-        <button
-          onClick={async () => {
-            playClick();
-            triggerHaptic('medium');
-            try {
-              const { sdk } = await import('@farcaster/miniapp-sdk');
-              await sdk.actions.viewToken({ token: `eip155:8453/erc20:0xb33ff54b9f7242ef1593d2c9bcd8f9df46c77935` });
-            } catch {
-              window.open('https://dexscreener.com/base/0xa12a532b0b7024b1d01ae66a3b8ba3c30eb8f5ef', '_blank');
-            }
-          }}
-          className="flex items-center justify-center gap-2 bg-gradient-to-r from-red-500 to-rose-500 rounded-2xl py-2.5 text-xs font-semibold text-white shadow-lg shadow-red-500/20 transition-all hover:scale-[1.02] active:scale-95"
-        >
-          Buy $BYEMONEY
-        </button>
       </div>
 
       <style jsx>{`

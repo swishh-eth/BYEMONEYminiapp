@@ -105,6 +105,7 @@ export default function App() {
           direction,
           tickets,
           wallet_address,
+          fid,
           prediction_users (
             username,
             pfp_url
@@ -154,6 +155,8 @@ export default function App() {
           if (!winningDirection) continue;
           
           const winningPool = winningDirection === 'up' ? upPool : downPool;
+          if (winningPool <= 0) continue;
+          
           const poolAfterFee = totalPool * 0.95;
           
           const marketBets = bets.filter(b => b.market_id === marketId && b.direction === winningDirection);
@@ -161,9 +164,14 @@ export default function App() {
           for (const bet of marketBets) {
             const winnings = (poolAfterFee * bet.tickets * TICKET_PRICE_ETH) / winningPool;
             if (winnings > 0) {
+              // Extract user data from the joined prediction_users
+              const userData = (bet as any).prediction_users;
+              const username = userData?.username || 'anon';
+              const pfpUrl = userData?.pfp_url || '';
+              
               wins.push({
-                username: (bet as any).prediction_users?.username || 'anon',
-                pfp: (bet as any).prediction_users?.pfp_url || '',
+                username,
+                pfp: pfpUrl || `https://api.dicebear.com/7.x/shapes/svg?seed=${bet.fid || username}`,
                 amount: winnings,
                 direction: bet.direction as 'up' | 'down',
               });
