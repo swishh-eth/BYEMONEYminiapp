@@ -180,6 +180,8 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
   const [selectedCoinIndex, setSelectedCoinIndex] = useState(0);
   const [pageReady, setPageReady] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
+  const [infoClosing, setInfoClosing] = useState(false);
+  const [infoMounted, setInfoMounted] = useState(false);
   const [ticketSectionClosing, setTicketSectionClosing] = useState(false);
   
   const ticketSectionRef = useRef<HTMLDivElement>(null);
@@ -201,6 +203,15 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
     setTimeout(() => {
       setShowHistory(false);
       setHistoryClosing(false);
+    }, 400);
+  };
+
+  const closeInfo = () => {
+    setInfoMounted(false);
+    setInfoClosing(true);
+    setTimeout(() => {
+      setShowInfo(false);
+      setInfoClosing(false);
     }, 400);
   };
 
@@ -226,6 +237,17 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
       return () => clearTimeout(timer);
     }
   }, [showHistory]);
+
+  useEffect(() => {
+    if (showInfo) {
+      // Reset and trigger animation
+      setInfoMounted(false);
+      const timer = setTimeout(() => {
+        setInfoMounted(true);
+      }, 20);
+      return () => clearTimeout(timer);
+    }
+  }, [showInfo]);
   
   // Safe access to selected coin
   const selectedCoin = AVAILABLE_COINS[selectedCoinIndex] || AVAILABLE_COINS[0];
@@ -1644,22 +1666,32 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
 
       {/* Info Modal */}
       {showInfo && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in">
-          <div className="absolute inset-0 bg-black/90 backdrop-blur-md" onClick={() => setShowInfo(false)} />
-          <div className="relative w-full max-w-sm bg-black border border-white/10 rounded-2xl p-5 animate-scale-in">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold">How It Works</h2>
-              <button 
-                onClick={() => setShowInfo(false)}
-                className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center hover:bg-white/10 transition-all"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                  <path d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
+        <div 
+          className="fixed inset-0 z-50 flex items-end justify-center"
+          onClick={closeInfo}
+        >
+          {/* Backdrop - combined dark + blur layer */}
+          <div 
+            className={`absolute inset-0 bg-black/70 backdrop-blur-xl transition-opacity duration-500 ease-out ${
+              infoMounted && !infoClosing ? 'opacity-100' : 'opacity-0'
+            }`}
+          />
+          {/* Content panel */}
+          <div 
+            className={`relative w-full max-w-md max-h-[80vh] bg-gradient-to-t from-black via-black/95 to-transparent rounded-t-3xl pb-6 px-4 overflow-hidden transition-all duration-500 ${
+              infoMounted && !infoClosing
+                ? 'opacity-100 translate-y-0' 
+                : 'opacity-0 translate-y-full'
+            }`}
+            style={{ transitionTimingFunction: infoClosing ? 'ease-in' : 'cubic-bezier(0.22, 1, 0.36, 1)' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="pt-6 pb-4">
+              <h3 className="text-lg font-bold text-white text-center">How It Works</h3>
             </div>
             
-            <div className="space-y-4 text-sm text-white/70">
+            <div className="overflow-y-auto max-h-[calc(80vh-120px)] space-y-4 text-sm text-white/70 pb-2 scrollbar-hide">
               <div className="flex gap-3">
                 <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
                   <span className="text-xs font-bold">1</span>
@@ -1678,7 +1710,7 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
                 <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
                   <span className="text-xs font-bold">3</span>
                 </div>
-                <p><span className="text-white font-medium">Wait</span> - Each round lasts 1 hour. Price is checked via Chainlink oracle</p>
+                <p><span className="text-white font-medium">Wait</span> - Each round lasts 24 hours. Price is checked via Chainlink oracle</p>
               </div>
               
               <div className="flex gap-3">
@@ -1688,12 +1720,15 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
                 <p><span className="text-white font-medium">Win</span> - If you predicted correctly, claim your share of the losing pool!</p>
               </div>
               
-              <div className="mt-4 p-3 bg-white/5 rounded-xl text-xs">
+              <div className="mt-2 p-3 bg-white/5 rounded-xl text-xs">
                 <p className="text-white/50">
                   <span className="text-red-400">5% fee</span> is taken from the pool. Winnings are split proportionally based on your tickets.
                 </p>
               </div>
             </div>
+            
+            {/* Close hint */}
+            <p className="text-center text-white/20 text-[10px] mt-3 uppercase tracking-wider">tap anywhere above to close</p>
           </div>
         </div>
       )}
