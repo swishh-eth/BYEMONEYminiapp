@@ -120,99 +120,57 @@ export default function App() {
 
       console.log('Market ID:', marketId, 'Fetching recent wins...');
 
-      // Fetch recent wins inline
+      // Fetch recent bets as social proof (not wins, just activity)
       let recentWins: Array<{ username: string; pfp: string; amount: number; direction: 'up' | 'down' }> = [];
       
       try {
-        if (marketId > 1) {
-          // Get bets from recently completed markets
-          const { data: bets, error: betsError } = await supabase
-            .from('prediction_bets')
-            .select('market_id, direction, tickets, wallet_address, fid')
-            .lt('market_id', marketId)
-            .gte('market_id', Math.max(1, marketId - 10))
-            .order('market_id', { ascending: false })
-            .limit(100);
+        // Get recent bets from current and recent markets
+        const { data: bets, error: betsError } = await supabase
+          .from('prediction_bets')
+          .select('market_id, direction, tickets, wallet_address, fid')
+          .gte('market_id', Math.max(1, marketId - 5))
+          .order('timestamp', { ascending: false })
+          .limit(20);
 
-          console.log('Bets query result:', bets?.length || 0, 'bets, error:', betsError);
+        console.log('Bets query result:', bets?.length || 0, 'bets, error:', betsError);
 
-          if (bets && bets.length > 0) {
-            // Get unique fids to fetch user data
-            const fids = [...new Set(bets.map(b => b.fid).filter(Boolean))];
-            console.log('Unique fids:', fids);
-            
-            // Fetch user data separately
-            const { data: users, error: usersError } = await supabase
-              .from('prediction_users')
-              .select('fid, username, pfp_url')
-              .in('fid', fids);
-            
-            console.log('Users query result:', users?.length || 0, 'users, error:', usersError);
-            
-            // Create a map of fid -> user data
-            const userMap = new Map<number, { username: string; pfp_url: string }>();
-            if (users) {
-              users.forEach(u => userMap.set(u.fid, u));
-            }
-
-            // Get unique market IDs
-            const marketIds = [...new Set(bets.map(b => b.market_id))];
-            
-            for (const mId of marketIds.slice(0, 5)) {
-              try {
-                const marketInfo = await publicClient.readContract({
-                  address: CONTRACT_ADDRESS,
-                  abi: MARKET_ABI,
-                  functionName: 'markets',
-                  args: [BigInt(mId)],
-                });
-                
-                const status = Number(marketInfo[7]);
-                const result = Number(marketInfo[8]);
-                const mUpPool = Number(formatEther(marketInfo[5]));
-                const mDownPool = Number(formatEther(marketInfo[6]));
-                const totalPool = mUpPool + mDownPool;
-                
-                // Only process resolved markets
-                if (status !== 1) continue;
-                
-                const winningDirection = result === 1 ? 'up' : result === 2 ? 'down' : null;
-                if (!winningDirection) continue;
-                
-                const winningPool = winningDirection === 'up' ? mUpPool : mDownPool;
-                if (winningPool <= 0) continue;
-                
-                const poolAfterFee = totalPool * 0.95;
-                
-                const marketBets = bets.filter(b => b.market_id === mId && b.direction === winningDirection);
-                
-                for (const bet of marketBets) {
-                  const winnings = (poolAfterFee * bet.tickets * TICKET_PRICE_ETH) / winningPool;
-                  if (winnings > 0) {
-                    const userData = userMap.get(bet.fid);
-                    const username = userData?.username || 'anon';
-                    const pfpUrl = userData?.pfp_url || '';
-                    
-                    recentWins.push({
-                      username,
-                      pfp: pfpUrl || `https://api.dicebear.com/7.x/shapes/svg?seed=${bet.fid || username}`,
-                      amount: winnings,
-                      direction: bet.direction as 'up' | 'down',
-                    });
-                  }
-                }
-              } catch (e) {
-                console.error('Failed to fetch market', mId, e);
-              }
-            }
-            
-            // Sort by amount and take top 5
-            recentWins = recentWins.sort((a, b) => b.amount - a.amount).slice(0, 5);
-            console.log('Recent wins found:', recentWins.length);
+        if (bets && bets.length > 0) {
+          // Get unique fids to fetch user data
+          const fids = [...new Set(bets.map(b => b.fid).filter(Boolean))];
+          console.log('Unique fids:', fids);
+          
+          // Fetch user data separately
+          const { data: users, error: usersError } = await supabase
+            .from('prediction_users')
+            .select('fid, username, pfp_url')
+            .in('fid', fids);
+          
+          console.log('Users query result:', users?.length || 0, 'users, error:', usersError);
+          
+          // Create a map of fid -> user data
+          const userMap = new Map<number, { username: string; pfp_url: string }>();
+          if (users) {
+            users.forEach(u => userMap.set(u.fid, u));
           }
+
+          // Just show recent bets as activity (treating bet amount as "amount")
+          for (const bet of bets.slice(0, 5)) {
+            const userData = userMap.get(bet.fid);
+            const username = userData?.username || 'anon';
+            const pfpUrl = userData?.pfp_url || '';
+            
+            recentWins.push({
+              username,
+              pfp: pfpUrl || `https://api.dicebear.com/7.x/shapes/svg?seed=${bet.fid || username}`,
+              amount: bet.tickets * TICKET_PRICE_ETH,
+              direction: bet.direction as 'up' | 'down',
+            });
+          }
+          
+          console.log('Recent activity found:', recentWins.length);
         }
       } catch (error) {
-        console.error('Failed to fetch recent wins:', error);
+        console.error('Failed to fetch recent activity:', error);
       }
 
       setPredictionData(prev => ({
