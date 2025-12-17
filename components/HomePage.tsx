@@ -67,6 +67,27 @@ export default function HomePage({ predictionData, onNavigate }: HomePageProps) 
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [burnCount, setBurnCount] = useState(1034262); // Starting value, will fetch real value later
   const [betScrollIndex, setBetScrollIndex] = useState(0);
+  const [showDailyClaim, setShowDailyClaim] = useState(false);
+  const [dailyClaimMounted, setDailyClaimMounted] = useState(false);
+  const [dailyClaimClosing, setDailyClaimClosing] = useState(false);
+
+  // Handle Daily Claim modal open
+  const openDailyClaim = () => {
+    playClick();
+    triggerHaptic('medium');
+    setShowDailyClaim(true);
+    setTimeout(() => setDailyClaimMounted(true), 10);
+  };
+
+  // Handle Daily Claim modal close
+  const closeDailyClaim = () => {
+    setDailyClaimClosing(true);
+    setTimeout(() => {
+      setShowDailyClaim(false);
+      setDailyClaimMounted(false);
+      setDailyClaimClosing(false);
+    }, 500);
+  };
 
   // Auto-rotate markets every 4 seconds
   useEffect(() => {
@@ -158,7 +179,7 @@ export default function HomePage({ predictionData, onNavigate }: HomePageProps) 
         </div>
       </div>
 
-      {/* Quick Actions - Chart & Buy */}
+      {/* Quick Actions - Chart & Daily Claim */}
       <div className="grid grid-cols-2 gap-2 animate-fade-in" style={{ animationDelay: '25ms' }}>
         <button
           onClick={() => {
@@ -174,19 +195,13 @@ export default function HomePage({ predictionData, onNavigate }: HomePageProps) 
           Chart
         </button>
         <button
-          onClick={async () => {
-            playClick();
-            triggerHaptic('medium');
-            try {
-              const { sdk } = await import('@farcaster/miniapp-sdk');
-              await sdk.actions.viewToken({ token: `eip155:8453/erc20:0xb33ff54b9f7242ef1593d2c9bcd8f9df46c77935` });
-            } catch {
-              window.open('https://dexscreener.com/base/0xa12a532b0b7024b1d01ae66a3b8ba3c30eb8f5ef', '_blank');
-            }
-          }}
+          onClick={openDailyClaim}
           className="flex items-center justify-center gap-2 bg-white rounded-2xl p-3 text-xs font-bold text-black transition-all hover:scale-[1.02] active:scale-95"
         >
-          Buy $BYEMONEY
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+            <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          Daily Claim
         </button>
       </div>
 
@@ -453,6 +468,82 @@ export default function HomePage({ predictionData, onNavigate }: HomePageProps) 
           )}
         </div>
       </div>
+
+      {/* Daily Claim Modal */}
+      {showDailyClaim && (
+        <div 
+          className="fixed inset-0 z-50 flex items-end justify-center"
+          onClick={closeDailyClaim}
+        >
+          {/* Backdrop */}
+          <div 
+            className={`absolute inset-0 bg-black/70 backdrop-blur-xl transition-opacity duration-500 ease-out ${
+              dailyClaimMounted && !dailyClaimClosing ? 'opacity-100' : 'opacity-0'
+            }`}
+          />
+          {/* Content panel */}
+          <div 
+            className={`relative w-full max-w-md max-h-[80vh] bg-gradient-to-t from-black via-black/95 to-transparent rounded-t-3xl pb-6 px-4 overflow-hidden transition-all duration-500 ${
+              dailyClaimMounted && !dailyClaimClosing
+                ? 'opacity-100 translate-y-0' 
+                : 'opacity-0 translate-y-full'
+            }`}
+            style={{ transitionTimingFunction: dailyClaimClosing ? 'ease-in' : 'cubic-bezier(0.22, 1, 0.36, 1)' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="pt-6 pb-4">
+              <h3 className="text-lg font-bold text-white text-center">Daily Claim</h3>
+            </div>
+            
+            <div className="space-y-4 text-sm text-white/70 pb-4">
+              <div className="flex gap-3">
+                <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
+                  <span className="text-xs font-bold">1</span>
+                </div>
+                <p><span className="text-white font-medium">Place a Bet</span> - Purchase at least 1 ticket in any daily prediction round to become eligible</p>
+              </div>
+              
+              <div className="flex gap-3">
+                <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
+                  <span className="text-xs font-bold">2</span>
+                </div>
+                <p><span className="text-white font-medium">Come Back Daily</span> - Return each day to claim your share of the daily $BYEMONEY rewards</p>
+              </div>
+              
+              <div className="flex gap-3">
+                <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
+                  <span className="text-xs font-bold">3</span>
+                </div>
+                <p><span className="text-white font-medium">Earn More</span> - The more tickets you buy, the larger your daily claim becomes</p>
+              </div>
+              
+              <div className="mt-4 p-3 bg-white/5 rounded-xl text-xs">
+                <p className="text-white/50">
+                  <span className="text-red-400">Note:</span> You must have an active bet in the current or previous round to be eligible for daily claims.
+                </p>
+              </div>
+            </div>
+
+            {/* Claim Button - Locked */}
+            <div className="mt-2">
+              <button
+                disabled
+                className="w-full py-3 rounded-xl font-bold text-sm bg-white/10 text-white/30 flex items-center justify-center gap-2 cursor-not-allowed"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                  <path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+                Claim $BYEMONEY
+              </button>
+              <p className="text-center text-white/30 text-[10px] mt-2 uppercase tracking-wider">Coming Soon</p>
+            </div>
+            
+            {/* Close hint */}
+            <p className="text-center text-white/20 text-[10px] mt-4 uppercase tracking-wider">tap anywhere to close</p>
+          </div>
+        </div>
+      )}
 
       <style jsx>{`
         .scrollbar-hide {
