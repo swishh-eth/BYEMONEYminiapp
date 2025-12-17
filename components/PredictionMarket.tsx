@@ -1086,48 +1086,6 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
       </div>
 
       <div ref={mainContainerRef} className="relative flex flex-col h-full p-4 pt-16 gap-3 overflow-y-auto scrollbar-hide">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          {/* Coin Selector Tab */}
-          <button 
-            onClick={() => { setShowCoinSelector(true); playClick(); triggerHaptic('light'); }}
-            className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all group"
-          >
-            <img 
-              src={selectedCoin.icon}
-              alt={selectedCoin.symbol}
-              className="w-6 h-6 rounded-full"
-            />
-            <span className="text-sm font-semibold text-white">
-              {selectedCoin.symbol} Prediction
-            </span>
-            <svg className="w-3 h-3 text-white/40 group-hover:text-white/60 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}>
-              <path d="M19 9l-7 7-7-7" />
-            </svg>
-          </button>
-          
-          {/* Info & History Buttons */}
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => { setShowInfo(true); playClick(); triggerHaptic('light'); }}
-              className="w-10 h-10 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center transition-all hover:scale-105 active:scale-95"
-            >
-              <svg className="w-5 h-5 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="10" />
-                <line x1="12" y1="16" x2="12" y2="12" />
-                <circle cx="12" cy="8" r="0.5" fill="currentColor" />
-              </svg>
-            </button>
-            <button
-              onClick={() => { setShowHistory(true); playClick(); triggerHaptic('light'); }}
-              className="w-10 h-10 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center transition-all hover:scale-105 active:scale-95"
-            >
-              <svg className="w-5 h-5 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </button>
-          </div>
-        </div>
 
         {/* Unclaimed Winnings Banner */}
         {totalUnclaimed > 0 && (
@@ -1155,12 +1113,23 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
           </button>
         )}
 
-        {/* Price Card */}
-        <div className="bg-white/[0.03] border border-white/[0.08] rounded-2xl p-4">
+        {/* Price Card - Click to select coin */}
+        <button 
+          onClick={() => { setShowCoinSelector(true); playClick(); triggerHaptic('light'); }}
+          className="bg-white/[0.03] border border-white/[0.08] rounded-2xl p-4 text-left hover:bg-white/[0.05] transition-all active:scale-[0.99]"
+        >
           <div className="flex items-center justify-between">
             <div>
               <div className="flex items-center gap-2 mb-1">
+                <img 
+                  src={selectedCoin.icon}
+                  alt={selectedCoin.symbol}
+                  className="w-4 h-4 rounded-full"
+                />
                 <p className="text-[10px] text-white/40 uppercase tracking-wider">{selectedCoin.symbol}/USD</p>
+                <svg className="w-2.5 h-2.5 text-white/30" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}>
+                  <path d="M19 9l-7 7-7-7" />
+                </svg>
                 <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-white/5">
                   <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
                   <span className="text-[8px] text-white/40">LIVE</span>
@@ -1197,7 +1166,7 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
               </span>
             </div>
           )}
-        </div>
+        </button>
 
         {/* Resolved State - Show after price */}
         {isResolved && (
@@ -1224,26 +1193,81 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
           </div>
         )}
 
-        {/* Timer */}
+        {/* Timer with Info & History */}
         {hasMarket && !isResolved && !isCancelled && (
           <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-3">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1.5">
-                {isLocked && (
-                  <svg className="w-3 h-3 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                    <path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                  </svg>
-                )}
-                <p className="text-[10px] text-white/40 uppercase tracking-wider">
-                  {isLocked ? 'Locked' : 'Ends In'}
-                </p>
+              {/* Left: Timer */}
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-1.5">
+                  {isLocked && (
+                    <svg className="w-3 h-3 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                      <path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                  )}
+                  <p className="text-[10px] text-white/40 uppercase tracking-wider">
+                    {isLocked ? 'Locked' : 'Ends In'}
+                  </p>
+                </div>
+                <div className="flex items-center gap-1">
+                  <TimeBlock value={timeLeft.hours} />
+                  <span className="text-white/20 text-xs">:</span>
+                  <TimeBlock value={timeLeft.minutes} />
+                  <span className="text-white/20 text-xs">:</span>
+                  <TimeBlock value={timeLeft.seconds} />
+                </div>
               </div>
-              <div className="flex items-center gap-1">
-                <TimeBlock value={timeLeft.hours} />
-                <span className="text-black animate-pulse">:</span>
-                <TimeBlock value={timeLeft.minutes} />
-                <span className="text-black animate-pulse">:</span>
-                <TimeBlock value={timeLeft.seconds} />
+              {/* Right: Info & History Buttons */}
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={(e) => { e.stopPropagation(); setShowInfo(true); playClick(); triggerHaptic('light'); }}
+                  className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center transition-all active:scale-95"
+                >
+                  <svg className="w-4 h-4 text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="12" y1="16" x2="12" y2="12" />
+                    <circle cx="12" cy="8" r="0.5" fill="currentColor" />
+                  </svg>
+                </button>
+                <button
+                  onClick={(e) => { e.stopPropagation(); setShowHistory(true); playClick(); triggerHaptic('light'); }}
+                  className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center transition-all active:scale-95"
+                >
+                  <svg className="w-4 h-4 text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                    <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Info & History Row - shown when no timer (resolved/cancelled/no market) */}
+        {(!hasMarket || isResolved || isCancelled) && (
+          <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-3">
+            <div className="flex items-center justify-between">
+              <p className="text-[10px] text-white/40 uppercase tracking-wider">
+                {isResolved ? 'Round Ended' : isCancelled ? 'Round Cancelled' : 'No Active Round'}
+              </p>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={(e) => { e.stopPropagation(); setShowInfo(true); playClick(); triggerHaptic('light'); }}
+                  className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center transition-all active:scale-95"
+                >
+                  <svg className="w-4 h-4 text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="12" y1="16" x2="12" y2="12" />
+                    <circle cx="12" cy="8" r="0.5" fill="currentColor" />
+                  </svg>
+                </button>
+                <button
+                  onClick={(e) => { e.stopPropagation(); setShowHistory(true); playClick(); triggerHaptic('light'); }}
+                  className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center transition-all active:scale-95"
+                >
+                  <svg className="w-4 h-4 text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                    <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </button>
               </div>
             </div>
           </div>
