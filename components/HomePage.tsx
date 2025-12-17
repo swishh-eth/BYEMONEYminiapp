@@ -182,10 +182,16 @@ export default function HomePage({ predictionData, onNavigate }: HomePageProps) 
       {/* Quick Actions - Chart & Daily Claim */}
       <div className="grid grid-cols-2 gap-2 animate-fade-in" style={{ animationDelay: '25ms' }}>
         <button
-          onClick={() => {
+          onClick={async () => {
             playClick();
             triggerHaptic('light');
-            window.open('https://dexscreener.com/base/0xa12a532b0b7024b1d01ae66a3b8ba3c30eb8f5ef', '_blank');
+            const chartUrl = 'https://dexscreener.com/base/0x26d915a941c399b81d6cd47aa5d19beed86662164587b38635455a4dc5edb213';
+            try {
+              const { sdk } = await import('@farcaster/miniapp-sdk');
+              await sdk.actions.openUrl({ url: chartUrl });
+            } catch {
+              window.open(chartUrl, '_blank');
+            }
           }}
           className="flex items-center justify-center gap-2 bg-white rounded-2xl p-3 text-xs font-bold text-black transition-all hover:scale-[1.02] active:scale-95"
         >
