@@ -701,11 +701,11 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
     if (selectedDirection === direction) {
       // Same button clicked - close with animation
       setTicketSectionClosing(true);
-      // Wait for animation to complete (300ms) before removing
+      // Wait for animation to complete before removing
       setTimeout(() => {
         setSelectedDirection(null);
         setTicketSectionClosing(false);
-      }, 300);
+      }, 250);
     } else if (selectedDirection && selectedDirection !== direction) {
       // Switching direction - just swap, no close animation needed
       setSelectedDirection(direction);
@@ -2045,18 +2045,18 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
           animation: slide-up 0.4s cubic-bezier(0.16, 1, 0.3, 1);
         }
         .animate-slide-in {
-          animation: slide-in 0.3s ease-out forwards;
+          animation: slide-in 0.35s cubic-bezier(0.22, 1, 0.36, 1) forwards;
         }
         @keyframes slide-in {
-          from { opacity: 0; transform: translateY(-10px) scale(0.98); }
-          to { opacity: 1; transform: translateY(0) scale(1); }
+          from { opacity: 0; transform: translateY(-15px); }
+          to { opacity: 1; transform: translateY(0); }
         }
         .animate-slide-out {
-          animation: slide-out 0.3s ease-out forwards;
+          animation: slide-out 0.25s ease-in forwards;
         }
         @keyframes slide-out {
-          from { opacity: 1; transform: translateY(0) scale(1); max-height: 500px; }
-          to { opacity: 0; transform: translateY(-10px) scale(0.98); max-height: 0; }
+          from { opacity: 1; transform: translateY(0); }
+          to { opacity: 0; transform: translateY(-15px); }
         }
         .animate-slide-down {
           animation: slide-down 0.3s ease-in forwards;
