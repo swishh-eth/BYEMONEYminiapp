@@ -353,63 +353,99 @@ export default function HomePage({ predictionData, onNavigate }: HomePageProps) 
             </div>
           </div>
 
-          {predictionData?.recentWins && predictionData.recentWins.length > 0 ? (
-            <div className="relative h-[108px] overflow-hidden">
-              <div 
-                className="transition-transform duration-500 ease-out"
-                style={{ 
-                  transform: `translateY(-${36}px)`,
-                }}
-              >
-                {/* Show 5 items: 2 above visible, 3 visible area, creates buffer for smooth scroll */}
-                {[0, 1, 2, 3, 4].map((offset) => {
-                  const bets = predictionData.recentWins;
-                  const index = (betScrollIndex + offset) % bets.length;
-                  const bet = bets[index];
-                  
-                  // Position 0,1 = above/faded, 2 = middle/highlighted, 3,4 = below/faded
-                  const isMiddle = offset === 2;
-                  const isAdjacent = offset === 1 || offset === 3;
-                  const opacity = isMiddle ? 1 : isAdjacent ? 0.5 : 0.2;
-                  
-                  return (
-                    <div 
-                      key={`${betScrollIndex}-${offset}`}
-                      className="flex items-center justify-between px-1 h-[36px] transition-all duration-500"
-                      style={{ opacity }}
-                    >
-                      <div className="flex items-center gap-2">
-                        <img 
-                          src={bet.pfp || `https://api.dicebear.com/7.x/shapes/svg?seed=${bet.username}`}
-                          alt={bet.username}
-                          className={`rounded-full bg-white/10 transition-all duration-500 ${
-                            isMiddle ? 'w-7 h-7' : 'w-5 h-5'
-                          }`}
-                        />
-                        <span className={`text-white transition-all duration-500 ${
-                          isMiddle ? 'text-sm font-medium' : 'text-xs'
-                        }`}>@{bet.username}</span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <span className={`font-bold transition-all duration-500 ${
-                          isMiddle ? 'text-sm' : 'text-xs'
-                        } ${bet.direction === 'up' ? 'text-white' : 'text-red-400'}`}>
-                          {bet.amount.toFixed(3)} ETH
-                        </span>
-                        <div className={`rounded flex items-center justify-center transition-all duration-500 ${
-                          isMiddle ? 'w-5 h-5' : 'w-4 h-4'
-                        } ${bet.direction === 'up' ? 'bg-white/20' : 'bg-red-500/20'}`}>
-                          <svg className={`${isMiddle ? 'w-3 h-3' : 'w-2.5 h-2.5'} ${bet.direction === 'up' ? 'text-white' : 'text-red-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}>
-                            <path d={bet.direction === 'up' ? 'M5 15l7-7 7 7' : 'M19 9l-7 7-7-7'} />
-                          </svg>
+          {predictionData?.recentWins && predictionData.recentWins.length > 0 ? (() => {
+            const bets = predictionData.recentWins;
+            const betsLength = bets.length;
+            // Create extended list for smooth infinite scroll
+            const extendedBets = [...bets, ...bets, ...bets];
+            const scrollOffset = betScrollIndex % betsLength;
+            
+            return (
+              <div className="relative h-[108px] overflow-hidden">
+                <div 
+                  className="transition-transform duration-700 ease-in-out"
+                  style={{ 
+                    transform: `translateY(-${scrollOffset * 36}px)`,
+                  }}
+                >
+                  {extendedBets.map((bet, i) => {
+                    // Calculate visual position relative to current scroll
+                    const visualPos = i - scrollOffset;
+                    // Middle is at position 1 (second visible item)
+                    const distanceFromMiddle = Math.abs(visualPos - 1);
+                    const isMiddle = visualPos === 1;
+                    const opacity = isMiddle ? 1 : distanceFromMiddle === 1 ? 0.5 : 0.2;
+                    
+                    return (
+                      <div 
+                        key={i}
+                        className="flex items-center justify-between px-1 h-[36px]"
+                        style={{ 
+                          opacity,
+                          transform: isMiddle ? 'scale(1.02)' : 'scale(1)',
+                          transition: 'opacity 0.7s ease-in-out, transform 0.7s ease-in-out'
+                        }}
+                      >
+                        <div className="flex items-center gap-2">
+                          <img 
+                            src={bet.pfp || `https://api.dicebear.com/7.x/shapes/svg?seed=${bet.username}`}
+                            alt={bet.username}
+                            className="rounded-full bg-white/10 w-6 h-6"
+                            style={{
+                              width: isMiddle ? '28px' : '20px',
+                              height: isMiddle ? '28px' : '20px',
+                              transition: 'width 0.7s ease-in-out, height 0.7s ease-in-out'
+                            }}
+                          />
+                          <span 
+                            className="text-white"
+                            style={{
+                              fontSize: isMiddle ? '14px' : '12px',
+                              fontWeight: isMiddle ? 500 : 400,
+                              transition: 'font-size 0.7s ease-in-out'
+                            }}
+                          >@{bet.username}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span 
+                            className={`font-bold ${bet.direction === 'up' ? 'text-white' : 'text-red-400'}`}
+                            style={{
+                              fontSize: isMiddle ? '14px' : '12px',
+                              transition: 'font-size 0.7s ease-in-out'
+                            }}
+                          >
+                            {bet.amount.toFixed(3)} ETH
+                          </span>
+                          <div 
+                            className={`rounded flex items-center justify-center ${bet.direction === 'up' ? 'bg-white/20' : 'bg-red-500/20'}`}
+                            style={{
+                              width: isMiddle ? '20px' : '16px',
+                              height: isMiddle ? '20px' : '16px',
+                              transition: 'width 0.7s ease-in-out, height 0.7s ease-in-out'
+                            }}
+                          >
+                            <svg 
+                              className={`${bet.direction === 'up' ? 'text-white' : 'text-red-400'}`} 
+                              style={{
+                                width: isMiddle ? '12px' : '10px',
+                                height: isMiddle ? '12px' : '10px',
+                              }}
+                              fill="none" 
+                              stroke="currentColor" 
+                              viewBox="0 0 24 24" 
+                              strokeWidth={3}
+                            >
+                              <path d={bet.direction === 'up' ? 'M5 15l7-7 7 7' : 'M19 9l-7 7-7-7'} />
+                            </svg>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-          ) : (
+            );
+          })() : (
             <div className="text-center py-3 text-white/30 text-xs">
               <p>No recent bets yet</p>
               <p className="text-[10px] mt-0.5">Be the first to bet!</p>

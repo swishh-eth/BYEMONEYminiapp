@@ -124,13 +124,13 @@ export default function App() {
       let recentWins: Array<{ username: string; pfp: string; amount: number; direction: 'up' | 'down' }> = [];
       
       try {
-        // Get recent bets from current and recent markets
+        // Get recent bets from current round only
         const { data: bets, error: betsError } = await supabase
           .from('prediction_bets')
           .select('market_id, direction, tickets, wallet_address, fid')
-          .gte('market_id', Math.max(1, marketId - 5))
+          .eq('market_id', marketId)
           .order('timestamp', { ascending: false })
-          .limit(20);
+          .limit(50);
 
         console.log('Bets query result:', bets?.length || 0, 'bets, error:', betsError);
 
@@ -153,8 +153,8 @@ export default function App() {
             users.forEach(u => userMap.set(u.fid, u));
           }
 
-          // Just show recent bets as activity (treating bet amount as "amount")
-          for (const bet of bets.slice(0, 5)) {
+          // Show all recent bets from current round
+          for (const bet of bets) {
             const userData = userMap.get(bet.fid);
             const username = userData?.username || 'anon';
             const pfpUrl = userData?.pfp_url || '';
