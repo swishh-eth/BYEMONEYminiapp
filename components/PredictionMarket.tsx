@@ -168,6 +168,7 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
   const [userPfp, setUserPfp] = useState<string | null>(null);
   const [showHistory, setShowHistory] = useState(false);
   const [historyClosing, setHistoryClosing] = useState(false);
+  const [historyMounted, setHistoryMounted] = useState(false);
   const [showUsdValues, setShowUsdValues] = useState(false);
   const [unclaimedMarkets, setUnclaimedMarkets] = useState<UnclaimedMarket[]>([]);
   const [history, setHistory] = useState<HistoryItem[]>([]);
@@ -175,6 +176,7 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
   const [claimingMarketId, setClaimingMarketId] = useState<number | null>(null);
   const [showCoinSelector, setShowCoinSelector] = useState(false);
   const [coinSelectorClosing, setCoinSelectorClosing] = useState(false);
+  const [coinSelectorMounted, setCoinSelectorMounted] = useState(false);
   const [selectedCoinIndex, setSelectedCoinIndex] = useState(0);
   const [pageReady, setPageReady] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
@@ -186,19 +188,42 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
   
   const closeCoinSelector = () => {
     setCoinSelectorClosing(true);
+    setCoinSelectorMounted(false);
     setTimeout(() => {
       setShowCoinSelector(false);
       setCoinSelectorClosing(false);
-    }, 300);
+    }, 400);
   };
 
   const closeHistory = () => {
     setHistoryClosing(true);
+    setHistoryMounted(false);
     setTimeout(() => {
       setShowHistory(false);
       setHistoryClosing(false);
-    }, 300);
+    }, 400);
   };
+
+  // Handle mounting animations
+  useEffect(() => {
+    if (showCoinSelector && !coinSelectorMounted) {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          setCoinSelectorMounted(true);
+        });
+      });
+    }
+  }, [showCoinSelector, coinSelectorMounted]);
+
+  useEffect(() => {
+    if (showHistory && !historyMounted) {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          setHistoryMounted(true);
+        });
+      });
+    }
+  }, [showHistory, historyMounted]);
   
   // Safe access to selected coin
   const selectedCoin = AVAILABLE_COINS[selectedCoinIndex] || AVAILABLE_COINS[0];
@@ -1675,26 +1700,20 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
           className="fixed inset-0 z-50 flex items-end justify-center"
           onClick={closeCoinSelector}
         >
-          {/* Backdrop - dark overlay */}
+          {/* Backdrop - combined dark + blur layer */}
           <div 
-            className={`absolute inset-0 bg-black transition-opacity duration-300 ease-out ${
-              coinSelectorClosing ? 'opacity-0' : 'opacity-80'
-            }`}
-          />
-          {/* Backdrop - blur layer */}
-          <div 
-            className={`absolute inset-0 backdrop-blur-xl transition-opacity duration-300 ease-out ${
-              coinSelectorClosing ? 'opacity-0' : 'opacity-100'
+            className={`absolute inset-0 bg-black/70 backdrop-blur-xl transition-opacity duration-500 ease-out ${
+              coinSelectorMounted && !coinSelectorClosing ? 'opacity-100' : 'opacity-0'
             }`}
           />
           {/* Content panel */}
           <div 
-            className={`relative w-full max-w-md bg-gradient-to-t from-black via-black/98 to-black/90 pt-20 pb-8 px-4 rounded-t-3xl transition-all duration-300 ${
-              coinSelectorClosing 
-                ? 'opacity-0 translate-y-full' 
-                : 'opacity-100 translate-y-0'
+            className={`relative w-full max-w-md bg-gradient-to-t from-black via-black/95 to-transparent pt-20 pb-8 px-4 rounded-t-3xl transition-all duration-500 ${
+              coinSelectorMounted && !coinSelectorClosing
+                ? 'opacity-100 translate-y-0' 
+                : 'opacity-0 translate-y-full'
             }`}
-            style={{ transitionTimingFunction: coinSelectorClosing ? 'ease-in' : 'cubic-bezier(0.16, 1, 0.3, 1)' }}
+            style={{ transitionTimingFunction: coinSelectorClosing ? 'ease-in' : 'cubic-bezier(0.22, 1, 0.36, 1)' }}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="text-center mb-6">
@@ -1772,26 +1791,20 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
           className="fixed inset-0 z-50 flex items-end justify-center"
           onClick={closeHistory}
         >
-          {/* Backdrop - dark overlay */}
+          {/* Backdrop - combined dark + blur layer */}
           <div 
-            className={`absolute inset-0 bg-black transition-opacity duration-300 ease-out ${
-              historyClosing ? 'opacity-0' : 'opacity-80'
-            }`}
-          />
-          {/* Backdrop - blur layer (separate for smooth animation) */}
-          <div 
-            className={`absolute inset-0 backdrop-blur-xl transition-opacity duration-300 ease-out ${
-              historyClosing ? 'opacity-0' : 'opacity-100'
+            className={`absolute inset-0 bg-black/70 backdrop-blur-xl transition-opacity duration-500 ease-out ${
+              historyMounted && !historyClosing ? 'opacity-100' : 'opacity-0'
             }`}
           />
           {/* Content panel */}
           <div 
-            className={`relative w-full max-w-md max-h-[70vh] bg-gradient-to-t from-black via-black/98 to-black/90 rounded-t-3xl pb-6 px-4 overflow-hidden transition-all duration-300 ease-out ${
-              historyClosing 
-                ? 'opacity-0 translate-y-full' 
-                : 'opacity-100 translate-y-0'
+            className={`relative w-full max-w-md max-h-[70vh] bg-gradient-to-t from-black via-black/95 to-transparent rounded-t-3xl pb-6 px-4 overflow-hidden transition-all duration-500 ${
+              historyMounted && !historyClosing
+                ? 'opacity-100 translate-y-0' 
+                : 'opacity-0 translate-y-full'
             }`}
-            style={{ transitionTimingFunction: historyClosing ? 'ease-in' : 'cubic-bezier(0.16, 1, 0.3, 1)' }}
+            style={{ transitionTimingFunction: historyClosing ? 'ease-in' : 'cubic-bezier(0.22, 1, 0.36, 1)' }}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
