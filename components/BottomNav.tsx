@@ -49,7 +49,7 @@ export default function BottomNav({ activeIndex, onNavigate }: BottomNavProps) {
       {/* Fade gradient overlay - smoother */}
       <div className="absolute inset-x-0 -top-12 h-12 bg-gradient-to-t from-black via-black/60 to-transparent pointer-events-none" />
       
-      <div className="bg-black flex justify-around items-center py-2 px-4">
+      <div className="bg-black flex justify-around items-center pt-1 pb-1 px-4">
         {PAGES.map((page, index) => {
           const isActive = activeIndex === index;
           return (

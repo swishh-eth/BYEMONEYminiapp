@@ -17,19 +17,16 @@ export default function Header({ userFid, username, pfpUrl, onConnect }: HeaderP
   useEffect(() => {
     if (pfpUrl) setUserPfp(pfpUrl);
     if (username) setDisplayName(username);
-    // Once we have user info, stop loading
     if (userFid || username || pfpUrl) {
       setIsLoading(false);
     }
   }, [pfpUrl, username, userFid]);
 
-  // Give SDK time to initialize before showing Connect
   useEffect(() => {
     const timer = setTimeout(() => setIsLoading(false), 1500);
     return () => clearTimeout(timer);
   }, []);
 
-  // Fetch user data if we have fid but no pfp
   useEffect(() => {
     if (userFid && !userPfp) {
       fetch(`/api/user?fid=${userFid}`)
@@ -45,10 +42,16 @@ export default function Header({ userFid, username, pfpUrl, onConnect }: HeaderP
   const isConnected = userFid || displayName || userPfp;
 
   return (
-    <header className="relative flex-shrink-0 z-20">
-      <div className="px-4 py-2 flex items-center justify-between bg-black">
+    <header className="absolute top-0 left-0 right-0 z-20 pointer-events-none">
+      <div 
+        className="px-4 py-3 flex items-center justify-between pointer-events-auto"
+        style={{
+          background: 'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.8) 50%, rgba(0,0,0,0) 100%)',
+          paddingBottom: '2rem',
+        }}
+      >
         {/* Logo Tile */}
-        <div className="w-10 h-10 bg-black rounded-xl flex items-center justify-center overflow-hidden">
+        <div className="w-10 h-10 rounded-xl flex items-center justify-center overflow-hidden">
           <img 
             src="/splash.png" 
             alt="BYEMONEY" 
@@ -84,9 +87,6 @@ export default function Header({ userFid, username, pfpUrl, onConnect }: HeaderP
           </button>
         )}
       </div>
-      
-      {/* Fade gradient overlay - subtle */}
-      <div className="absolute inset-x-0 top-full h-8 bg-gradient-to-b from-black/80 to-transparent pointer-events-none z-20" />
     </header>
   );
 }
