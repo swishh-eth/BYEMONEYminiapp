@@ -7,12 +7,16 @@ interface HeaderProps {
   username?: string;
   pfpUrl?: string;
   onConnect?: () => void;
+  activePageIndex?: number;
 }
 
-export default function Header({ userFid, username, pfpUrl, onConnect }: HeaderProps) {
+export default function Header({ userFid, username, pfpUrl, onConnect, activePageIndex = 1 }: HeaderProps) {
   const [userPfp, setUserPfp] = useState<string | null>(pfpUrl || null);
   const [displayName, setDisplayName] = useState<string>(username || '');
   const [isLoading, setIsLoading] = useState(true);
+
+  // Home page is index 1 (vote=0, home=1, info=2)
+  const isHomePage = activePageIndex === 1;
 
   useEffect(() => {
     if (pfpUrl) setUserPfp(pfpUrl);
@@ -50,8 +54,12 @@ export default function Header({ userFid, username, pfpUrl, onConnect }: HeaderP
           paddingBottom: '2rem',
         }}
       >
-        {/* Logo Tile */}
-        <div className="w-10 h-10 rounded-xl flex items-center justify-center overflow-hidden">
+        {/* Logo Tile - fades out on non-home pages */}
+        <div 
+          className={`w-10 h-10 rounded-xl flex items-center justify-center overflow-hidden transition-opacity duration-300 ${
+            isHomePage ? 'opacity-100' : 'opacity-0'
+          }`}
+        >
           <img 
             src="/splash.png" 
             alt="BYEMONEY" 
