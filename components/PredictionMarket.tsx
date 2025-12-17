@@ -769,7 +769,7 @@ export default function PredictionMarket({ userFid, username, initialData, onDat
         const container = mainContainerRef.current;
         const currentScroll = container.scrollTop;
         // Scroll up by roughly the height of the ticket section
-        const targetScroll = Math.max(0, currentScroll - 250);
+        const targetScroll = Math.max(0, currentScroll - 280);
         container.scrollTo({ top: targetScroll, behavior: 'smooth' });
       }
       
