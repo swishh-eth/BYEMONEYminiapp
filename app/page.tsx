@@ -92,112 +92,11 @@ export default function App() {
   const [pfpUrl, setPfpUrl] = useState<string | undefined>();
   const [predictionData, setPredictionData] = useState<PredictionData | undefined>();
 
-  // Fetch recent wins from completed markets
-  const fetchRecentWins = useCallback(async (currentMarketId: number) => {
-    try {
-      if (!currentMarketId || currentMarketId <= 1) return [];
-      
-      // Get bets from recently completed markets (last 10 markets before current)
-      const { data: bets, error } = await supabase
-        .from('prediction_bets')
-        .select('market_id, direction, tickets, wallet_address, fid')
-        .lt('market_id', currentMarketId)
-        .gte('market_id', Math.max(1, currentMarketId - 10))
-        .order('market_id', { ascending: false })
-        .limit(100);
-
-      if (error) {
-        console.error('Supabase error fetching bets:', error);
-        return [];
-      }
-
-      if (!bets || bets.length === 0) {
-        console.log('No bets found for recent markets');
-        return [];
-      }
-
-      // Get unique fids to fetch user data
-      const fids = [...new Set(bets.map(b => b.fid).filter(Boolean))];
-      
-      // Fetch user data separately
-      const { data: users } = await supabase
-        .from('prediction_users')
-        .select('fid, username, pfp_url')
-        .in('fid', fids);
-      
-      // Create a map of fid -> user data
-      const userMap = new Map();
-      if (users) {
-        users.forEach(u => userMap.set(u.fid, u));
-      }
-
-      // Get unique market IDs
-      const marketIds = [...new Set(bets.map(b => b.market_id))];
-      
-      // Fetch market results from contract
-      const wins: Array<{ username: string; pfp: string; amount: number; direction: 'up' | 'down' }> = [];
-      
-      for (const marketId of marketIds.slice(0, 5)) {
-        try {
-          const marketInfo = await publicClient.readContract({
-            address: CONTRACT_ADDRESS,
-            abi: MARKET_ABI,
-            functionName: 'markets',
-            args: [BigInt(marketId)],
-          });
-          
-          const status = Number(marketInfo[7]);
-          const result = Number(marketInfo[8]);
-          const upPool = Number(formatEther(marketInfo[5]));
-          const downPool = Number(formatEther(marketInfo[6]));
-          const totalPool = upPool + downPool;
-          
-          // Only process resolved markets
-          if (status !== 1) continue;
-          
-          // Find winning bets
-          const winningDirection = result === 1 ? 'up' : result === 2 ? 'down' : null;
-          if (!winningDirection) continue;
-          
-          const winningPool = winningDirection === 'up' ? upPool : downPool;
-          if (winningPool <= 0) continue;
-          
-          const poolAfterFee = totalPool * 0.95;
-          
-          const marketBets = bets.filter(b => b.market_id === marketId && b.direction === winningDirection);
-          
-          for (const bet of marketBets) {
-            const winnings = (poolAfterFee * bet.tickets * TICKET_PRICE_ETH) / winningPool;
-            if (winnings > 0) {
-              // Get user data from our map
-              const userData = userMap.get(bet.fid);
-              const username = userData?.username || 'anon';
-              const pfpUrl = userData?.pfp_url || '';
-              
-              wins.push({
-                username,
-                pfp: pfpUrl || `https://api.dicebear.com/7.x/shapes/svg?seed=${bet.fid || username}`,
-                amount: winnings,
-                direction: bet.direction as 'up' | 'down',
-              });
-            }
-          }
-        } catch (e) {
-          console.error('Failed to fetch market', marketId, e);
-        }
-      }
-      
-      // Sort by amount and return top 5
-      return wins.sort((a, b) => b.amount - a.amount).slice(0, 5);
-    } catch (error) {
-      console.error('Failed to fetch recent wins:', error);
-      return [];
-    }
-  }, []);
-
   // Fetch basic market data for HomePage
   const fetchBasicMarketData = useCallback(async () => {
     try {
+      console.log('Fetching basic market data...');
+      
       const [market, price] = await Promise.all([
         publicClient.readContract({
           address: CONTRACT_ADDRESS,
@@ -219,8 +118,102 @@ export default function App() {
       const timeRemaining = Math.max(0, Math.floor((endTime - now) / 1000));
       const ethPrice = price ? Number(price) / 1e8 : 0;
 
-      // Fetch recent wins
-      const recentWins = await fetchRecentWins(marketId);
+      console.log('Market ID:', marketId, 'Fetching recent wins...');
+
+      // Fetch recent wins inline
+      let recentWins: Array<{ username: string; pfp: string; amount: number; direction: 'up' | 'down' }> = [];
+      
+      try {
+        if (marketId > 1) {
+          // Get bets from recently completed markets
+          const { data: bets, error: betsError } = await supabase
+            .from('prediction_bets')
+            .select('market_id, direction, tickets, wallet_address, fid')
+            .lt('market_id', marketId)
+            .gte('market_id', Math.max(1, marketId - 10))
+            .order('market_id', { ascending: false })
+            .limit(100);
+
+          console.log('Bets query result:', bets?.length || 0, 'bets, error:', betsError);
+
+          if (bets && bets.length > 0) {
+            // Get unique fids to fetch user data
+            const fids = [...new Set(bets.map(b => b.fid).filter(Boolean))];
+            console.log('Unique fids:', fids);
+            
+            // Fetch user data separately
+            const { data: users, error: usersError } = await supabase
+              .from('prediction_users')
+              .select('fid, username, pfp_url')
+              .in('fid', fids);
+            
+            console.log('Users query result:', users?.length || 0, 'users, error:', usersError);
+            
+            // Create a map of fid -> user data
+            const userMap = new Map<number, { username: string; pfp_url: string }>();
+            if (users) {
+              users.forEach(u => userMap.set(u.fid, u));
+            }
+
+            // Get unique market IDs
+            const marketIds = [...new Set(bets.map(b => b.market_id))];
+            
+            for (const mId of marketIds.slice(0, 5)) {
+              try {
+                const marketInfo = await publicClient.readContract({
+                  address: CONTRACT_ADDRESS,
+                  abi: MARKET_ABI,
+                  functionName: 'markets',
+                  args: [BigInt(mId)],
+                });
+                
+                const status = Number(marketInfo[7]);
+                const result = Number(marketInfo[8]);
+                const mUpPool = Number(formatEther(marketInfo[5]));
+                const mDownPool = Number(formatEther(marketInfo[6]));
+                const totalPool = mUpPool + mDownPool;
+                
+                // Only process resolved markets
+                if (status !== 1) continue;
+                
+                const winningDirection = result === 1 ? 'up' : result === 2 ? 'down' : null;
+                if (!winningDirection) continue;
+                
+                const winningPool = winningDirection === 'up' ? mUpPool : mDownPool;
+                if (winningPool <= 0) continue;
+                
+                const poolAfterFee = totalPool * 0.95;
+                
+                const marketBets = bets.filter(b => b.market_id === mId && b.direction === winningDirection);
+                
+                for (const bet of marketBets) {
+                  const winnings = (poolAfterFee * bet.tickets * TICKET_PRICE_ETH) / winningPool;
+                  if (winnings > 0) {
+                    const userData = userMap.get(bet.fid);
+                    const username = userData?.username || 'anon';
+                    const pfpUrl = userData?.pfp_url || '';
+                    
+                    recentWins.push({
+                      username,
+                      pfp: pfpUrl || `https://api.dicebear.com/7.x/shapes/svg?seed=${bet.fid || username}`,
+                      amount: winnings,
+                      direction: bet.direction as 'up' | 'down',
+                    });
+                  }
+                }
+              } catch (e) {
+                console.error('Failed to fetch market', mId, e);
+              }
+            }
+            
+            // Sort by amount and take top 5
+            recentWins = recentWins.sort((a, b) => b.amount - a.amount).slice(0, 5);
+            console.log('Recent wins found:', recentWins.length);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch recent wins:', error);
+      }
 
       setPredictionData(prev => ({
         marketId,
@@ -231,10 +224,12 @@ export default function App() {
         ethPrice: ethPrice > 0 ? ethPrice : prev?.ethPrice || 2900,
         recentWins: recentWins.length > 0 ? recentWins : prev?.recentWins || [],
       }));
+      
+      console.log('PredictionData set with', recentWins.length, 'recent wins');
     } catch (error) {
       console.error('Failed to fetch basic market data:', error);
     }
-  }, [fetchRecentWins]);
+  }, []);
 
   useEffect(() => {
     const initSDK = async () => {
