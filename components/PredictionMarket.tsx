@@ -1212,13 +1212,9 @@ export default function PredictionMarket({ userFid, username, onDataUpdate }: Pr
                     {isLocked ? 'Locked' : 'Ends In'}
                   </p>
                 </div>
-                <div className="flex items-center gap-1">
-                  <TimeBlock value={timeLeft.hours} />
-                  <span className="text-white/20 text-xs">:</span>
-                  <TimeBlock value={timeLeft.minutes} />
-                  <span className="text-white/20 text-xs">:</span>
-                  <TimeBlock value={timeLeft.seconds} />
-                </div>
+                <p className="text-xl font-bold">
+                  {timeLeft.hours}h {timeLeft.minutes}m {timeLeft.seconds}s
+                </p>
               </div>
               {/* Right: Info & History Buttons */}
               <div className="flex items-center gap-2">
@@ -2152,14 +2148,6 @@ export default function PredictionMarket({ userFid, username, onDataUpdate }: Pr
           font-variant-numeric: tabular-nums;
         }
       `}</style>
-    </div>
-  );
-}
-
-function TimeBlock({ value }: { value: number }) {
-  return (
-    <div className="bg-white/5 border border-white/10 rounded px-2 py-1 min-w-[24px] text-center">
-      <span className="text-xs font-mono font-bold">{value.toString().padStart(2, '0')}</span>
     </div>
   );
 }
