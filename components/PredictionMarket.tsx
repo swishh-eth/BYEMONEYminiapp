@@ -1091,7 +1091,7 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
         {totalUnclaimed > 0 && (
           <button
             onClick={() => { setShowHistory(true); playClick(); triggerHaptic('medium'); }}
-            className="bg-gradient-to-r from-white/10 to-white/5 border border-white/20 rounded-xl p-4 hover:from-white/15 hover:to-white/10 transition-all"
+            className="bg-gradient-to-r from-white/10 to-white/5 border border-white/20 rounded-xl p-4 hover:from-white/15 hover:to-white/10 transition-all animate-fade-in"
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -1116,7 +1116,8 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
         {/* Price Card - Click to select coin */}
         <button 
           onClick={() => { setShowCoinSelector(true); playClick(); triggerHaptic('light'); }}
-          className="bg-white/[0.03] border border-white/[0.08] rounded-2xl p-4 text-left hover:bg-white/[0.05] transition-all active:scale-[0.99]"
+          className="bg-white/[0.03] border border-white/[0.08] rounded-2xl p-4 text-left hover:bg-white/[0.05] transition-all active:scale-[0.99] animate-fade-in"
+          style={{ animationDelay: '50ms' }}
         >
           <div className="flex items-center justify-between">
             <div>
@@ -1195,7 +1196,7 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
 
         {/* Timer with Info & History */}
         {hasMarket && !isResolved && !isCancelled && (
-          <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-3">
+          <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-3 animate-fade-in" style={{ animationDelay: '100ms' }}>
             <div className="flex items-center justify-between">
               {/* Left: Timer */}
               <div className="flex items-center gap-3">
@@ -1244,7 +1245,7 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
 
         {/* Info & History Row - shown when no timer (resolved/cancelled/no market) */}
         {(!hasMarket || isResolved || isCancelled) && (
-          <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-3">
+          <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-3 animate-fade-in" style={{ animationDelay: '100ms' }}>
             <div className="flex items-center justify-between">
               <p className="text-[10px] text-white/40 uppercase tracking-wider">
                 {isResolved ? 'Round Ended' : isCancelled ? 'Round Cancelled' : 'No Active Round'}
@@ -1275,7 +1276,7 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
 
         {/* Pool */}
         {hasMarket && (
-          <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-4">
+          <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-4 animate-fade-in" style={{ animationDelay: '150ms' }}>
             <div className="flex justify-between items-center mb-3">
               <p className="text-[10px] text-white/40 uppercase tracking-wider">Pool</p>
               <p className="text-xs">
@@ -1373,12 +1374,13 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
         {!walletAddress ? (
           <button
             onClick={connectWallet}
-            className="w-full py-4 rounded-xl bg-white/10 border border-white/20 font-semibold hover:bg-white/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
+            className="w-full py-4 rounded-xl bg-white/10 border border-white/20 font-semibold hover:bg-white/20 transition-all hover:scale-[1.02] active:scale-[0.98] animate-fade-in"
+            style={{ animationDelay: '200ms' }}
           >
             Connect Wallet
           </button>
         ) : (!hasMarket || isResolved || isCancelled) ? (
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-3 animate-fade-in" style={{ animationDelay: '200ms' }}>
             <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-4 text-center">
               <h3 className="text-lg font-bold text-white mb-1">New Round Starting</h3>
               <p className="text-sm text-white/50 mb-4">Be the first to bet and start the next 24h prediction round!</p>
@@ -1501,7 +1503,7 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
             )}
           </div>
         ) : !isLocked ? (
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-3 animate-fade-in" style={{ animationDelay: '200ms' }}>
             <div className="grid grid-cols-2 gap-2">
               <button
                 onClick={() => handleDirectionClick('up')}
@@ -1630,7 +1632,7 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
 
         {/* Locked State - Above Recent Bets */}
         {isLocked && (
-          <div className="flex flex-col items-center justify-center py-6 bg-white/[0.03] border border-white/[0.08] rounded-xl">
+          <div className="flex flex-col items-center justify-center py-6 bg-white/[0.03] border border-white/[0.08] rounded-xl animate-fade-in" style={{ animationDelay: '200ms' }}>
             <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center">
               <svg className="w-7 h-7 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
                 <path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
@@ -1643,7 +1645,7 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
 
         {/* Recent Bets */}
         {recentBets.length > 0 && (
-          <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-4">
+          <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-4 animate-fade-in" style={{ animationDelay: '250ms' }}>
             <p className="text-[10px] text-white/40 uppercase tracking-wider mb-3">Recent Bets</p>
             <div className="space-y-2">
               {recentBets.slice(0, 5).map((bet, i) => (
