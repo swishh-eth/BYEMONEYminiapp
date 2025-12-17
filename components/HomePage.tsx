@@ -67,7 +67,6 @@ export default function HomePage({ predictionData, onNavigate }: HomePageProps) 
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [burnCount, setBurnCount] = useState(1034262); // Starting value, will fetch real value later
   const [visibleBetIndex, setVisibleBetIndex] = useState(0);
-  const [betTransitioning, setBetTransitioning] = useState(false);
 
   // Auto-rotate markets every 4 seconds
   useEffect(() => {
@@ -81,18 +80,20 @@ export default function HomePage({ predictionData, onNavigate }: HomePageProps) 
     return () => clearInterval(interval);
   }, []);
 
-  // Auto-rotate recent bets every 2.5 seconds
+  // Auto-rotate recent bets - continuous scroll down
   useEffect(() => {
     const bets = predictionData?.recentWins || [];
-    if (bets.length <= 1) return;
+    if (bets.length === 0) return;
     
     const interval = setInterval(() => {
-      setBetTransitioning(true);
-      setTimeout(() => {
-        setVisibleBetIndex((prev) => (prev + 1) % bets.length);
-        setBetTransitioning(false);
-      }, 200);
-    }, 2500);
+      setVisibleBetIndex((prev) => {
+        // Reset when we've scrolled through enough to loop
+        if (prev >= bets.length * 2 - 3) {
+          return 0;
+        }
+        return prev + 1;
+      });
+    }, 2000);
     return () => clearInterval(interval);
   }, [predictionData?.recentWins]);
 
@@ -353,59 +354,68 @@ export default function HomePage({ predictionData, onNavigate }: HomePageProps) 
         <div className="relative">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
-              {/* Activity icon */}
               <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
               <span className="text-[9px] text-white/40 uppercase tracking-wider">Live Bets</span>
             </div>
-            {predictionData?.recentWins && predictionData.recentWins.length > 1 && (
-              <div className="flex gap-1">
-                {predictionData.recentWins.slice(0, 5).map((_, i) => (
-                  <div 
-                    key={i}
-                    className={`w-1 h-1 rounded-full transition-all duration-300 ${
-                      i === visibleBetIndex % predictionData.recentWins.length ? 'bg-white' : 'bg-white/20'
-                    }`}
-                  />
-                ))}
-              </div>
-            )}
           </div>
 
           {predictionData?.recentWins && predictionData.recentWins.length > 0 ? (
-            <div className="relative h-[40px] overflow-hidden">
-              {(() => {
-                const bet = predictionData.recentWins[visibleBetIndex % predictionData.recentWins.length];
-                return (
-                  <div 
-                    className={`absolute inset-0 flex items-center justify-between bg-white/[0.03] rounded-lg px-3 transition-all duration-200 ${
-                      betTransitioning 
-                        ? 'opacity-0 -translate-y-full' 
-                        : 'opacity-100 translate-y-0'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2">
-                      <img 
-                        src={bet.pfp || `https://api.dicebear.com/7.x/shapes/svg?seed=${bet.username}`}
-                        alt={bet.username}
-                        className="w-7 h-7 rounded-full bg-white/10"
-                      />
-                      <span className="text-sm text-white/80">@{bet.username}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className={`text-sm font-bold ${bet.direction === 'up' ? 'text-white' : 'text-red-400'}`}>
-                        {bet.amount.toFixed(3)} ETH
-                      </span>
-                      <div className={`w-5 h-5 rounded flex items-center justify-center ${
-                        bet.direction === 'up' ? 'bg-white/20' : 'bg-red-500/20'
-                      }`}>
-                        <svg className={`w-3 h-3 ${bet.direction === 'up' ? 'text-white' : 'text-red-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}>
-                          <path d={bet.direction === 'up' ? 'M5 15l7-7 7 7' : 'M19 9l-7 7-7-7'} />
-                        </svg>
+            <div className="relative h-[120px] overflow-hidden">
+              {/* Gradient overlays for wheel effect */}
+              <div className="absolute top-0 left-0 right-0 h-6 bg-gradient-to-b from-black/80 to-transparent z-10 pointer-events-none" />
+              <div className="absolute bottom-0 left-0 right-0 h-6 bg-gradient-to-t from-black/80 to-transparent z-10 pointer-events-none" />
+              
+              <div 
+                className="transition-transform duration-500 ease-out"
+                style={{ 
+                  transform: `translateY(-${visibleBetIndex * 40}px)`,
+                }}
+              >
+                {/* Render enough items for smooth infinite scroll */}
+                {[...Array(Math.max(6, predictionData.recentWins.length * 2))].map((_, i) => {
+                  const bets = predictionData.recentWins;
+                  const bet = bets[i % bets.length];
+                  const isMiddle = i === visibleBetIndex + 1;
+                  
+                  return (
+                    <div 
+                      key={i}
+                      className={`flex items-center justify-between rounded-lg px-2 h-[40px] transition-all duration-300 ${
+                        isMiddle 
+                          ? 'bg-white/[0.06] scale-[1.02]' 
+                          : 'bg-white/[0.02] opacity-60'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <img 
+                          src={bet.pfp || `https://api.dicebear.com/7.x/shapes/svg?seed=${bet.username}`}
+                          alt={bet.username}
+                          className={`rounded-full bg-white/10 transition-all duration-300 ${
+                            isMiddle ? 'w-7 h-7' : 'w-6 h-6'
+                          }`}
+                        />
+                        <span className={`text-white/80 transition-all duration-300 ${
+                          isMiddle ? 'text-sm font-medium' : 'text-xs'
+                        }`}>@{bet.username}</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <span className={`font-bold transition-all duration-300 ${
+                          isMiddle ? 'text-sm' : 'text-xs'
+                        } ${bet.direction === 'up' ? 'text-white' : 'text-red-400'}`}>
+                          {bet.amount.toFixed(3)} ETH
+                        </span>
+                        <div className={`rounded flex items-center justify-center transition-all duration-300 ${
+                          isMiddle ? 'w-5 h-5' : 'w-4 h-4'
+                        } ${bet.direction === 'up' ? 'bg-white/20' : 'bg-red-500/20'}`}>
+                          <svg className={`${isMiddle ? 'w-3 h-3' : 'w-2.5 h-2.5'} ${bet.direction === 'up' ? 'text-white' : 'text-red-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}>
+                            <path d={bet.direction === 'up' ? 'M5 15l7-7 7 7' : 'M19 9l-7 7-7-7'} />
+                          </svg>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                );
-              })()}
+                  );
+                })}
+              </div>
             </div>
           ) : (
             <div className="text-center py-3 text-white/30 text-xs">
