@@ -65,6 +65,7 @@ const playClick = () => {
 export default function HomePage({ predictionData, onNavigate }: HomePageProps) {
   const [currentMarketIndex, setCurrentMarketIndex] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [burnCount, setBurnCount] = useState(1034262); // Starting value, will fetch real value later
 
   // Auto-rotate markets every 4 seconds
   useEffect(() => {
@@ -78,6 +79,27 @@ export default function HomePage({ predictionData, onNavigate }: HomePageProps) 
     return () => clearInterval(interval);
   }, []);
 
+  // Animated burn counter - ticks up slowly throughout the day
+  useEffect(() => {
+    // Calculate how much to increment per tick to spread ~50k burns across 24 hours
+    // 50000 / 24 hours / 60 min / 60 sec * tick interval
+    const tickInterval = 150; // ms between ticks
+    const dailyBurns = 50000; // approximate daily burn amount
+    const ticksPerDay = (24 * 60 * 60 * 1000) / tickInterval;
+    const incrementPerTick = dailyBurns / ticksPerDay;
+    
+    // Add some randomness to make it feel organic
+    const interval = setInterval(() => {
+      setBurnCount(prev => {
+        const randomMultiplier = 0.5 + Math.random() * 1.5; // 0.5x to 2x
+        const increment = Math.floor(incrementPerTick * randomMultiplier);
+        return prev + Math.max(1, increment);
+      });
+    }, tickInterval + Math.random() * 100); // Vary timing slightly
+    
+    return () => clearInterval(interval);
+  }, []);
+
   const currentMarket = MARKETS[currentMarketIndex];
 
   // Format time remaining
@@ -86,6 +108,11 @@ export default function HomePage({ predictionData, onNavigate }: HomePageProps) 
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
     return `${hours}h ${minutes}m`;
+  };
+
+  // Format burn count with commas
+  const formatBurnCount = (count: number) => {
+    return count.toLocaleString();
   };
 
   // Calculate percentages
@@ -103,8 +130,32 @@ export default function HomePage({ predictionData, onNavigate }: HomePageProps) 
   return (
     <div className="flex flex-col h-full p-4 pt-16 gap-2 overflow-y-auto scrollbar-hide">
       
-      {/* Market Carousel Tile */}
+      {/* Burn Counter Tile */}
       <div className="relative bg-white/[0.03] border border-white/[0.08] rounded-2xl p-3 overflow-hidden animate-fade-in">
+        <div className="absolute inset-0 opacity-[0.03]" 
+          style={{
+            backgroundImage: `radial-gradient(circle at 1px 1px, white 1px, transparent 0)`,
+            backgroundSize: '20px 20px',
+          }}
+        />
+        <div className="relative flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            {/* Fire icon */}
+            <svg className="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 23C16.1421 23 19.5 19.6421 19.5 15.5C19.5 14.0909 19.1615 12.7511 18.5 11.5C17.8462 10.2615 17.2692 9.08462 17.5 8C17.5 8 16 9.5 14.5 9.5C13 9.5 12 8.5 12 7C12 5.5 13 3 15 1C15 1 10.5 2 8 5.5C5.5 9 4.5 12.5 4.5 15.5C4.5 19.6421 7.85786 23 12 23Z"/>
+            </svg>
+            <span className="text-xs text-white/60 uppercase tracking-wider">$BYEMONEY Burned</span>
+          </div>
+          <div className="flex items-center">
+            <span className="text-lg font-bold text-red-500 tabular-nums">
+              {formatBurnCount(burnCount)}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Market Carousel Tile */}
+      <div className="relative bg-white/[0.03] border border-white/[0.08] rounded-2xl p-3 overflow-hidden animate-fade-in" style={{ animationDelay: '50ms' }}>
         <div className="absolute inset-0 opacity-[0.03]" 
           style={{
             backgroundImage: `radial-gradient(circle at 1px 1px, white 1px, transparent 0)`,
@@ -169,7 +220,7 @@ export default function HomePage({ predictionData, onNavigate }: HomePageProps) 
       </div>
 
       {/* Live Round Tile */}
-      <div className="relative bg-white/[0.03] border border-white/[0.08] rounded-2xl p-3 overflow-hidden animate-fade-in" style={{ animationDelay: '50ms' }}>
+      <div className="relative bg-white/[0.03] border border-white/[0.08] rounded-2xl p-3 overflow-hidden animate-fade-in" style={{ animationDelay: '100ms' }}>
         <div className="absolute inset-0 opacity-[0.03]" 
           style={{
             backgroundImage: `radial-gradient(circle at 1px 1px, white 1px, transparent 0)`,
@@ -242,7 +293,7 @@ export default function HomePage({ predictionData, onNavigate }: HomePageProps) 
       </div>
 
       {/* Recent Wins Tile */}
-      <div className="relative bg-white/[0.03] border border-white/[0.08] rounded-2xl p-3 overflow-hidden animate-fade-in" style={{ animationDelay: '100ms' }}>
+      <div className="relative bg-white/[0.03] border border-white/[0.08] rounded-2xl p-3 overflow-hidden animate-fade-in" style={{ animationDelay: '150ms' }}>
         <div className="absolute inset-0 opacity-[0.03]" 
           style={{
             backgroundImage: `radial-gradient(circle at 1px 1px, white 1px, transparent 0)`,
@@ -293,7 +344,7 @@ export default function HomePage({ predictionData, onNavigate }: HomePageProps) 
       <div className="flex-grow min-h-2" />
 
       {/* Quick Actions */}
-      <div className="grid grid-cols-2 gap-2 animate-fade-in" style={{ animationDelay: '150ms' }}>
+      <div className="grid grid-cols-2 gap-2 animate-fade-in" style={{ animationDelay: '200ms' }}>
         <button
           onClick={() => {
             playClick();
