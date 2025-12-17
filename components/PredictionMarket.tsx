@@ -839,6 +839,7 @@ export default function PredictionMarket({ userFid, username, initialData, onDat
           to: CONTRACT_ADDRESS,
           value: `0x${totalCost.toString(16)}`,
           data,
+          chainId: `0x${(8453).toString(16)}`, // Base mainnet
         }],
       });
 
