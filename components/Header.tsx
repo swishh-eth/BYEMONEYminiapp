@@ -56,8 +56,8 @@ export default function Header({ userFid, username, pfpUrl, onConnect, activePag
       >
         {/* Logo Tile - fades out on non-home pages */}
         <div 
-          className={`w-10 h-10 rounded-xl flex items-center justify-center overflow-hidden transition-opacity duration-300 ${
-            isHomePage ? 'opacity-100' : 'opacity-0'
+          className={`w-10 h-10 rounded-xl flex items-center justify-center overflow-hidden transition-all duration-500 ease-in-out ${
+            isHomePage ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
           }`}
         >
           <img 
