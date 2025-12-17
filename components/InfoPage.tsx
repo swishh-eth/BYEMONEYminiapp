@@ -143,7 +143,7 @@ export default function InfoPage() {
   };
 
   return (
-    <div className="flex flex-col h-full overflow-y-auto scrollbar-hide p-4 pt-16 gap-3">
+    <div className="flex flex-col h-full overflow-y-auto scrollbar-hide p-4 pt-20 gap-3">
       {/* Video Header */}
       <div className="relative bg-white/[0.03] border border-white/[0.08] rounded-2xl overflow-hidden aspect-video animate-fade-in">
         <div className="absolute inset-0 opacity-[0.03]" 

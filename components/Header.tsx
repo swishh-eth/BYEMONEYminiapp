@@ -46,7 +46,7 @@ export default function Header({ userFid, username, pfpUrl, onConnect }: HeaderP
       <div 
         className="px-4 py-3 flex items-center justify-between pointer-events-auto"
         style={{
-          background: 'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.8) 50%, rgba(0,0,0,0) 100%)',
+          background: 'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 30%, rgba(0,0,0,0.6) 60%, rgba(0,0,0,0) 100%)',
           paddingBottom: '2rem',
         }}
       >

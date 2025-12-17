@@ -47,7 +47,7 @@ export default function BottomNav({ activeIndex, onNavigate }: BottomNavProps) {
   return (
     <nav className="flex-shrink-0 relative">
       {/* Fade gradient overlay - smoother */}
-      <div className="absolute inset-x-0 -top-12 h-12 bg-gradient-to-t from-black via-black/60 to-transparent pointer-events-none" />
+      <div className="absolute inset-x-0 -top-6 h-6 bg-gradient-to-t from-black via-black/40 to-transparent pointer-events-none" />
       
       <div className="bg-black flex justify-around items-center pt-1 pb-1 px-4">
         {PAGES.map((page, index) => {
