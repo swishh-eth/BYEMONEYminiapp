@@ -116,6 +116,20 @@ const AVAILABLE_COINS = [
 interface PredictionMarketProps {
   userFid?: number;
   username?: string;
+  onDataUpdate?: (data: {
+    marketId: number;
+    timeRemaining: number;
+    totalPool: number;
+    upPool: number;
+    downPool: number;
+    ethPrice: number;
+    recentWins: Array<{
+      username: string;
+      pfp: string;
+      amount: number;
+      direction: 'up' | 'down';
+    }>;
+  }) => void;
 }
 
 interface RecentBet {
@@ -154,7 +168,7 @@ interface HistoryItem {
   priceAtBet: number;
 }
 
-export default function PredictionMarket({ userFid, username }: PredictionMarketProps) {
+export default function PredictionMarket({ userFid, username, onDataUpdate }: PredictionMarketProps) {
   const [walletAddress, setWalletAddress] = useState<`0x${string}` | null>(null);
   const [ethBalance, setEthBalance] = useState<string>('0');
   const [ticketCount, setTicketCount] = useState(1);
@@ -983,6 +997,35 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
   const isLocked = hasMarket && !isResolved && !isCancelled && !isBettingOpen;
 
   const totalUnclaimed = unclaimedMarkets.reduce((sum, m) => sum + m.estimatedWinnings, 0);
+
+  // Calculate time remaining in seconds for parent
+  const timeRemainingSeconds = timeLeft.hours * 3600 + timeLeft.minutes * 60 + timeLeft.seconds;
+
+  // Call onDataUpdate when relevant data changes
+  useEffect(() => {
+    if (onDataUpdate) {
+      // Get recent wins from history
+      const recentWins = history
+        .filter(h => h.winnings > 0 && h.status === 1)
+        .slice(0, 5)
+        .map(h => ({
+          username: username || 'anon',
+          pfp: '',
+          amount: h.winnings,
+          direction: h.direction,
+        }));
+
+      onDataUpdate({
+        marketId: marketData ? Number(marketData.id) : 0,
+        timeRemaining: timeRemainingSeconds,
+        totalPool,
+        upPool,
+        downPool,
+        ethPrice: currentPriceUsd || 2900,
+        recentWins,
+      });
+    }
+  }, [marketData?.id, timeRemainingSeconds, totalPool, upPool, downPool, currentPriceUsd, history, onDataUpdate, username]);
 
   return (
     <div className="flex flex-col h-full bg-black text-white overflow-hidden">

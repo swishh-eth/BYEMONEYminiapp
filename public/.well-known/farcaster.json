@@ -20,7 +20,7 @@
     ],
     "webhookUrl": "https://byemoney.vercel.app/api/webhook",
     "subtitle": "Price Prediction Game",
-    "description": "Predict crypto prices and burn your favorite coins with BYEMONEY. Say goodbye to your money.",
+    "description": "Predict crypto prices and burn your favorite coins with BYEMONEY. Say goodbye to your money!",
     "screenshotUrls": [
       "https://byemoney.vercel.app/screenshot1.png",
       "https://byemoney.vercel.app/screenshot2.png"
