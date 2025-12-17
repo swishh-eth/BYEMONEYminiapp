@@ -1671,12 +1671,32 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
 
       {/* Coin Selector Modal */}
       {showCoinSelector && (
-        <div className={`fixed inset-0 z-50 flex items-end justify-center ${coinSelectorClosing ? 'animate-fade-out' : 'animate-fade-in'}`}>
+        <div 
+          className="fixed inset-0 z-50 flex items-end justify-center"
+          onClick={closeCoinSelector}
+        >
+          {/* Backdrop - dark overlay */}
           <div 
-            className="absolute inset-0 bg-black/90 backdrop-blur-md" 
-            onClick={closeCoinSelector} 
+            className={`absolute inset-0 bg-black transition-opacity duration-300 ease-out ${
+              coinSelectorClosing ? 'opacity-0' : 'opacity-80'
+            }`}
           />
-          <div className={`relative w-full max-w-md bg-gradient-to-t from-black via-black/95 to-transparent pt-20 pb-8 px-4 ${coinSelectorClosing ? 'animate-slide-down' : 'animate-slide-up'}`}>
+          {/* Backdrop - blur layer */}
+          <div 
+            className={`absolute inset-0 backdrop-blur-xl transition-opacity duration-300 ease-out ${
+              coinSelectorClosing ? 'opacity-0' : 'opacity-100'
+            }`}
+          />
+          {/* Content panel */}
+          <div 
+            className={`relative w-full max-w-md bg-gradient-to-t from-black via-black/98 to-black/90 pt-20 pb-8 px-4 rounded-t-3xl transition-all duration-300 ${
+              coinSelectorClosing 
+                ? 'opacity-0 translate-y-full' 
+                : 'opacity-100 translate-y-0'
+            }`}
+            style={{ transitionTimingFunction: coinSelectorClosing ? 'ease-in' : 'cubic-bezier(0.16, 1, 0.3, 1)' }}
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="text-center mb-6">
               <h3 className="text-xl font-bold text-white mb-1">Select Market</h3>
               <p className="text-sm text-white/40">Choose a coin to predict</p>
@@ -1741,7 +1761,7 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
             </div>
             
             {/* Close hint */}
-            <p className="text-center text-white/30 text-xs mt-4">Tap outside to close</p>
+            <p className="text-center text-white/20 text-[10px] mt-4 uppercase tracking-wider">tap anywhere above to close</p>
           </div>
         </div>
       )}
@@ -1749,15 +1769,29 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
       {/* History Modal */}
       {showHistory && (
         <div 
-          className={`fixed inset-0 z-50 flex items-end justify-center ${historyClosing ? 'animate-fade-out' : 'animate-fade-in'}`}
+          className="fixed inset-0 z-50 flex items-end justify-center"
           onClick={closeHistory}
         >
+          {/* Backdrop - dark overlay */}
           <div 
-            className={`absolute inset-0 bg-black/80 ${historyClosing ? '' : 'animate-blur-in'}`}
-            style={historyClosing ? { backdropFilter: 'blur(0px)', transition: 'backdrop-filter 0.3s ease-out' } : {}}
+            className={`absolute inset-0 bg-black transition-opacity duration-300 ease-out ${
+              historyClosing ? 'opacity-0' : 'opacity-80'
+            }`}
           />
+          {/* Backdrop - blur layer (separate for smooth animation) */}
           <div 
-            className={`relative w-full max-w-md max-h-[70vh] bg-gradient-to-t from-black via-black/98 to-transparent rounded-t-3xl pb-6 px-4 overflow-hidden ${historyClosing ? 'animate-slide-down' : 'animate-slide-up'}`}
+            className={`absolute inset-0 backdrop-blur-xl transition-opacity duration-300 ease-out ${
+              historyClosing ? 'opacity-0' : 'opacity-100'
+            }`}
+          />
+          {/* Content panel */}
+          <div 
+            className={`relative w-full max-w-md max-h-[70vh] bg-gradient-to-t from-black via-black/98 to-black/90 rounded-t-3xl pb-6 px-4 overflow-hidden transition-all duration-300 ease-out ${
+              historyClosing 
+                ? 'opacity-0 translate-y-full' 
+                : 'opacity-100 translate-y-0'
+            }`}
+            style={{ transitionTimingFunction: historyClosing ? 'ease-in' : 'cubic-bezier(0.16, 1, 0.3, 1)' }}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
