@@ -75,7 +75,7 @@ export default function HomePage({ predictionData, onNavigate }: HomePageProps) 
       setTimeout(() => {
         setCurrentMarketIndex((prev) => (prev + 1) % MARKETS.length);
         setIsTransitioning(false);
-      }, 300);
+      }, 700); // Match the 700ms animation duration
     }, 4000);
     return () => clearInterval(interval);
   }, []);
@@ -199,7 +199,7 @@ export default function HomePage({ predictionData, onNavigate }: HomePageProps) 
           }}
         />
         
-        <div className={`relative transition-all duration-300 ${isTransitioning ? 'opacity-0 translate-y-2' : 'opacity-100 translate-y-0'}`}>
+        <div className={`relative transition-all duration-700 ease-in-out ${isTransitioning ? 'opacity-0 translate-y-2' : 'opacity-100 translate-y-0'}`}>
           {/* Market Header */}
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-3">
