@@ -167,6 +167,7 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
   const [recentBets, setRecentBets] = useState<RecentBet[]>([]);
   const [userPfp, setUserPfp] = useState<string | null>(null);
   const [showHistory, setShowHistory] = useState(false);
+  const [historyClosing, setHistoryClosing] = useState(false);
   const [unclaimedMarkets, setUnclaimedMarkets] = useState<UnclaimedMarket[]>([]);
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [showConfetti, setShowConfetti] = useState(false);
@@ -187,6 +188,14 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
     setTimeout(() => {
       setShowCoinSelector(false);
       setCoinSelectorClosing(false);
+    }, 300);
+  };
+
+  const closeHistory = () => {
+    setHistoryClosing(true);
+    setTimeout(() => {
+      setShowHistory(false);
+      setHistoryClosing(false);
     }, 300);
   };
   
@@ -280,7 +289,7 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
         console.log('SDK init error:', error);
       }
       // Small delay to ensure smooth animation
-      setTimeout(() => setPageReady(true), 100);
+      setTimeout(() => setPageReady(true), 50);
     };
     initSDK();
   }, []);
@@ -924,125 +933,6 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
   const isLocked = hasMarket && !isResolved && !isCancelled && !isBettingOpen;
 
   const totalUnclaimed = unclaimedMarkets.reduce((sum, m) => sum + m.estimatedWinnings, 0);
-
-  // History Page
-  if (showHistory) {
-    return (
-      <div className="flex flex-col h-full bg-black text-white overflow-hidden">
-        <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          <div className="absolute inset-0 opacity-[0.02]" 
-            style={{
-              backgroundImage: `radial-gradient(circle at 1px 1px, white 1px, transparent 0)`,
-              backgroundSize: '32px 32px',
-            }}
-          />
-        </div>
-
-        <div className="relative flex flex-col h-full p-4 pt-16 gap-3 overflow-y-auto scrollbar-hide">
-          <div className="flex items-center justify-between mb-2">
-            <button 
-              onClick={() => { setShowHistory(false); playClick(); triggerHaptic('light'); }}
-              className="flex items-center gap-2 text-white/60 hover:text-white transition-colors"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                <path d="M15 19l-7-7 7-7" />
-              </svg>
-              <span className="text-sm">Back</span>
-            </button>
-            <h1 className="text-lg font-bold">Betting History</h1>
-            <div className="w-16" />
-          </div>
-
-          {unclaimedMarkets.length > 0 && (
-            <div className="bg-gradient-to-r from-white/20 to-white/20 border border-white/30 rounded-xl p-4 animate-pulse-subtle">
-              <p className="text-[10px] text-white uppercase tracking-wider mb-2">Unclaimed Winnings</p>
-              <p className="text-2xl font-bold text-white">{totalUnclaimed.toFixed(4)} ETH</p>
-              <div className="mt-3 space-y-2">
-                {unclaimedMarkets.map((m) => (
-                  <div key={m.marketId} className="flex items-center justify-between bg-black/30 rounded-lg p-3">
-                    <div className="flex-shrink-0">
-                      <p className="text-sm text-white/70">Round #{m.marketId}</p>
-                      <p className="text-xs text-white/40">
-                        {m.status === 2 ? 'Cancelled' : m.result === 1 ? 'UP won' : 'DOWN won'}
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => handleClaim(m.marketId)}
-                      disabled={claimingMarketId === m.marketId}
-                      className="bg-white hover:bg-white/90 text-black text-xs font-bold px-4 py-2 rounded-lg transition-all disabled:opacity-50 whitespace-nowrap ml-3"
-                    >
-                      {claimingMarketId === m.marketId ? 'Claiming...' : `Claim ${m.estimatedWinnings.toFixed(4)}`}
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          <div className="space-y-2">
-            {history.length === 0 ? (
-              <div className="text-center py-12 text-white/40">
-                <p>No betting history yet</p>
-              </div>
-            ) : (
-              history.map((item, index) => (
-                <div 
-                  key={`${item.marketId}-${item.direction}-${index}`} 
-                  className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-4 animate-fade-in"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-                        item.direction === 'up' ? 'bg-white/20' : 'bg-red-500/20'
-                      }`}>
-                        <svg className={`w-5 h-5 ${item.direction === 'up' ? 'text-white' : 'text-red-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
-                          <path d={item.direction === 'up' ? 'M5 15l7-7 7 7' : 'M19 9l-7 7-7-7'} />
-                        </svg>
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <p className="text-sm font-semibold">Round #{item.marketId}</p>
-                          <span className={`text-[10px] px-1.5 py-0.5 rounded ${
-                            item.direction === 'up' ? 'bg-white/10 text-white' : 'bg-red-500/20 text-red-400'
-                          }`}>
-                            {item.direction === 'up' ? 'PUMP' : 'DUMP'}
-                          </span>
-                        </div>
-                        <p className="text-[10px] text-white/40">
-                          {item.tickets} ticket{item.tickets > 1 ? 's' : ''} @ ${item.priceAtBet?.toFixed(2)}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      {item.status === 0 ? (
-                        <span className="text-xs text-yellow-400 font-medium">Active</span>
-                      ) : item.status === 2 ? (
-                        <span className="text-xs text-orange-400 font-medium">Cancelled</span>
-                      ) : item.result === (item.direction === 'up' ? 1 : 2) ? (
-                        <span className="text-xs text-white font-medium">Won ✓</span>
-                      ) : item.result === 0 ? (
-                        <span className="text-xs text-white/40 font-medium">Tie</span>
-                      ) : (
-                        <span className="text-xs text-red-400 font-medium">Lost</span>
-                      )}
-                      {item.winnings > 0 && !item.claimed && (
-                        <p className="text-sm font-bold text-white">
-                          +{item.winnings.toFixed(4)} ETH
-                        </p>
-                      )}
-                      {item.claimed && (
-                        <p className="text-xs text-white/30">Claimed</p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="flex flex-col h-full bg-black text-white overflow-hidden">
@@ -1824,6 +1714,138 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
             
             {/* Close hint */}
             <p className="text-center text-white/30 text-xs mt-4">Tap outside to close</p>
+          </div>
+        </div>
+      )}
+
+      {/* History Modal */}
+      {showHistory && (
+        <div className={`fixed inset-0 z-50 flex items-end justify-center ${historyClosing ? 'animate-fade-out' : 'animate-fade-in'}`}>
+          <div 
+            className="absolute inset-0 bg-black/90 backdrop-blur-md" 
+            onClick={closeHistory} 
+          />
+          <div className={`relative w-full max-w-md max-h-[80vh] bg-gradient-to-t from-black via-black to-black/95 rounded-t-3xl pb-8 px-4 overflow-hidden ${historyClosing ? 'animate-slide-down' : 'animate-slide-up'}`}>
+            {/* Header */}
+            <div className="sticky top-0 bg-black pt-6 pb-4 z-10">
+              <div className="w-12 h-1 bg-white/20 rounded-full mx-auto mb-4" />
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-bold text-white">Betting History</h3>
+                <button 
+                  onClick={closeHistory}
+                  className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center"
+                >
+                  <svg className="w-4 h-4 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                    <path d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+            
+            <div className="overflow-y-auto max-h-[calc(80vh-100px)] space-y-2 pb-4 scrollbar-hide">
+              {/* Unclaimed Winnings */}
+              {unclaimedMarkets.length > 0 && (
+                <div className="bg-white/10 border border-white/20 rounded-xl p-3 mb-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-[10px] text-white/60 uppercase tracking-wider">Unclaimed</p>
+                    <p className="text-sm font-bold text-white">{totalUnclaimed.toFixed(4)} ETH</p>
+                  </div>
+                  <div className="space-y-1.5">
+                    {unclaimedMarkets.map((m) => (
+                      <div key={m.marketId} className="flex items-center justify-between bg-black/40 rounded-lg p-2">
+                        <div>
+                          <p className="text-xs text-white/70">Round #{m.marketId}</p>
+                          <p className="text-[10px] text-white/40">
+                            {m.status === 2 ? 'Cancelled' : m.result === 1 ? 'UP won' : 'DOWN won'}
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => handleClaim(m.marketId)}
+                          disabled={claimingMarketId === m.marketId}
+                          className="bg-white hover:bg-white/90 text-black text-[10px] font-bold px-3 py-1.5 rounded-lg transition-all disabled:opacity-50 whitespace-nowrap"
+                        >
+                          {claimingMarketId === m.marketId ? '...' : `Claim`}
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* History Items - Last 7 */}
+              {history.length === 0 ? (
+                <div className="text-center py-8 text-white/40">
+                  <p className="text-sm">No betting history yet</p>
+                </div>
+              ) : (
+                history.slice(0, 7).map((item, index) => {
+                  const betDate = item.timestamp ? new Date(item.timestamp) : null;
+                  const dayName = betDate ? ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][betDate.getDay()] : '';
+                  const ethPrice = currentPriceUsd > 0 ? currentPriceUsd : 2900; // fallback
+                  const betAmountUsd = (item.tickets * TICKET_PRICE_ETH * ethPrice).toFixed(2);
+                  const winningsUsd = item.winnings > 0 ? (item.winnings * ethPrice).toFixed(2) : '0';
+                  const isWin = item.result === (item.direction === 'up' ? 1 : 2);
+                  
+                  return (
+                    <div 
+                      key={`${item.marketId}-${item.direction}-${index}`} 
+                      className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-3 animate-fade-in"
+                      style={{ animationDelay: `${index * 30}ms` }}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2.5">
+                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                            item.direction === 'up' ? 'bg-white/20' : 'bg-red-500/20'
+                          }`}>
+                            <svg className={`w-4 h-4 ${item.direction === 'up' ? 'text-white' : 'text-red-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                              <path d={item.direction === 'up' ? 'M5 15l7-7 7 7' : 'M19 9l-7 7-7-7'} />
+                            </svg>
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-1.5">
+                              <p className="text-xs font-semibold">#{item.marketId}</p>
+                              <span className={`text-[9px] px-1 py-0.5 rounded ${
+                                item.direction === 'up' ? 'bg-white/10 text-white/70' : 'bg-red-500/20 text-red-400/70'
+                              }`}>
+                                {item.direction === 'up' ? 'PUMP' : 'DUMP'}
+                              </span>
+                              {dayName && <span className="text-[9px] text-white/30">{dayName}</span>}
+                            </div>
+                            <p className="text-[10px] text-white/40">
+                              {item.tickets} ticket{item.tickets > 1 ? 's'  : ''} · ${betAmountUsd}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          {item.status === 0 ? (
+                            <span className="text-[10px] text-yellow-400 font-medium">Active</span>
+                          ) : item.status === 2 ? (
+                            <span className="text-[10px] text-orange-400 font-medium">Cancelled</span>
+                          ) : isWin ? (
+                            <>
+                              <span className="text-[10px] text-white font-medium">Won ✓</span>
+                              {item.winnings > 0 && (
+                                <p className="text-xs font-bold text-white">+${winningsUsd}</p>
+                              )}
+                            </>
+                          ) : item.result === 0 ? (
+                            <span className="text-[10px] text-white/40 font-medium">Tie</span>
+                          ) : (
+                            <span className="text-[10px] text-red-400 font-medium">Lost</span>
+                          )}
+                          {item.claimed && (
+                            <p className="text-[9px] text-white/30">Claimed</p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+            
+            {/* Close hint */}
+            <p className="text-center text-white/30 text-[10px] mt-2">Tap outside to close</p>
           </div>
         </div>
       )}
