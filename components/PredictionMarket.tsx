@@ -1368,73 +1368,73 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
               </button>
             </div>
 
+            {/* Ticket Section + Buy Button - animate together */}
             {(selectedDirection || ticketSectionClosing) && (
-              <div ref={ticketSectionRef} className={`bg-white/[0.03] border border-white/[0.08] rounded-xl p-4 ${ticketSectionClosing ? 'animate-slide-out' : 'animate-slide-in'}`}>
-                <div className="flex items-center justify-between mb-3">
-                  <p className="text-[10px] text-white/40 uppercase">Tickets</p>
-                  <p className="text-[10px] text-white/40">
-                    Bal: <span className="text-white">{Number(ethBalance).toFixed(4)} ETH</span>
-                  </p>
-                </div>
-
-                <div className="flex items-center justify-center gap-1">
-                  <button
-                    onClick={() => { setTicketCount(Math.max(1, ticketCount - 10)); playClick(); triggerHaptic('light'); }}
-                    className="w-10 h-10 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center text-xs font-medium transition-all active:scale-95"
-                  >
-                    -10
-                  </button>
-                  <button
-                    onClick={() => { setTicketCount(Math.max(1, ticketCount - 5)); playClick(); triggerHaptic('light'); }}
-                    className="w-9 h-10 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center text-xs font-medium transition-all active:scale-95"
-                  >
-                    -5
-                  </button>
-                  <button
-                    onClick={() => { setTicketCount(Math.max(1, ticketCount - 1)); playClick(); triggerHaptic('light'); }}
-                    className="w-8 h-10 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center text-sm transition-all active:scale-95"
-                  >
-                    −
-                  </button>
-                  
-                  <div className="w-16 text-center px-2">
-                    <p className="text-2xl font-bold">{ticketCount}</p>
-                    <p className="text-[9px] text-white/40">{(ticketCount * TICKET_PRICE_ETH).toFixed(3)} ETH</p>
+              <div className={`flex flex-col gap-3 overflow-hidden ${ticketSectionClosing ? 'animate-slide-out' : 'animate-slide-in'}`}>
+                <div ref={ticketSectionRef} className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="text-[10px] text-white/40 uppercase">Tickets</p>
+                    <p className="text-[10px] text-white/40">
+                      Bal: <span className="text-white">{Number(ethBalance).toFixed(4)} ETH</span>
+                    </p>
                   </div>
 
-                  <button
-                    onClick={() => { setTicketCount(ticketCount + 1); playClick(); triggerHaptic('light'); }}
-                    className="w-8 h-10 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center text-sm transition-all active:scale-95"
-                  >
-                    +
-                  </button>
-                  <button
-                    onClick={() => { setTicketCount(ticketCount + 5); playClick(); triggerHaptic('light'); }}
-                    className="w-9 h-10 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center text-xs font-medium transition-all active:scale-95"
-                  >
-                    +5
-                  </button>
-                  <button
-                    onClick={() => { setTicketCount(ticketCount + 10); playClick(); triggerHaptic('light'); }}
-                    className="w-10 h-10 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center text-xs font-medium transition-all active:scale-95"
-                  >
-                    +10
-                  </button>
-                </div>
-              </div>
-            )}
+                  <div className="flex items-center justify-center gap-1">
+                    <button
+                      onClick={() => { setTicketCount(Math.max(1, ticketCount - 10)); playClick(); triggerHaptic('light'); }}
+                      className="w-10 h-10 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center text-xs font-medium transition-all active:scale-95"
+                    >
+                      -10
+                    </button>
+                    <button
+                      onClick={() => { setTicketCount(Math.max(1, ticketCount - 5)); playClick(); triggerHaptic('light'); }}
+                      className="w-9 h-10 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center text-xs font-medium transition-all active:scale-95"
+                    >
+                      -5
+                    </button>
+                    <button
+                      onClick={() => { setTicketCount(Math.max(1, ticketCount - 1)); playClick(); triggerHaptic('light'); }}
+                      className="w-8 h-10 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center text-sm transition-all active:scale-95"
+                    >
+                      −
+                    </button>
+                    
+                    <div className="w-16 text-center px-2">
+                      <p className="text-2xl font-bold">{ticketCount}</p>
+                      <p className="text-[9px] text-white/40">{(ticketCount * TICKET_PRICE_ETH).toFixed(3)} ETH</p>
+                    </div>
 
-            {(selectedDirection || ticketSectionClosing) && (
-              <button
-                ref={buyButtonRef}
-                onClick={handleBuyClick}
-                disabled={txState !== 'idle'}
-                className={`w-full py-4 rounded-xl font-bold transition-all hover:scale-[1.02] active:scale-[0.98] ${ticketSectionClosing ? 'animate-slide-out' : 'animate-slide-in'} ${
-                  selectedDirection === 'up'
-                    ? 'bg-gradient-to-r from-white to-white text-black shadow-lg shadow-white/20'
-                    : 'bg-gradient-to-r from-red-500 to-rose-500 text-white shadow-lg shadow-red-500/20'
-                } disabled:opacity-50 disabled:hover:scale-100`}
-              >
+                    <button
+                      onClick={() => { setTicketCount(ticketCount + 1); playClick(); triggerHaptic('light'); }}
+                      className="w-8 h-10 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center text-sm transition-all active:scale-95"
+                    >
+                      +
+                    </button>
+                    <button
+                      onClick={() => { setTicketCount(ticketCount + 5); playClick(); triggerHaptic('light'); }}
+                      className="w-9 h-10 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center text-xs font-medium transition-all active:scale-95"
+                    >
+                      +5
+                    </button>
+                    <button
+                      onClick={() => { setTicketCount(ticketCount + 10); playClick(); triggerHaptic('light'); }}
+                      className="w-10 h-10 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center text-xs font-medium transition-all active:scale-95"
+                    >
+                      +10
+                    </button>
+                  </div>
+                </div>
+
+                <button
+                  ref={buyButtonRef}
+                  onClick={handleBuyClick}
+                  disabled={txState !== 'idle'}
+                  className={`w-full py-4 rounded-xl font-bold transition-all hover:scale-[1.02] active:scale-[0.98] ${
+                    selectedDirection === 'up'
+                      ? 'bg-gradient-to-r from-white to-white text-black shadow-lg shadow-white/20'
+                      : 'bg-gradient-to-r from-red-500 to-rose-500 text-white shadow-lg shadow-red-500/20'
+                  } disabled:opacity-50 disabled:hover:scale-100`}
+                >
                 {txState === 'buying' ? (
                   <span className="flex items-center justify-center gap-2">
                     <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
@@ -1448,6 +1448,7 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
                  txState === 'error' ? errorMsg || 'Failed' :
                  `Start Round & Bet ${(ticketCount * TICKET_PRICE_ETH).toFixed(3)} ETH`}
               </button>
+              </div>
             )}
           </div>
         ) : !isLocked ? (
@@ -1892,7 +1893,7 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
                         </div>
                         <div className="flex items-center gap-2 flex-shrink-0">
                           {item.status === 0 ? (
-                            <span className="text-[10px] text-yellow-400 font-medium">Active</span>
+                            <span className="text-[10px] text-white font-medium">Active</span>
                           ) : item.status === 2 ? (
                             <span className="text-[10px] text-orange-400 font-medium">Cancelled</span>
                           ) : isWin ? (
@@ -2047,15 +2048,15 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
           animation: slide-in 0.3s ease-out forwards;
         }
         @keyframes slide-in {
-          from { opacity: 0; transform: translateY(-20px); }
-          to { opacity: 1; transform: translateY(0); }
+          from { opacity: 0; transform: translateY(-10px) scale(0.98); }
+          to { opacity: 1; transform: translateY(0) scale(1); }
         }
         .animate-slide-out {
-          animation: slide-out 0.25s ease-in forwards;
+          animation: slide-out 0.3s ease-out forwards;
         }
         @keyframes slide-out {
-          from { opacity: 1; transform: translateY(0); }
-          to { opacity: 0; transform: translateY(-20px); }
+          from { opacity: 1; transform: translateY(0) scale(1); max-height: 500px; }
+          to { opacity: 0; transform: translateY(-10px) scale(0.98); max-height: 0; }
         }
         .animate-slide-down {
           animation: slide-down 0.3s ease-in forwards;
