@@ -201,6 +201,7 @@ export default function PredictionMarket({ userFid, username, onDataUpdate }: Pr
   const ticketSectionRef = useRef<HTMLDivElement>(null);
   const mainContainerRef = useRef<HTMLDivElement>(null);
   const buyButtonRef = useRef<HTMLButtonElement>(null);
+  const directionButtonsRef = useRef<HTMLDivElement>(null);
   
   const closeCoinSelector = () => {
     setCoinSelectorMounted(false);
@@ -737,6 +738,12 @@ export default function PredictionMarket({ userFid, username, onDataUpdate }: Pr
     if (selectedDirection === direction) {
       // Same button clicked - close with animation
       setTicketSectionClosing(true);
+      
+      // Scroll back up to the buttons smoothly as the section closes
+      if (directionButtonsRef.current) {
+        directionButtonsRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      
       // Wait for animation to complete before removing
       setTimeout(() => {
         setSelectedDirection(null);
@@ -1399,7 +1406,7 @@ export default function PredictionMarket({ userFid, username, onDataUpdate }: Pr
               <p className="text-sm text-white/50 mb-4">Be the first to bet and start the next 24h prediction round!</p>
             </div>
             
-            <div className="grid grid-cols-2 gap-2">
+            <div ref={directionButtonsRef} className="grid grid-cols-2 gap-2">
               <button
                 onClick={() => handleDirectionClick('up')}
                 className={`rounded-xl p-4 transition-all hover:scale-[1.02] active:scale-[0.98] ${
@@ -1518,7 +1525,7 @@ export default function PredictionMarket({ userFid, username, onDataUpdate }: Pr
           </div>
         ) : !isLocked ? (
           <div className="flex flex-col gap-3 animate-fade-in" style={{ animationDelay: '200ms' }}>
-            <div className="grid grid-cols-2 gap-2">
+            <div ref={directionButtonsRef} className="grid grid-cols-2 gap-2">
               <button
                 onClick={() => handleDirectionClick('up')}
                 className={`rounded-xl p-4 transition-all hover:scale-[1.02] active:scale-[0.98] ${
