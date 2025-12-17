@@ -100,17 +100,7 @@ export default function App() {
       // Get bets from recently completed markets (last 10 markets before current)
       const { data: bets, error } = await supabase
         .from('prediction_bets')
-        .select(`
-          market_id,
-          direction,
-          tickets,
-          wallet_address,
-          fid,
-          prediction_users (
-            username,
-            pfp_url
-          )
-        `)
+        .select('market_id, direction, tickets, wallet_address, fid')
         .lt('market_id', currentMarketId)
         .gte('market_id', Math.max(1, currentMarketId - 10))
         .order('market_id', { ascending: false })
@@ -124,6 +114,21 @@ export default function App() {
       if (!bets || bets.length === 0) {
         console.log('No bets found for recent markets');
         return [];
+      }
+
+      // Get unique fids to fetch user data
+      const fids = [...new Set(bets.map(b => b.fid).filter(Boolean))];
+      
+      // Fetch user data separately
+      const { data: users } = await supabase
+        .from('prediction_users')
+        .select('fid, username, pfp_url')
+        .in('fid', fids);
+      
+      // Create a map of fid -> user data
+      const userMap = new Map();
+      if (users) {
+        users.forEach(u => userMap.set(u.fid, u));
       }
 
       // Get unique market IDs
@@ -164,8 +169,8 @@ export default function App() {
           for (const bet of marketBets) {
             const winnings = (poolAfterFee * bet.tickets * TICKET_PRICE_ETH) / winningPool;
             if (winnings > 0) {
-              // Extract user data from the joined prediction_users
-              const userData = (bet as any).prediction_users;
+              // Get user data from our map
+              const userData = userMap.get(bet.fid);
               const username = userData?.username || 'anon';
               const pfpUrl = userData?.pfp_url || '';
               

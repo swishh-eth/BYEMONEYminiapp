@@ -178,7 +178,7 @@ export default function HomePage({ predictionData, onNavigate }: HomePageProps) 
         </button>
       </div>
 
-      {/* Market Carousel Tile */}
+      {/* Combined Market + Live Round Tile */}
       <div className="relative bg-white/[0.03] border border-white/[0.08] rounded-2xl p-3 overflow-hidden animate-fade-in" style={{ animationDelay: '50ms' }}>
         <div className="absolute inset-0 opacity-[0.03]" 
           style={{
@@ -187,119 +187,116 @@ export default function HomePage({ predictionData, onNavigate }: HomePageProps) 
           }}
         />
         
-        {/* Market indicators */}
-        <div className="absolute top-2.5 right-2.5 flex gap-1">
-          {MARKETS.map((_, i) => (
-            <div 
-              key={i} 
-              className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${
-                i === currentMarketIndex ? 'bg-white' : 'bg-white/20'
-              }`}
-            />
-          ))}
-        </div>
-
         <div className={`relative transition-all duration-300 ${isTransitioning ? 'opacity-0 translate-y-2' : 'opacity-100 translate-y-0'}`}>
-          <div className="flex items-center gap-3 mb-2">
-            <div className={`w-10 h-10 rounded-xl overflow-hidden ${!currentMarket.active && 'opacity-40 grayscale'}`}>
-              <img 
-                src={currentMarket.icon} 
-                alt={currentMarket.symbol}
-                className="w-full h-full object-cover"
-              />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="font-bold text-base">{currentMarket.symbol}</span>
-                {!currentMarket.active && (
-                  <span className="text-[8px] px-1.5 py-0.5 rounded bg-white/10 text-white/40 uppercase">Coming Soon</span>
-                )}
-              </div>
-              <span className="text-[11px] text-white/40">{currentMarket.name}</span>
-            </div>
-          </div>
-
-          {/* Fixed height content area - same for all markets */}
-          <div className="h-[42px] flex items-center">
-            {currentMarket.active && predictionData ? (
-              <div className="flex items-center justify-between w-full">
-                <div>
-                  <p className="text-[9px] text-white/40 uppercase tracking-wider">ETH Price</p>
-                  <p className="text-lg font-bold">${predictionData.ethPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-[9px] text-white/40 uppercase tracking-wider">Market</p>
-                  <p className="text-xs text-white/60">Prediction</p>
-                </div>
-              </div>
-            ) : !currentMarket.active ? (
-              <div className="flex items-center justify-center w-full">
-                <div className="flex items-center gap-2 text-white/30">
-                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                    <path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                  </svg>
-                  <span className="text-xs">Market not yet available</span>
-                </div>
-              </div>
-            ) : null}
-          </div>
-        </div>
-      </div>
-
-      {/* Live Round Tile */}
-      <div className="relative bg-white/[0.03] border border-white/[0.08] rounded-2xl p-3 overflow-hidden animate-fade-in" style={{ animationDelay: '100ms' }}>
-        <div className="absolute inset-0 opacity-[0.03]" 
-          style={{
-            backgroundImage: `radial-gradient(circle at 1px 1px, white 1px, transparent 0)`,
-            backgroundSize: '20px 20px',
-          }}
-        />
-        <div className="relative">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2">
-              <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-              <span className="text-[9px] text-white/40 uppercase tracking-wider">Live Round</span>
-            </div>
-            <span className="text-[11px] text-white/60">
-              #{predictionData?.marketId || '--'}
-            </span>
-          </div>
-
+          {/* Market Header */}
           <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-3">
+              <div className={`w-10 h-10 rounded-xl overflow-hidden ${!currentMarket.active && 'opacity-40 grayscale'}`}>
+                <img 
+                  src={currentMarket.icon} 
+                  alt={currentMarket.symbol}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-base">{currentMarket.symbol}</span>
+                  {!currentMarket.active && (
+                    <span className="text-[8px] px-1.5 py-0.5 rounded bg-white/10 text-white/40 uppercase">Coming Soon</span>
+                  )}
+                </div>
+                <span className="text-[11px] text-white/40">{currentMarket.name}</span>
+              </div>
+            </div>
+            {/* Market indicators */}
+            <div className="flex gap-1">
+              {MARKETS.map((_, i) => (
+                <div 
+                  key={i} 
+                  className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${
+                    i === currentMarketIndex ? 'bg-white' : 'bg-white/20'
+                  }`}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Price Row */}
+          <div className={`flex items-center justify-between mb-3 ${!currentMarket.active && 'opacity-30'}`}>
             <div>
-              <p className="text-xl font-bold">{formatTime(predictionData?.timeRemaining || 0)}</p>
-              <p className="text-[9px] text-white/40">remaining</p>
+              <p className={`text-[9px] uppercase tracking-wider ${currentMarket.active ? 'text-white/40' : 'text-white/20'}`}>
+                {currentMarket.symbol} Price
+              </p>
+              <p className="text-lg font-bold">
+                {currentMarket.active && predictionData 
+                  ? `$${predictionData.ethPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                  : '$---.--'
+                }
+              </p>
             </div>
             <div className="text-right">
-              <p className="text-base font-bold">{predictionData?.totalPool.toFixed(4) || '0.0000'} ETH</p>
-              <p className="text-[9px] text-white/40">in pool</p>
+              <p className={`text-[9px] uppercase tracking-wider ${currentMarket.active ? 'text-white/40' : 'text-white/20'}`}>
+                Round
+              </p>
+              <p className="text-lg font-bold">
+                {currentMarket.active ? `#${predictionData?.marketId || '--'}` : '#--'}
+              </p>
+            </div>
+          </div>
+
+          {/* Live Round Info */}
+          <div className={`flex items-center justify-between mb-3 ${!currentMarket.active && 'opacity-30'}`}>
+            <div className="flex items-center gap-2">
+              <div className={`w-1.5 h-1.5 rounded-full ${currentMarket.active ? 'bg-green-400 animate-pulse' : 'bg-white/20'}`} />
+              <span className={`text-[9px] uppercase tracking-wider ${currentMarket.active ? 'text-white/40' : 'text-white/20'}`}>
+                {currentMarket.active ? 'Live Round' : 'Coming Soon'}
+              </span>
+            </div>
+          </div>
+
+          <div className={`flex items-center justify-between mb-3 ${!currentMarket.active && 'opacity-30'}`}>
+            <div>
+              <p className="text-xl font-bold">
+                {currentMarket.active ? formatTime(predictionData?.timeRemaining || 0) : '--h --m'}
+              </p>
+              <p className={`text-[9px] ${currentMarket.active ? 'text-white/40' : 'text-white/20'}`}>remaining</p>
+            </div>
+            <div className="text-right">
+              <p className="text-base font-bold">
+                {currentMarket.active ? `${predictionData?.totalPool.toFixed(4) || '0.0000'} ETH` : '0.0000 ETH'}
+              </p>
+              <p className={`text-[9px] ${currentMarket.active ? 'text-white/40' : 'text-white/20'}`}>in pool</p>
             </div>
           </div>
 
           {/* Pool Bar */}
-          <div className="mb-3">
+          <div className={`mb-3 ${!currentMarket.active && 'opacity-30'}`}>
             <div className="relative h-1.5 bg-white/5 rounded-full overflow-hidden">
               <div 
-                className="absolute left-0 top-0 h-full bg-white transition-all duration-700"
-                style={{ width: `${upPercent}%` }}
+                className={`absolute left-0 top-0 h-full transition-all duration-700 ${currentMarket.active ? 'bg-white' : 'bg-white/30'}`}
+                style={{ width: currentMarket.active ? `${upPercent}%` : '50%' }}
               />
               <div 
-                className="absolute right-0 top-0 h-full bg-red-500 transition-all duration-700"
-                style={{ width: `${downPercent}%` }}
+                className={`absolute right-0 top-0 h-full transition-all duration-700 ${currentMarket.active ? 'bg-red-500' : 'bg-white/20'}`}
+                style={{ width: currentMarket.active ? `${downPercent}%` : '50%' }}
               />
             </div>
             <div className="flex justify-between mt-1.5 text-[11px]">
               <div className="flex items-center gap-1">
-                <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}>
+                <svg className={`w-2.5 h-2.5 ${currentMarket.active ? 'text-white' : 'text-white/30'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}>
                   <path d="M5 15l7-7 7 7" />
                 </svg>
-                <span className="text-white font-medium">{upPercent.toFixed(0)}%</span>
-                <span className="text-white/30">PUMP</span>
+                <span className={`font-medium ${currentMarket.active ? 'text-white' : 'text-white/30'}`}>
+                  {currentMarket.active ? `${upPercent.toFixed(0)}%` : '--%'}
+                </span>
+                <span className={currentMarket.active ? 'text-white/30' : 'text-white/20'}>PUMP</span>
               </div>
               <div className="flex items-center gap-1">
-                <span className="text-white/30">DUMP</span>
-                <span className="text-red-400 font-medium">{downPercent.toFixed(0)}%</span>
-                <svg className="w-2.5 h-2.5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}>
+                <span className={currentMarket.active ? 'text-white/30' : 'text-white/20'}>DUMP</span>
+                <span className={`font-medium ${currentMarket.active ? 'text-red-400' : 'text-white/30'}`}>
+                  {currentMarket.active ? `${downPercent.toFixed(0)}%` : '--%'}
+                </span>
+                <svg className={`w-2.5 h-2.5 ${currentMarket.active ? 'text-red-400' : 'text-white/30'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}>
                   <path d="M19 9l-7 7-7-7" />
                 </svg>
               </div>
@@ -307,20 +304,29 @@ export default function HomePage({ predictionData, onNavigate }: HomePageProps) 
           </div>
 
           {/* CTA Button */}
-          <button
-            onClick={handleBetClick}
-            className="w-full py-2.5 rounded-xl font-bold text-sm bg-white text-black transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2"
-          >
-            Place Your Bet
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-              <path d="M13 7l5 5m0 0l-5 5m5-5H6" />
-            </svg>
-          </button>
+          {currentMarket.active ? (
+            <button
+              onClick={handleBetClick}
+              className="w-full py-2.5 rounded-xl font-bold text-sm bg-white text-black transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2"
+            >
+              Place Your Bet
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                <path d="M13 7l5 5m0 0l-5 5m5-5H6" />
+              </svg>
+            </button>
+          ) : (
+            <div className="w-full py-2.5 rounded-xl font-bold text-sm bg-white/10 text-white/30 flex items-center justify-center gap-2">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                <path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+              Coming Soon
+            </div>
+          )}
         </div>
       </div>
 
       {/* Recent Wins Tile */}
-      <div className="relative bg-white/[0.03] border border-white/[0.08] rounded-2xl p-3 overflow-hidden animate-fade-in" style={{ animationDelay: '150ms' }}>
+      <div className="relative bg-white/[0.03] border border-white/[0.08] rounded-2xl p-3 overflow-hidden animate-fade-in" style={{ animationDelay: '100ms' }}>
         <div className="absolute inset-0 opacity-[0.03]" 
           style={{
             backgroundImage: `radial-gradient(circle at 1px 1px, white 1px, transparent 0)`,
