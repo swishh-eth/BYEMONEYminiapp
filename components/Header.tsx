@@ -85,8 +85,8 @@ export default function Header({ userFid, username, pfpUrl, onConnect }: HeaderP
         )}
       </div>
       
-      {/* Fade gradient overlay */}
-      <div className="absolute inset-x-0 top-full h-12 bg-gradient-to-b from-black via-black/50 to-transparent pointer-events-none z-20" />
+      {/* Fade gradient overlay - subtle */}
+      <div className="absolute inset-x-0 top-full h-8 bg-gradient-to-b from-black/80 to-transparent pointer-events-none z-20" />
     </header>
   );
 }
