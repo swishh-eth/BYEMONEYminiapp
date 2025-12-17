@@ -1658,46 +1658,6 @@ export default function PredictionMarket({ userFid, username, onDataUpdate }: Pr
           </div>
         )}
 
-        {/* Recent Bets */}
-        {recentBets.length > 0 && (
-          <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-4 animate-fade-in" style={{ animationDelay: '250ms' }}>
-            <p className="text-[10px] text-white/40 uppercase tracking-wider mb-3">Recent Bets</p>
-            <div className="space-y-2">
-              {recentBets.slice(0, 5).map((bet, i) => (
-                <div 
-                  key={bet.id} 
-                  className="flex items-center justify-between animate-fade-in"
-                  style={{ animationDelay: `${i * 0.1}s` }}
-                >
-                  <div className="flex items-center gap-2">
-                    <img 
-                      src={bet.pfp_url || `https://api.dicebear.com/7.x/shapes/svg?seed=${bet.fid}`}
-                      alt={bet.username}
-                      className="w-6 h-6 rounded-full bg-white/10"
-                    />
-                    <div className="flex flex-col">
-                      <span className="text-xs text-white/70">@{bet.username}</span>
-                      {bet.price_at_bet && (
-                        <span className="text-[9px] text-white/30">${bet.price_at_bet.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-white/50">{bet.tickets}x</span>
-                    <div className={`w-5 h-5 rounded flex items-center justify-center ${
-                      bet.direction === 'up' ? 'bg-white/20' : 'bg-red-500/20'
-                    }`}>
-                      <svg className={`w-3 h-3 ${bet.direction === 'up' ? 'text-white' : 'text-red-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}>
-                        <path d={bet.direction === 'up' ? 'M5 15l7-7 7 7' : 'M19 9l-7 7-7-7'} />
-                      </svg>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
         {/* Footer */}
         <div className="text-center pt-2">
           <p className="text-[9px] text-black">

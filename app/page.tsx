@@ -231,11 +231,12 @@ export default function App() {
   };
 
   // Called by PredictionMarket with more detailed data
+  // We ALWAYS keep our own recentWins (global bets), ignore the user-specific ones from PredictionMarket
   const handlePredictionDataUpdate = (data: PredictionData) => {
-    // Keep our fetched recent wins if the incoming data doesn't have any
     setPredictionData(prev => ({
       ...data,
-      recentWins: data.recentWins.length > 0 ? data.recentWins : prev?.recentWins || [],
+      // Always keep our globally fetched recent bets, never use the user-specific ones
+      recentWins: prev?.recentWins || [],
     }));
   };
 
