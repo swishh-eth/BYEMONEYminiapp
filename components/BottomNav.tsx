@@ -61,11 +61,6 @@ export default function BottomNav({ activeIndex, onNavigate }: BottomNavProps) {
               onClick={() => handlePress(index)}
               className="relative flex flex-col items-center gap-1 p-2 transition-all duration-300 ease-out active:scale-90"
             >
-              {/* Glow effect behind active icon */}
-              {isActive && (
-                <div className="absolute inset-0 rounded-xl bg-white/5 blur-md" />
-              )}
-              
               {/* Icon */}
               <div className={`relative transition-all duration-300 ${
                 isActive 
