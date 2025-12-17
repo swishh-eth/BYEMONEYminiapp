@@ -95,8 +95,10 @@ export default function App() {
   // Fetch recent wins from completed markets
   const fetchRecentWins = useCallback(async (currentMarketId: number) => {
     try {
-      // Get bets from recently completed markets (last 5 markets before current)
-      const { data: bets } = await supabase
+      if (!currentMarketId || currentMarketId <= 1) return [];
+      
+      // Get bets from recently completed markets (last 10 markets before current)
+      const { data: bets, error } = await supabase
         .from('prediction_bets')
         .select(`
           market_id,
@@ -109,11 +111,19 @@ export default function App() {
           )
         `)
         .lt('market_id', currentMarketId)
-        .gte('market_id', currentMarketId - 5)
+        .gte('market_id', Math.max(1, currentMarketId - 10))
         .order('market_id', { ascending: false })
-        .limit(50);
+        .limit(100);
 
-      if (!bets || bets.length === 0) return [];
+      if (error) {
+        console.error('Supabase error fetching bets:', error);
+        return [];
+      }
+
+      if (!bets || bets.length === 0) {
+        console.log('No bets found for recent markets');
+        return [];
+      }
 
       // Get unique market IDs
       const marketIds = [...new Set(bets.map(b => b.market_id))];
@@ -121,7 +131,7 @@ export default function App() {
       // Fetch market results from contract
       const wins: Array<{ username: string; pfp: string; amount: number; direction: 'up' | 'down' }> = [];
       
-      for (const marketId of marketIds.slice(0, 3)) {
+      for (const marketId of marketIds.slice(0, 5)) {
         try {
           const marketInfo = await publicClient.readContract({
             address: CONTRACT_ADDRESS,

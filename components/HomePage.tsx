@@ -28,7 +28,7 @@ const MARKETS = [
   { 
     symbol: 'ETH', 
     name: 'Ethereum', 
-    icon: 'https://assets.coingecko.com/coins/images/279/small/ethereum.png',
+    icon: '/eth.png',
     active: true 
   },
   { 
@@ -40,7 +40,7 @@ const MARKETS = [
   { 
     symbol: 'CLANKER', 
     name: 'Clanker', 
-    icon: 'https://assets.coingecko.com/coins/images/51880/standard/clanker.jpg',
+    icon: '/clanker.png',
     active: false 
   },
 ];
@@ -139,18 +139,10 @@ export default function HomePage({ predictionData, onNavigate }: HomePageProps) 
           }}
         />
         <div className="relative flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            {/* Fire icon */}
-            <svg className="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M12 23C16.1421 23 19.5 19.6421 19.5 15.5C19.5 14.0909 19.1615 12.7511 18.5 11.5C17.8462 10.2615 17.2692 9.08462 17.5 8C17.5 8 16 9.5 14.5 9.5C13 9.5 12 8.5 12 7C12 5.5 13 3 15 1C15 1 10.5 2 8 5.5C5.5 9 4.5 12.5 4.5 15.5C4.5 19.6421 7.85786 23 12 23Z"/>
-            </svg>
-            <span className="text-xs text-white/60 uppercase tracking-wider">$BYEMONEY Burned</span>
-          </div>
-          <div className="flex items-center">
-            <span className="text-lg font-bold text-red-500 tabular-nums">
-              {formatBurnCount(burnCount)}
-            </span>
-          </div>
+          <span className="text-xs text-white/60 uppercase tracking-wider">$BYEMONEY Burned</span>
+          <span className="text-lg font-bold text-red-500 tabular-nums">
+            {formatBurnCount(burnCount)}
+          </span>
         </div>
       </div>
 
@@ -195,27 +187,30 @@ export default function HomePage({ predictionData, onNavigate }: HomePageProps) 
             </div>
           </div>
 
-          {currentMarket.active && predictionData ? (
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-[9px] text-white/40 uppercase tracking-wider">ETH Price</p>
-                <p className="text-lg font-bold">${predictionData.ethPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+          {/* Fixed height content area - same for all markets */}
+          <div className="h-[42px] flex items-center">
+            {currentMarket.active && predictionData ? (
+              <div className="flex items-center justify-between w-full">
+                <div>
+                  <p className="text-[9px] text-white/40 uppercase tracking-wider">ETH Price</p>
+                  <p className="text-lg font-bold">${predictionData.ethPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-[9px] text-white/40 uppercase tracking-wider">Market</p>
+                  <p className="text-xs text-white/60">Prediction</p>
+                </div>
               </div>
-              <div className="text-right">
-                <p className="text-[9px] text-white/40 uppercase tracking-wider">Market</p>
-                <p className="text-xs text-white/60">Prediction</p>
+            ) : !currentMarket.active ? (
+              <div className="flex items-center justify-center w-full">
+                <div className="flex items-center gap-2 text-white/30">
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                    <path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                  <span className="text-xs">Market not yet available</span>
+                </div>
               </div>
-            </div>
-          ) : !currentMarket.active ? (
-            <div className="flex items-center justify-center py-1">
-              <div className="flex items-center gap-2 text-white/30">
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                  <path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                </svg>
-                <span className="text-xs">Market not yet available</span>
-              </div>
-            </div>
-          ) : null}
+            ) : null}
+          </div>
         </div>
       </div>
 
