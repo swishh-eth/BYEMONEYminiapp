@@ -763,9 +763,9 @@ export default function PredictionMarket({ userFid, username, onDataUpdate }: Pr
       setTimeout(() => {
         if (mainContainerRef.current) {
           const container = mainContainerRef.current;
-          // Scroll down by roughly the height of the ticket section
+          // Scroll down to show the ticket section and buy button
           container.scrollTo({ 
-            top: container.scrollTop + 200, 
+            top: container.scrollTop + 280, 
             behavior: 'smooth' 
           });
         }
