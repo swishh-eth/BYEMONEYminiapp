@@ -66,6 +66,8 @@ export default function HomePage({ predictionData, onNavigate }: HomePageProps) 
   const [currentMarketIndex, setCurrentMarketIndex] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [burnCount, setBurnCount] = useState(1034262); // Starting value, will fetch real value later
+  const [visibleBetIndex, setVisibleBetIndex] = useState(0);
+  const [betTransitioning, setBetTransitioning] = useState(false);
 
   // Auto-rotate markets every 4 seconds
   useEffect(() => {
@@ -78,6 +80,21 @@ export default function HomePage({ predictionData, onNavigate }: HomePageProps) 
     }, 4000);
     return () => clearInterval(interval);
   }, []);
+
+  // Auto-rotate recent bets every 2.5 seconds
+  useEffect(() => {
+    const bets = predictionData?.recentWins || [];
+    if (bets.length <= 1) return;
+    
+    const interval = setInterval(() => {
+      setBetTransitioning(true);
+      setTimeout(() => {
+        setVisibleBetIndex((prev) => (prev + 1) % bets.length);
+        setBetTransitioning(false);
+      }, 200);
+    }, 2500);
+    return () => clearInterval(interval);
+  }, [predictionData?.recentWins]);
 
   // Animated burn counter - ticks up slowly throughout the day
   useEffect(() => {
@@ -334,43 +351,61 @@ export default function HomePage({ predictionData, onNavigate }: HomePageProps) 
           }}
         />
         <div className="relative">
-          <div className="flex items-center gap-2 mb-2">
-            {/* Activity icon */}
-            <svg className="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-              <path d="M13 10V3L4 14h7v7l9-11h-7z" />
-            </svg>
-            <span className="text-[9px] text-white/40 uppercase tracking-wider">Recent Bets</span>
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              {/* Activity icon */}
+              <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+              <span className="text-[9px] text-white/40 uppercase tracking-wider">Live Bets</span>
+            </div>
+            {predictionData?.recentWins && predictionData.recentWins.length > 1 && (
+              <div className="flex gap-1">
+                {predictionData.recentWins.slice(0, 5).map((_, i) => (
+                  <div 
+                    key={i}
+                    className={`w-1 h-1 rounded-full transition-all duration-300 ${
+                      i === visibleBetIndex % predictionData.recentWins.length ? 'bg-white' : 'bg-white/20'
+                    }`}
+                  />
+                ))}
+              </div>
+            )}
           </div>
 
           {predictionData?.recentWins && predictionData.recentWins.length > 0 ? (
-            <div className="space-y-1.5">
-              {predictionData.recentWins.slice(0, 3).map((bet, i) => (
-                <div 
-                  key={i}
-                  className="flex items-center justify-between bg-white/[0.03] rounded-lg p-2"
-                >
-                  <div className="flex items-center gap-2">
-                    <img 
-                      src={bet.pfp || `https://api.dicebear.com/7.x/shapes/svg?seed=${bet.username}`}
-                      alt={bet.username}
-                      className="w-6 h-6 rounded-full bg-white/10"
-                    />
-                    <span className="text-xs text-white/80">@{bet.username}</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <span className={`text-xs font-bold ${bet.direction === 'up' ? 'text-white' : 'text-red-400'}`}>
-                      {bet.amount.toFixed(3)} ETH
-                    </span>
-                    <div className={`w-4 h-4 rounded flex items-center justify-center ${
-                      bet.direction === 'up' ? 'bg-white/20' : 'bg-red-500/20'
-                    }`}>
-                      <svg className={`w-2.5 h-2.5 ${bet.direction === 'up' ? 'text-white' : 'text-red-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}>
-                        <path d={bet.direction === 'up' ? 'M5 15l7-7 7 7' : 'M19 9l-7 7-7-7'} />
-                      </svg>
+            <div className="relative h-[40px] overflow-hidden">
+              {(() => {
+                const bet = predictionData.recentWins[visibleBetIndex % predictionData.recentWins.length];
+                return (
+                  <div 
+                    className={`absolute inset-0 flex items-center justify-between bg-white/[0.03] rounded-lg px-3 transition-all duration-200 ${
+                      betTransitioning 
+                        ? 'opacity-0 -translate-y-full' 
+                        : 'opacity-100 translate-y-0'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <img 
+                        src={bet.pfp || `https://api.dicebear.com/7.x/shapes/svg?seed=${bet.username}`}
+                        alt={bet.username}
+                        className="w-7 h-7 rounded-full bg-white/10"
+                      />
+                      <span className="text-sm text-white/80">@{bet.username}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className={`text-sm font-bold ${bet.direction === 'up' ? 'text-white' : 'text-red-400'}`}>
+                        {bet.amount.toFixed(3)} ETH
+                      </span>
+                      <div className={`w-5 h-5 rounded flex items-center justify-center ${
+                        bet.direction === 'up' ? 'bg-white/20' : 'bg-red-500/20'
+                      }`}>
+                        <svg className={`w-3 h-3 ${bet.direction === 'up' ? 'text-white' : 'text-red-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}>
+                          <path d={bet.direction === 'up' ? 'M5 15l7-7 7 7' : 'M19 9l-7 7-7-7'} />
+                        </svg>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })()}
             </div>
           ) : (
             <div className="text-center py-3 text-white/30 text-xs">

@@ -759,12 +759,17 @@ export default function PredictionMarket({ userFid, username, onDataUpdate }: Pr
     } else {
       // Opening fresh
       setSelectedDirection(direction);
-      // Smooth scroll to buy button after it renders
+      // Smooth scroll down to show the ticket section after it renders
       setTimeout(() => {
-        if (buyButtonRef.current) {
-          buyButtonRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        if (mainContainerRef.current) {
+          const container = mainContainerRef.current;
+          // Scroll down by roughly the height of the ticket section
+          container.scrollTo({ 
+            top: container.scrollTop + 200, 
+            behavior: 'smooth' 
+          });
         }
-      }, 350);
+      }, 100);
     }
   };
 
