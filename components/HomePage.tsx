@@ -66,7 +66,6 @@ export default function HomePage({ predictionData, onNavigate }: HomePageProps) 
   const [currentMarketIndex, setCurrentMarketIndex] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [burnCount, setBurnCount] = useState(1034262); // Starting value, will fetch real value later
-  const [visibleBetIndex, setVisibleBetIndex] = useState(0);
 
   // Auto-rotate markets every 4 seconds
   useEffect(() => {
@@ -79,23 +78,6 @@ export default function HomePage({ predictionData, onNavigate }: HomePageProps) 
     }, 4000);
     return () => clearInterval(interval);
   }, []);
-
-  // Auto-rotate recent bets - continuous scroll down
-  useEffect(() => {
-    const bets = predictionData?.recentWins || [];
-    if (bets.length === 0) return;
-    
-    const interval = setInterval(() => {
-      setVisibleBetIndex((prev) => {
-        // Reset when we've scrolled through enough to loop
-        if (prev >= bets.length * 2 - 3) {
-          return 0;
-        }
-        return prev + 1;
-      });
-    }, 2000);
-    return () => clearInterval(interval);
-  }, [predictionData?.recentWins]);
 
   // Animated burn counter - ticks up slowly throughout the day
   useEffect(() => {
@@ -355,35 +337,32 @@ export default function HomePage({ predictionData, onNavigate }: HomePageProps) 
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
               <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-              <span className="text-[9px] text-white/40 uppercase tracking-wider">Live Bets</span>
+              <span className="text-[9px] text-white/40 uppercase tracking-wider">Recent Bets</span>
             </div>
           </div>
 
           {predictionData?.recentWins && predictionData.recentWins.length > 0 ? (
-            <div className="relative h-[120px] overflow-hidden">
+            <div className="relative h-[108px] overflow-hidden">
               {/* Gradient overlays for wheel effect */}
-              <div className="absolute top-0 left-0 right-0 h-6 bg-gradient-to-b from-black/80 to-transparent z-10 pointer-events-none" />
-              <div className="absolute bottom-0 left-0 right-0 h-6 bg-gradient-to-t from-black/80 to-transparent z-10 pointer-events-none" />
+              <div className="absolute top-0 left-0 right-0 h-8 bg-gradient-to-b from-black to-transparent z-10 pointer-events-none" />
+              <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-black to-transparent z-10 pointer-events-none" />
               
               <div 
-                className="transition-transform duration-500 ease-out"
+                className={`transition-transform duration-300 ${isTransitioning ? 'opacity-50' : 'opacity-100'}`}
                 style={{ 
-                  transform: `translateY(-${visibleBetIndex * 40}px)`,
+                  transform: `translateY(-${(currentMarketIndex % Math.max(1, predictionData.recentWins.length)) * 36}px)`,
                 }}
               >
-                {/* Render enough items for smooth infinite scroll */}
-                {[...Array(Math.max(6, predictionData.recentWins.length * 2))].map((_, i) => {
-                  const bets = predictionData.recentWins;
-                  const bet = bets[i % bets.length];
-                  const isMiddle = i === visibleBetIndex + 1;
+                {/* Render 3x the list for seamless infinite scroll */}
+                {[...predictionData.recentWins, ...predictionData.recentWins, ...predictionData.recentWins].map((bet, i) => {
+                  const positionInView = i - (currentMarketIndex % predictionData.recentWins.length);
+                  const isMiddle = positionInView === 1;
                   
                   return (
                     <div 
                       key={i}
-                      className={`flex items-center justify-between rounded-lg px-2 h-[40px] transition-all duration-300 ${
-                        isMiddle 
-                          ? 'bg-white/[0.06] scale-[1.02]' 
-                          : 'bg-white/[0.02] opacity-60'
+                      className={`flex items-center justify-between px-1 h-[36px] transition-all duration-300 ${
+                        isMiddle ? 'opacity-100' : 'opacity-40'
                       }`}
                     >
                       <div className="flex items-center gap-2">
@@ -391,10 +370,10 @@ export default function HomePage({ predictionData, onNavigate }: HomePageProps) 
                           src={bet.pfp || `https://api.dicebear.com/7.x/shapes/svg?seed=${bet.username}`}
                           alt={bet.username}
                           className={`rounded-full bg-white/10 transition-all duration-300 ${
-                            isMiddle ? 'w-7 h-7' : 'w-6 h-6'
+                            isMiddle ? 'w-7 h-7' : 'w-5 h-5'
                           }`}
                         />
-                        <span className={`text-white/80 transition-all duration-300 ${
+                        <span className={`text-white transition-all duration-300 ${
                           isMiddle ? 'text-sm font-medium' : 'text-xs'
                         }`}>@{bet.username}</span>
                       </div>
