@@ -739,9 +739,13 @@ export default function PredictionMarket({ userFid, username, onDataUpdate }: Pr
       // Same button clicked - close with animation
       setTicketSectionClosing(true);
       
-      // Scroll back up to the buttons smoothly as the section closes
-      if (directionButtonsRef.current) {
-        directionButtonsRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      // Smoothly scroll the container back up as the section closes
+      if (mainContainerRef.current) {
+        const container = mainContainerRef.current;
+        const currentScroll = container.scrollTop;
+        // Scroll up by roughly the height of the ticket section
+        const targetScroll = Math.max(0, currentScroll - 250);
+        container.scrollTo({ top: targetScroll, behavior: 'smooth' });
       }
       
       // Wait for animation to complete before removing
