@@ -187,8 +187,8 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
   const buyButtonRef = useRef<HTMLButtonElement>(null);
   
   const closeCoinSelector = () => {
-    setCoinSelectorClosing(true);
     setCoinSelectorMounted(false);
+    setCoinSelectorClosing(true);
     setTimeout(() => {
       setShowCoinSelector(false);
       setCoinSelectorClosing(false);
@@ -196,8 +196,8 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
   };
 
   const closeHistory = () => {
-    setHistoryClosing(true);
     setHistoryMounted(false);
+    setHistoryClosing(true);
     setTimeout(() => {
       setShowHistory(false);
       setHistoryClosing(false);
@@ -206,24 +206,26 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
 
   // Handle mounting animations
   useEffect(() => {
-    if (showCoinSelector && !coinSelectorMounted) {
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          setCoinSelectorMounted(true);
-        });
-      });
+    if (showCoinSelector) {
+      // Reset and trigger animation
+      setCoinSelectorMounted(false);
+      const timer = setTimeout(() => {
+        setCoinSelectorMounted(true);
+      }, 20);
+      return () => clearTimeout(timer);
     }
-  }, [showCoinSelector, coinSelectorMounted]);
+  }, [showCoinSelector]);
 
   useEffect(() => {
-    if (showHistory && !historyMounted) {
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          setHistoryMounted(true);
-        });
-      });
+    if (showHistory) {
+      // Reset and trigger animation
+      setHistoryMounted(false);
+      const timer = setTimeout(() => {
+        setHistoryMounted(true);
+      }, 20);
+      return () => clearTimeout(timer);
     }
-  }, [showHistory, historyMounted]);
+  }, [showHistory]);
   
   // Safe access to selected coin
   const selectedCoin = AVAILABLE_COINS[selectedCoinIndex] || AVAILABLE_COINS[0];
