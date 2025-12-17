@@ -168,6 +168,7 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
   const [userPfp, setUserPfp] = useState<string | null>(null);
   const [showHistory, setShowHistory] = useState(false);
   const [historyClosing, setHistoryClosing] = useState(false);
+  const [showUsdValues, setShowUsdValues] = useState(false);
   const [unclaimedMarkets, setUnclaimedMarkets] = useState<UnclaimedMarket[]>([]);
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [showConfetti, setShowConfetti] = useState(false);
@@ -1169,12 +1170,28 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
 
         {/* Pool */}
         {hasMarket && (
-          <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-4 animate-fade-in" style={{ animationDelay: '150ms' }}>
+          <button 
+            onClick={() => { setShowUsdValues(!showUsdValues); playClick(); triggerHaptic('light'); }}
+            className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-4 animate-fade-in text-left w-full active:scale-[0.99] transition-transform" 
+            style={{ animationDelay: '150ms' }}
+          >
             <div className="flex justify-between items-center mb-3">
-              <p className="text-[10px] text-white/40 uppercase tracking-wider">Pool</p>
+              <div className="flex items-center gap-2">
+                <p className="text-[10px] text-white/40 uppercase tracking-wider">Pool</p>
+                <span className="text-[8px] text-white/20 px-1.5 py-0.5 rounded bg-white/5">tap to switch</span>
+              </div>
               <p className="text-xs">
-                <span className="text-white font-semibold">{totalPool.toFixed(4)}</span>
-                <span className="text-white/40 ml-1">ETH</span>
+                {showUsdValues ? (
+                  <>
+                    <span className="text-white font-semibold">${(totalPool * (currentPriceUsd > 0 ? currentPriceUsd : 2900)).toFixed(2)}</span>
+                    <span className="text-white/40 ml-1">USD</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="text-white font-semibold">{totalPool.toFixed(4)}</span>
+                    <span className="text-white/40 ml-1">ETH</span>
+                  </>
+                )}
               </p>
             </div>
 
@@ -1215,13 +1232,12 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
                 <div className="flex items-center justify-between mb-2">
                   <p className="text-[10px] text-white/40 uppercase">Your Position</p>
                   {(canClaim || canRefund) && (
-                    <button
-                      onClick={() => handleClaim()}
-                      disabled={txState !== 'idle'}
-                      className="bg-gradient-to-r from-white to-white text-black text-[10px] font-bold px-3 py-1 rounded disabled:opacity-50 hover:scale-105 transition-transform"
+                    <span
+                      onClick={(e) => { e.stopPropagation(); handleClaim(); }}
+                      className="bg-gradient-to-r from-white to-white text-black text-[10px] font-bold px-3 py-1 rounded disabled:opacity-50 hover:scale-105 transition-transform cursor-pointer"
                     >
                       {txState === 'claiming' ? '...' : canRefund ? 'Refund' : 'Claim'}
-                    </button>
+                    </span>
                   )}
                 </div>
                 <div className="space-y-1.5">
@@ -1235,9 +1251,15 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
                       </div>
                       <div className="text-right">
                         <span className="text-xs text-white/40">to win </span>
-                        <span className="text-xs font-bold text-white">
-                          {((totalPool * 0.95 / upPool) * userUpTickets * TICKET_PRICE_ETH).toFixed(4)} ETH
-                        </span>
+                        {showUsdValues ? (
+                          <span className="text-xs font-bold text-white">
+                            ${(((totalPool * 0.95 / upPool) * userUpTickets * TICKET_PRICE_ETH) * (currentPriceUsd > 0 ? currentPriceUsd : 2900)).toFixed(2)}
+                          </span>
+                        ) : (
+                          <span className="text-xs font-bold text-white">
+                            {((totalPool * 0.95 / upPool) * userUpTickets * TICKET_PRICE_ETH).toFixed(4)} ETH
+                          </span>
+                        )}
                       </div>
                     </div>
                   )}
@@ -1251,16 +1273,22 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
                       </div>
                       <div className="text-right">
                         <span className="text-xs text-white/40">to win </span>
-                        <span className="text-xs font-bold text-red-400">
-                          {((totalPool * 0.95 / downPool) * userDownTickets * TICKET_PRICE_ETH).toFixed(4)} ETH
-                        </span>
+                        {showUsdValues ? (
+                          <span className="text-xs font-bold text-red-400">
+                            ${(((totalPool * 0.95 / downPool) * userDownTickets * TICKET_PRICE_ETH) * (currentPriceUsd > 0 ? currentPriceUsd : 2900)).toFixed(2)}
+                          </span>
+                        ) : (
+                          <span className="text-xs font-bold text-red-400">
+                            {((totalPool * 0.95 / downPool) * userDownTickets * TICKET_PRICE_ETH).toFixed(4)} ETH
+                          </span>
+                        )}
                       </div>
                     </div>
                   )}
                 </div>
               </div>
             )}
-          </div>
+          </button>
         )}
 
         {/* Betting Section */}
@@ -1720,32 +1748,24 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
 
       {/* History Modal */}
       {showHistory && (
-        <div className={`fixed inset-0 z-50 flex items-end justify-center ${historyClosing ? 'animate-fade-out' : 'animate-fade-in'}`}>
+        <div 
+          className={`fixed inset-0 z-50 flex items-end justify-center ${historyClosing ? 'animate-fade-out' : 'animate-fade-in'}`}
+          onClick={closeHistory}
+        >
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-md" />
           <div 
-            className="absolute inset-0 bg-black/90 backdrop-blur-md" 
-            onClick={closeHistory} 
-          />
-          <div className={`relative w-full max-w-md max-h-[80vh] bg-gradient-to-t from-black via-black to-black/95 rounded-t-3xl pb-8 px-4 overflow-hidden ${historyClosing ? 'animate-slide-down' : 'animate-slide-up'}`}>
+            className={`relative w-full max-w-md max-h-[70vh] bg-gradient-to-t from-black via-black/98 to-transparent rounded-t-3xl pb-6 px-4 overflow-hidden ${historyClosing ? 'animate-slide-down' : 'animate-slide-up'}`}
+            onClick={(e) => e.stopPropagation()}
+          >
             {/* Header */}
-            <div className="sticky top-0 bg-black pt-6 pb-4 z-10">
-              <div className="w-12 h-1 bg-white/20 rounded-full mx-auto mb-4" />
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-bold text-white">Betting History</h3>
-                <button 
-                  onClick={closeHistory}
-                  className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center"
-                >
-                  <svg className="w-4 h-4 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                    <path d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
+            <div className="pt-6 pb-3">
+              <h3 className="text-lg font-bold text-white text-center">Betting History</h3>
             </div>
             
-            <div className="overflow-y-auto max-h-[calc(80vh-100px)] space-y-2 pb-4 scrollbar-hide">
+            <div className="overflow-y-auto max-h-[calc(70vh-100px)] space-y-2 pb-2 scrollbar-hide">
               {/* Unclaimed Winnings */}
               {unclaimedMarkets.length > 0 && (
-                <div className="bg-white/10 border border-white/20 rounded-xl p-3 mb-3">
+                <div className="bg-white/10 border border-white/20 rounded-xl p-3 mb-2">
                   <div className="flex items-center justify-between mb-2">
                     <p className="text-[10px] text-white/60 uppercase tracking-wider">Unclaimed</p>
                     <p className="text-sm font-bold text-white">{totalUnclaimed.toFixed(4)} ETH</p>
@@ -1760,7 +1780,7 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
                           </p>
                         </div>
                         <button
-                          onClick={() => handleClaim(m.marketId)}
+                          onClick={(e) => { e.stopPropagation(); handleClaim(m.marketId); }}
                           disabled={claimingMarketId === m.marketId}
                           className="bg-white hover:bg-white/90 text-black text-[10px] font-bold px-3 py-1.5 rounded-lg transition-all disabled:opacity-50 whitespace-nowrap"
                         >
@@ -1781,60 +1801,58 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
                 history.slice(0, 7).map((item, index) => {
                   const betDate = item.timestamp ? new Date(item.timestamp) : null;
                   const dayName = betDate ? ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][betDate.getDay()] : '';
-                  const ethPrice = currentPriceUsd > 0 ? currentPriceUsd : 2900; // fallback
+                  const ethPrice = currentPriceUsd > 0 ? currentPriceUsd : 2900;
+                  const betAmountEth = (item.tickets * TICKET_PRICE_ETH).toFixed(4);
                   const betAmountUsd = (item.tickets * TICKET_PRICE_ETH * ethPrice).toFixed(2);
+                  const winningsEth = item.winnings > 0 ? item.winnings.toFixed(4) : '0';
                   const winningsUsd = item.winnings > 0 ? (item.winnings * ethPrice).toFixed(2) : '0';
                   const isWin = item.result === (item.direction === 'up' ? 1 : 2);
                   
                   return (
                     <div 
                       key={`${item.marketId}-${item.direction}-${index}`} 
-                      className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-3 animate-fade-in"
+                      className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-2.5 animate-fade-in"
                       style={{ animationDelay: `${index * 30}ms` }}
                     >
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2.5">
-                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                        <div className="flex items-center gap-2">
+                          <div className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 ${
                             item.direction === 'up' ? 'bg-white/20' : 'bg-red-500/20'
                           }`}>
-                            <svg className={`w-4 h-4 ${item.direction === 'up' ? 'text-white' : 'text-red-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                            <svg className={`w-3.5 h-3.5 ${item.direction === 'up' ? 'text-white' : 'text-red-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
                               <path d={item.direction === 'up' ? 'M5 15l7-7 7 7' : 'M19 9l-7 7-7-7'} />
                             </svg>
                           </div>
-                          <div>
+                          <div className="min-w-0">
                             <div className="flex items-center gap-1.5">
-                              <p className="text-xs font-semibold">#{item.marketId}</p>
-                              <span className={`text-[9px] px-1 py-0.5 rounded ${
+                              <p className="text-[11px] font-semibold">#{item.marketId}</p>
+                              <span className={`text-[8px] px-1 py-0.5 rounded ${
                                 item.direction === 'up' ? 'bg-white/10 text-white/70' : 'bg-red-500/20 text-red-400/70'
                               }`}>
                                 {item.direction === 'up' ? 'PUMP' : 'DUMP'}
                               </span>
-                              {dayName && <span className="text-[9px] text-white/30">{dayName}</span>}
+                              {dayName && <span className="text-[8px] text-white/30">{dayName}</span>}
                             </div>
-                            <p className="text-[10px] text-white/40">
-                              {item.tickets} ticket{item.tickets > 1 ? 's'  : ''} · ${betAmountUsd}
+                            <p className="text-[9px] text-white/40">
+                              {item.tickets}x · {betAmountEth} ETH · ${betAmountUsd}
                             </p>
                           </div>
                         </div>
-                        <div className="text-right">
+                        <div className="flex items-center gap-2 flex-shrink-0">
                           {item.status === 0 ? (
                             <span className="text-[10px] text-yellow-400 font-medium">Active</span>
                           ) : item.status === 2 ? (
                             <span className="text-[10px] text-orange-400 font-medium">Cancelled</span>
                           ) : isWin ? (
-                            <>
-                              <span className="text-[10px] text-white font-medium">Won ✓</span>
-                              {item.winnings > 0 && (
-                                <p className="text-xs font-bold text-white">+${winningsUsd}</p>
-                              )}
-                            </>
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-[9px] text-white/50">Won</span>
+                              <span className="text-[10px] font-bold text-white">+{winningsEth} ETH</span>
+                              <span className="text-[9px] text-white/40">(${winningsUsd})</span>
+                            </div>
                           ) : item.result === 0 ? (
                             <span className="text-[10px] text-white/40 font-medium">Tie</span>
                           ) : (
                             <span className="text-[10px] text-red-400 font-medium">Lost</span>
-                          )}
-                          {item.claimed && (
-                            <p className="text-[9px] text-white/30">Claimed</p>
                           )}
                         </div>
                       </div>
@@ -1845,7 +1863,7 @@ export default function PredictionMarket({ userFid, username }: PredictionMarket
             </div>
             
             {/* Close hint */}
-            <p className="text-center text-white/30 text-[10px] mt-2">Tap outside to close</p>
+            <p className="text-center text-white/20 text-[10px] mt-3">tap anywhere to close</p>
           </div>
         </div>
       )}
