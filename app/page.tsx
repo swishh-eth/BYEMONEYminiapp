@@ -256,6 +256,7 @@ export default function App() {
       
       <SwipeContainer activeIndex={activeIndex} onNavigate={handleNavigate}>
         <PredictionMarket 
+          key={`prediction-${activeIndex === 0 ? 'active' : 'inactive'}`}
           userFid={userFid} 
           username={username} 
           initialData={predictionData ? {

@@ -869,6 +869,10 @@ export default function PredictionMarket({ userFid, username, initialData, onDat
 
   // Refetch when activeMarket changes
   useEffect(() => {
+    // Reset state when market changes to ensure fresh data
+    setMarketData(null);
+    setCurrentPrice(null);
+    
     fetchMarketData();
     const interval = setInterval(fetchMarketData, 30000);
     return () => clearInterval(interval);
