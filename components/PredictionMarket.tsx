@@ -1476,11 +1476,6 @@ export default function PredictionMarket({ userFid, username, initialData, onDat
               </span>
             </div>
           )}
-          {hasMarket && !isEthMarket && (
-            <div className="mt-3 pt-3 border-t border-white/5 flex items-center justify-between text-xs text-white/40">
-              <span>Price via Uniswap V4</span>
-            </div>
-          )}
         </button>
 
         {/* Resolved State - Show after price */}
