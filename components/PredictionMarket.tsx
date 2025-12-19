@@ -436,6 +436,7 @@ export default function PredictionMarket({ userFid, username, initialData, onDat
     }
     return null;
   });
+  const [ethPriceFromChainlink, setEthPriceFromChainlink] = useState<bigint | null>(null);
   const [isBettingOpen, setIsBettingOpen] = useState(true);
   const [sdk, setSdk] = useState<any>(null);
 
@@ -751,7 +752,7 @@ export default function PredictionMarket({ userFid, username, initialData, onDat
       const contractAbi = activeMarket === 'ETH' ? ETH_CONTRACT_ABI : BYEMONEY_CONTRACT_ABI;
       const priceFunction = activeMarket === 'ETH' ? 'getPrice' : 'getPriceInEth';
       
-      const [market, price, betting] = await Promise.all([
+      const [market, price, betting, ethPrice] = await Promise.all([
         publicClient.readContract({
           address: contractAddress,
           abi: contractAbi,
@@ -770,6 +771,13 @@ export default function PredictionMarket({ userFid, username, initialData, onDat
           functionName: 'isBettingOpen',
           args: [],
         } as any) as Promise<boolean>,
+        // Always fetch ETH price from Chainlink for USD conversion
+        publicClient.readContract({
+          address: ETH_CONTRACT_ADDRESS,
+          abi: ETH_CONTRACT_ABI,
+          functionName: 'getPrice',
+          args: [],
+        } as any) as Promise<bigint>,
       ]);
 
       setMarketData({
@@ -788,6 +796,10 @@ export default function PredictionMarket({ userFid, username, initialData, onDat
       // Only update price if we got a valid value
       if (price && price > 0n) {
         setCurrentPrice(price);
+      }
+      // Always store ETH price for USD conversions
+      if (ethPrice && ethPrice > 0n) {
+        setEthPriceFromChainlink(ethPrice);
       }
       setIsBettingOpen(betting);
       
@@ -1276,26 +1288,16 @@ export default function PredictionMarket({ userFid, username, initialData, onDat
 
   // Price display depends on market
   const startPriceUsd = isEthMarket && marketData ? Number(marketData.startPrice) / 1e8 : 0;
-  const currentPriceUsd = isEthMarket && currentPrice ? Number(currentPrice) / 1e8 : 0;
-  // For BYEMONEY, getPriceInEth returns price of 1 BYEMONEY in ETH (18 decimals)
-  // We want to show the value of 1M BYEMONEY in USD
-  const byemoneyPriceInEth = !isEthMarket && currentPrice ? Number(formatEther(currentPrice)) : 0;
-  const ethPriceUsd = currentPriceUsd > 0 ? currentPriceUsd : 3500; // Use ETH price if available, else estimate
-  // 1 BYEMONEY price in USD * 1,000,000 = 1M BYEMONEY value
-  const byemoney1mValueUsd = byemoneyPriceInEth * ethPriceUsd * 1000000;
+  // ETH price from Chainlink (always available now)
+  const ethPriceUsd = ethPriceFromChainlink ? Number(ethPriceFromChainlink) / 1e8 : 3500;
+  const currentPriceUsd = isEthMarket ? ethPriceUsd : 0;
+  // For BYEMONEY, getPriceInEth returns price in a custom format
+  // Raw value needs to be divided by 1e12 for 1M tokens
+  const byemoneyRawPrice = !isEthMarket && currentPrice ? Number(currentPrice) : 0;
+  const byemoney1mValueUsd = (byemoneyRawPrice / 1e12) * ethPriceUsd;
   
-  // Debug: log the values to console
-  if (!isEthMarket && currentPrice) {
-    console.log('BYEMONEY Debug:', {
-      rawPrice: currentPrice?.toString(),
-      priceInEth: byemoneyPriceInEth,
-      ethPriceUsd,
-      value1m: byemoney1mValueUsd,
-    });
-  }
-  
-  const priceChange = startPriceUsd > 0 ? ((currentPriceUsd - startPriceUsd) / startPriceUsd) * 100 : 0;
-  const hasPriceData = isEthMarket ? currentPriceUsd > 0 : byemoneyPriceInEth > 0;
+  const priceChange = startPriceUsd > 0 ? ((ethPriceUsd - startPriceUsd) / startPriceUsd) * 100 : 0;
+  const hasPriceData = isEthMarket ? ethPriceUsd > 0 : byemoneyRawPrice > 0;
 
   // Calculate time remaining in seconds for parent
   const timeRemainingSeconds = timeLeft.hours * 3600 + timeLeft.minutes * 60 + timeLeft.seconds;

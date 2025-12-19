@@ -1,6 +1,53 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { createPublicClient, http, formatEther } from 'viem';
+import { base } from 'viem/chains';
+
+// Contract addresses
+const ETH_CONTRACT_ADDRESS = '0x0625E29C2A71A834482bFc6b4cc012ACeee62DA4' as `0x${string}`;
+const BYEMONEY_CONTRACT_ADDRESS = '0xc5dBe9571B10d76020556b8De77287b04fE8ef3d' as `0x${string}`;
+
+// ABIs for fetching data
+const MARKET_ABI = [
+  {
+    name: 'getCurrentMarket',
+    type: 'function',
+    stateMutability: 'view',
+    inputs: [],
+    outputs: [
+      { name: 'id', type: 'uint256' },
+      { name: 'startPrice', type: 'uint256' },
+      { name: 'endPrice', type: 'uint256' },
+      { name: 'startTime', type: 'uint256' },
+      { name: 'endTime', type: 'uint256' },
+      { name: 'upPool', type: 'uint256' },
+      { name: 'downPool', type: 'uint256' },
+      { name: 'status', type: 'uint8' },
+      { name: 'result', type: 'uint8' },
+      { name: 'totalTickets', type: 'uint256' },
+    ],
+  },
+  {
+    name: 'getPriceInEth',
+    type: 'function',
+    stateMutability: 'view',
+    inputs: [],
+    outputs: [{ name: '', type: 'uint256' }],
+  },
+  {
+    name: 'getPrice',
+    type: 'function',
+    stateMutability: 'view',
+    inputs: [],
+    outputs: [{ name: '', type: 'uint256' }],
+  },
+] as const;
+
+const publicClient = createPublicClient({
+  chain: base,
+  transport: http('https://base-mainnet.g.alchemy.com/v2/jKHNMnfb18wYA1HfaHxo5'),
+});
 
 // Types for props from parent
 interface PredictionData {
@@ -73,6 +120,69 @@ export default function HomePage({ predictionData, onNavigate }: HomePageProps) 
   const [showDailyClaim, setShowDailyClaim] = useState(false);
   const [dailyClaimMounted, setDailyClaimMounted] = useState(false);
   const [dailyClaimClosing, setDailyClaimClosing] = useState(false);
+  
+  // BYEMONEY market data
+  const [byemoneyData, setByemoneyData] = useState<{
+    marketId: number;
+    timeRemaining: number;
+    totalPool: number;
+    upPool: number;
+    downPool: number;
+    priceUsd: number; // Value of 1M BYEMONEY in USD
+  } | null>(null);
+
+  // Fetch BYEMONEY market data
+  useEffect(() => {
+    const fetchByemoneyData = async () => {
+      try {
+        const [market, priceInEth, ethPrice] = await Promise.all([
+          publicClient.readContract({
+            address: BYEMONEY_CONTRACT_ADDRESS,
+            abi: MARKET_ABI,
+            functionName: 'getCurrentMarket',
+            args: [],
+          } as any),
+          publicClient.readContract({
+            address: BYEMONEY_CONTRACT_ADDRESS,
+            abi: MARKET_ABI,
+            functionName: 'getPriceInEth',
+            args: [],
+          } as any) as Promise<bigint>,
+          // Always fetch ETH price from Chainlink
+          publicClient.readContract({
+            address: ETH_CONTRACT_ADDRESS,
+            abi: MARKET_ABI,
+            functionName: 'getPrice',
+            args: [],
+          } as any) as Promise<bigint>,
+        ]);
+
+        const endTime = Number((market as any)[4]) * 1000;
+        const timeRemaining = Math.max(0, Math.floor((endTime - Date.now()) / 1000));
+        const upPool = Number(formatEther((market as any)[5]));
+        const downPool = Number(formatEther((market as any)[6]));
+        
+        // Calculate 1M BYEMONEY value in USD using Chainlink ETH price
+        const ethPriceUsd = Number(ethPrice) / 1e8;
+        const priceUsd = (Number(priceInEth) / 1e12) * ethPriceUsd;
+
+        setByemoneyData({
+          marketId: Number((market as any)[0]),
+          timeRemaining,
+          totalPool: upPool + downPool,
+          upPool,
+          downPool,
+          priceUsd,
+        });
+      } catch (error) {
+        console.error('Failed to fetch BYEMONEY data:', error);
+      }
+    };
+
+    fetchByemoneyData();
+    const interval = setInterval(fetchByemoneyData, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Handle Daily Claim modal open
   const openDailyClaim = () => {
@@ -151,11 +261,19 @@ export default function HomePage({ predictionData, onNavigate }: HomePageProps) 
     return count.toLocaleString();
   };
 
-  // Calculate percentages
-  const upPercent = predictionData && predictionData.totalPool > 0 
-    ? (predictionData.upPool / predictionData.totalPool) * 100 
-    : 50;
-  const downPercent = 100 - upPercent;
+  // Calculate percentages based on current market
+  const getMarketPercentages = () => {
+    if (currentMarket.symbol === 'ETH' && predictionData && predictionData.totalPool > 0) {
+      const up = (predictionData.upPool / predictionData.totalPool) * 100;
+      return { upPercent: up, downPercent: 100 - up };
+    } else if (currentMarket.symbol === 'BYEMONEY' && byemoneyData && byemoneyData.totalPool > 0) {
+      const up = (byemoneyData.upPool / byemoneyData.totalPool) * 100;
+      return { upPercent: up, downPercent: 100 - up };
+    }
+    return { upPercent: 50, downPercent: 50 };
+  };
+  
+  const { upPercent, downPercent } = getMarketPercentages();
 
   const handleBetClick = () => {
     playClick();
@@ -261,11 +379,13 @@ export default function HomePage({ predictionData, onNavigate }: HomePageProps) 
           <div className={`flex items-center justify-between mb-3 ${!currentMarket.active && 'opacity-30'}`}>
             <div>
               <p className={`text-[9px] uppercase tracking-wider ${currentMarket.active ? 'text-white/40' : 'text-white/20'}`}>
-                {currentMarket.symbol} Price
+                {currentMarket.symbol === 'BYEMONEY' ? '1M BYEMONEY' : `${currentMarket.symbol} Price`}
               </p>
               <p className="text-lg font-bold">
-                {currentMarket.active && predictionData 
+                {currentMarket.symbol === 'ETH' && currentMarket.active && predictionData 
                   ? `$${predictionData.ethPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                  : currentMarket.symbol === 'BYEMONEY' && currentMarket.active && byemoneyData
+                  ? `$${byemoneyData.priceUsd.toFixed(3)}`
                   : '$---.--'
                 }
               </p>
@@ -275,7 +395,12 @@ export default function HomePage({ predictionData, onNavigate }: HomePageProps) 
                 Round
               </p>
               <p className="text-lg font-bold">
-                {currentMarket.active ? `#${predictionData?.marketId || '--'}` : '#--'}
+                {currentMarket.symbol === 'ETH' && currentMarket.active 
+                  ? `#${predictionData?.marketId || '--'}`
+                  : currentMarket.symbol === 'BYEMONEY' && currentMarket.active
+                  ? `#${byemoneyData?.marketId || '--'}`
+                  : '#--'
+                }
               </p>
             </div>
           </div>
@@ -293,13 +418,23 @@ export default function HomePage({ predictionData, onNavigate }: HomePageProps) 
           <div className={`flex items-center justify-between mb-3 ${!currentMarket.active && 'opacity-30'}`}>
             <div>
               <p className="text-xl font-bold">
-                {currentMarket.active ? formatTime(predictionData?.timeRemaining || 0) : '--h --m'}
+                {currentMarket.symbol === 'ETH' && currentMarket.active 
+                  ? formatTime(predictionData?.timeRemaining || 0)
+                  : currentMarket.symbol === 'BYEMONEY' && currentMarket.active
+                  ? formatTime(byemoneyData?.timeRemaining || 0)
+                  : '--h --m'
+                }
               </p>
               <p className={`text-[9px] ${currentMarket.active ? 'text-white/40' : 'text-white/20'}`}>remaining</p>
             </div>
             <div className="text-right">
               <p className="text-base font-bold">
-                {currentMarket.active ? `${predictionData?.totalPool.toFixed(4) || '0.0000'} ETH` : '0.0000 ETH'}
+                {currentMarket.symbol === 'ETH' && currentMarket.active 
+                  ? `${predictionData?.totalPool.toFixed(4) || '0.0000'} ETH`
+                  : currentMarket.symbol === 'BYEMONEY' && currentMarket.active
+                  ? `${byemoneyData?.totalPool ? (byemoneyData.totalPool >= 1000000 ? `${(byemoneyData.totalPool / 1000000).toFixed(1)}M` : byemoneyData.totalPool >= 1000 ? `${(byemoneyData.totalPool / 1000).toFixed(1)}K` : byemoneyData.totalPool.toFixed(0)) : '0'} BYEMONEY`
+                  : '0.0000'
+                }
               </p>
               <p className={`text-[9px] ${currentMarket.active ? 'text-white/40' : 'text-white/20'}`}>in pool</p>
             </div>
