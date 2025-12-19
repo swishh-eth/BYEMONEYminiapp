@@ -755,6 +755,8 @@ export default function PredictionMarket({ userFid, username, initialData, onDat
       const contractAbi = activeMarket === 'ETH' ? ETH_CONTRACT_ABI : BYEMONEY_CONTRACT_ABI;
       const priceFunction = activeMarket === 'ETH' ? 'getPrice' : 'getPriceInEth';
       
+      console.log('[fetchMarketData] Fetching for market:', activeMarket, 'contract:', contractAddress);
+      
       const [market, price, betting, ethPrice] = await Promise.all([
         publicClient.readContract({
           address: contractAddress,
@@ -783,6 +785,8 @@ export default function PredictionMarket({ userFid, username, initialData, onDat
         } as any) as Promise<bigint>,
       ]);
 
+      console.log('[fetchMarketData] Got market data:', market, 'for', activeMarket);
+
       setMarketData({
         id: (market as any)[0],
         startPrice: (market as any)[1],
@@ -808,7 +812,7 @@ export default function PredictionMarket({ userFid, username, initialData, onDat
       setIsBettingOpen(betting);
       
     } catch (error) {
-      console.error('Failed to fetch market:', error);
+      console.error('[fetchMarketData] Failed to fetch market:', activeMarket, error);
       // Don't reset state on error - keep existing values
     }
   }, [activeMarket]);
@@ -876,11 +880,10 @@ export default function PredictionMarket({ userFid, username, initialData, onDat
   useEffect(() => {
     // Immediate fetch on market change
     fetchMarketData();
-    fetchUserPosition();
     
     const interval = setInterval(fetchMarketData, 30000);
     return () => clearInterval(interval);
-  }, [activeMarket]); // Remove fetchMarketData from deps to avoid loop
+  }, [fetchMarketData]); // fetchMarketData already depends on activeMarket
 
   useEffect(() => {
     fetchUserPosition();
