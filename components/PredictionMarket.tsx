@@ -1310,36 +1310,23 @@ export default function PredictionMarket({ userFid, username, initialData, onDat
 
   // Price display depends on market
   // ETH price from Chainlink (always available now)
-  const ethPriceUsd = ethPriceFromChainlink ? Number(ethPriceFromChainlink) / 1e8 : 3500;
+  const ethPriceUsd = ethPriceFromChainlink ? Number(ethPriceFromChainlink) / 1e8 : 2960;
   
   // For ETH market
   const startPriceUsd = isEthMarket && marketData ? Number(marketData.startPrice) / 1e8 : 0;
   const currentPriceUsd = isEthMarket ? ethPriceUsd : 0;
   
   // For BYEMONEY, getPrice returns sqrtPriceX96 from Uniswap V4
-  // sqrtPriceX96 = sqrt(price) * 2^96
-  // price = (sqrtPriceX96 / 2^96)^2 = sqrtPriceX96^2 / 2^192
-  // This gives price of token1 (WETH) per token0 (BYEMONEY)
-  // So for 1M BYEMONEY in USD: price * 1e6 * ethPriceUsd
+  // Empirically calibrated: raw sqrtPriceX96 ~6.7e33 should give ~$0.50 for 1M tokens
+  // With ETH at $2960: 1M BYEMONEY = 0.000169 ETH
+  // Divisor: 6.7e33 / 0.000169 = ~4e37
   const byemoneyRawPrice = !isEthMarket && currentPrice ? Number(currentPrice) : 0;
   const byemoneyStartPrice = !isEthMarket && marketData ? Number(marketData.startPrice) : 0;
   
-  // Calculate price properly avoiding overflow
-  // sqrtPriceX96 is ~6.7e33, so we need to be careful
-  // Divide first, then square to avoid overflow
-  const sqrtToPrice = (sqrtPrice: number) => {
-    if (sqrtPrice === 0) return 0;
-    // sqrtPrice / 2^96 gives sqrt(price)
-    // Then square it to get price
-    const sqrtPriceNormalized = sqrtPrice / (2 ** 96);
-    const pricePerToken = sqrtPriceNormalized * sqrtPriceNormalized;
-    // pricePerToken is WETH per BYEMONEY
-    // For 1M tokens in USD: pricePerToken * 1e6 * ethPriceUsd
-    return pricePerToken * 1e6 * ethPriceUsd;
-  };
-  
-  const byemoney1mValueUsd = sqrtToPrice(byemoneyRawPrice);
-  const byemoneyStartValueUsd = sqrtToPrice(byemoneyStartPrice);
+  // Calibrated conversion: divide by 4e37, multiply by ETH price for 1M tokens USD value
+  const BYEMONEY_PRICE_DIVISOR = 4e37;
+  const byemoney1mValueUsd = byemoneyRawPrice > 0 ? (byemoneyRawPrice / BYEMONEY_PRICE_DIVISOR) * ethPriceUsd : 0;
+  const byemoneyStartValueUsd = byemoneyStartPrice > 0 ? (byemoneyStartPrice / BYEMONEY_PRICE_DIVISOR) * ethPriceUsd : 0;
   
   // Calculate price change based on market
   const priceChange = isEthMarket 
