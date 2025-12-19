@@ -19,7 +19,7 @@ const supabase = SUPABASE_URL && SUPABASE_ANON_KEY
   : null;
 
 const Q96 = 2 ** 96;
-const BYEMONEY_PRICE_CALIBRATION = 0.74;
+const BYEMONEY_PRICE_CALIBRATION = 1;
 
 const calculateByemoneyUsdValue = (sqrtPriceX96: number, ethPriceUsd: number): number => {
   if (sqrtPriceX96 <= 0 || ethPriceUsd <= 0) return 0;
