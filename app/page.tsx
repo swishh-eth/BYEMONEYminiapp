@@ -9,11 +9,9 @@ import BottomNav from '@/components/BottomNav';
 import SwipeContainer from '@/components/SwipeContainer';
 import HomePage from '@/components/HomePage';
 import PredictionMarket from '@/components/PredictionMarket';
-import BYEMONEYPredictionMarket from '@/components/BYEMONEYPredictionMarket';
 import InfoPage from '@/components/InfoPage';
 
 const ETH_CONTRACT_ADDRESS = '0x0625E29C2A71A834482bFc6b4cc012ACeee62DA4' as const;
-const BYEMONEY_CONTRACT_ADDRESS = '0xc5dBe9571B10d76020556b8De77287b04fE8ef3d' as const;
 const TICKET_PRICE_ETH = 0.001;
 
 const supabase = createClient(
@@ -247,37 +245,6 @@ export default function App() {
     }));
   };
 
-  // Render the appropriate market component
-  const renderMarketComponent = () => {
-    if (selectedMarket === 'BYEMONEY') {
-      return (
-        <BYEMONEYPredictionMarket 
-          userFid={userFid} 
-          username={username}
-          onMarketChange={handleMarketChange}
-        />
-      );
-    }
-    
-    return (
-      <PredictionMarket 
-        userFid={userFid} 
-        username={username} 
-        initialData={predictionData ? {
-          marketId: predictionData.marketId,
-          timeRemaining: predictionData.timeRemaining,
-          totalPool: predictionData.totalPool,
-          upPool: predictionData.upPool,
-          downPool: predictionData.downPool,
-          ethPrice: predictionData.ethPrice,
-        } : undefined}
-        onDataUpdate={handlePredictionDataUpdate}
-        onMarketChange={handleMarketChange}
-        selectedMarket={selectedMarket}
-      />
-    );
-  };
-
   return (
     <div className="h-full flex flex-col">
       <Header 
@@ -288,7 +255,21 @@ export default function App() {
       />
       
       <SwipeContainer activeIndex={activeIndex} onNavigate={handleNavigate}>
-        {renderMarketComponent()}
+        <PredictionMarket 
+          userFid={userFid} 
+          username={username} 
+          initialData={predictionData ? {
+            marketId: predictionData.marketId,
+            timeRemaining: predictionData.timeRemaining,
+            totalPool: predictionData.totalPool,
+            upPool: predictionData.upPool,
+            downPool: predictionData.downPool,
+            ethPrice: predictionData.ethPrice,
+          } : undefined}
+          onDataUpdate={handlePredictionDataUpdate}
+          onMarketChange={handleMarketChange}
+          selectedMarket={selectedMarket}
+        />
         <HomePage 
           predictionData={predictionData}
           onNavigate={handleNavigate}

@@ -5,8 +5,11 @@ import { createPublicClient, http, formatEther, parseEther, encodeFunctionData }
 import { base } from 'viem/chains';
 import { createClient } from '@supabase/supabase-js';
 
-const CONTRACT_ADDRESS = '0x0625E29C2A71A834482bFc6b4cc012ACeee62DA4' as `0x${string}`;
+const ETH_CONTRACT_ADDRESS = '0x0625E29C2A71A834482bFc6b4cc012ACeee62DA4' as `0x${string}`;
+const BYEMONEY_CONTRACT_ADDRESS = '0xc5dBe9571B10d76020556b8De77287b04fE8ef3d' as `0x${string}`;
+const BYEMONEY_TOKEN_ADDRESS = '0xA12A532B0B7024b1D01Ae66a3b8cF77366c7dB07' as `0x${string}`;
 const BASE_TICKET_PRICE_ETH = 0.001;
+const BASE_TICKET_PRICE_BYEMONEY = 1000n * 10n**18n; // 1000 BYEMONEY per ticket
 const LOCK_PERIOD_SECONDS = 60 * 60; // 1 hour before end = locked
 const SURGE_PERIOD_SECONDS = 12 * 60 * 60; // Last 12 hours = double price
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
@@ -16,7 +19,8 @@ const supabase = SUPABASE_URL && SUPABASE_ANON_KEY
   ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
   : null;
 
-const CONTRACT_ABI = [
+// ETH Market ABI (Chainlink price)
+const ETH_CONTRACT_ABI = [
   {
     name: 'getCurrentMarket',
     type: 'function',
@@ -104,6 +108,117 @@ const CONTRACT_ABI = [
   },
 ] as const;
 
+// BYEMONEY Market ABI (Uniswap V4 price, ERC20 betting)
+const BYEMONEY_CONTRACT_ABI = [
+  {
+    name: 'getCurrentMarket',
+    type: 'function',
+    stateMutability: 'view',
+    inputs: [],
+    outputs: [
+      { name: 'id', type: 'uint256' },
+      { name: 'startPrice', type: 'uint256' },
+      { name: 'endPrice', type: 'uint256' },
+      { name: 'startTime', type: 'uint256' },
+      { name: 'endTime', type: 'uint256' },
+      { name: 'upPool', type: 'uint256' },
+      { name: 'downPool', type: 'uint256' },
+      { name: 'status', type: 'uint8' },
+      { name: 'result', type: 'uint8' },
+      { name: 'totalTickets', type: 'uint256' },
+    ],
+  },
+  {
+    name: 'getPosition',
+    type: 'function',
+    stateMutability: 'view',
+    inputs: [
+      { name: 'marketId', type: 'uint256' },
+      { name: 'user', type: 'address' },
+    ],
+    outputs: [
+      { name: 'up', type: 'uint256' },
+      { name: 'down', type: 'uint256' },
+      { name: 'claimed', type: 'bool' },
+    ],
+  },
+  {
+    name: 'buyTickets',
+    type: 'function',
+    stateMutability: 'nonpayable',
+    inputs: [
+      { name: 'direction', type: 'uint8' },
+      { name: 'amount', type: 'uint256' },
+    ],
+    outputs: [],
+  },
+  {
+    name: 'claim',
+    type: 'function',
+    stateMutability: 'nonpayable',
+    inputs: [{ name: 'marketId', type: 'uint256' }],
+    outputs: [],
+  },
+  {
+    name: 'getPriceInEth',
+    type: 'function',
+    stateMutability: 'view',
+    inputs: [],
+    outputs: [{ name: '', type: 'uint256' }],
+  },
+  {
+    name: 'isBettingOpen',
+    type: 'function',
+    stateMutability: 'view',
+    inputs: [],
+    outputs: [{ name: '', type: 'bool' }],
+  },
+  {
+    name: 'config',
+    type: 'function',
+    stateMutability: 'view',
+    inputs: [],
+    outputs: [
+      { name: 'ticketPrice', type: 'uint256' },
+      { name: 'roundDuration', type: 'uint256' },
+      { name: 'bettingCutoff', type: 'uint256' },
+      { name: 'feeBps', type: 'uint256' },
+      { name: 'paused', type: 'bool' },
+    ],
+  },
+] as const;
+
+// ERC20 ABI for BYEMONEY token approval
+const ERC20_ABI = [
+  {
+    name: 'approve',
+    type: 'function',
+    stateMutability: 'nonpayable',
+    inputs: [
+      { name: 'spender', type: 'address' },
+      { name: 'amount', type: 'uint256' },
+    ],
+    outputs: [{ name: '', type: 'bool' }],
+  },
+  {
+    name: 'allowance',
+    type: 'function',
+    stateMutability: 'view',
+    inputs: [
+      { name: 'owner', type: 'address' },
+      { name: 'spender', type: 'address' },
+    ],
+    outputs: [{ name: '', type: 'uint256' }],
+  },
+  {
+    name: 'balanceOf',
+    type: 'function',
+    stateMutability: 'view',
+    inputs: [{ name: 'account', type: 'address' }],
+    outputs: [{ name: '', type: 'uint256' }],
+  },
+] as const;
+
 const publicClient = createPublicClient({
   chain: base,
   transport: http('https://base-mainnet.g.alchemy.com/v2/jKHNMnfb18wYA1HfaHxo5'),
@@ -185,8 +300,10 @@ interface HistoryItem {
 export default function PredictionMarket({ userFid, username, initialData, onDataUpdate, onMarketChange, selectedMarket = 'ETH' }: PredictionMarketProps) {
   const [walletAddress, setWalletAddress] = useState<`0x${string}` | null>(null);
   const [ethBalance, setEthBalance] = useState<string>('0');
+  const [byemoneyBalance, setByemoneyBalance] = useState<bigint>(0n);
   const [ticketCount, setTicketCount] = useState(1);
   const [selectedDirection, setSelectedDirection] = useState<'up' | 'down' | null>(null);
+  const [activeMarket, setActiveMarket] = useState<MarketType>(selectedMarket);
   const [timeLeft, setTimeLeft] = useState(() => {
     if (initialData?.timeRemaining) {
       const seconds = initialData.timeRemaining;
@@ -294,8 +411,8 @@ export default function PredictionMarket({ userFid, username, initialData, onDat
     }
   }, [showInfo]);
   
-  // Safe access to selected coin
-  const selectedCoin = AVAILABLE_COINS[selectedCoinIndex] || AVAILABLE_COINS[0];
+  // Safe access to selected coin based on activeMarket
+  const selectedCoin = AVAILABLE_COINS.find(c => c.symbol === activeMarket) || AVAILABLE_COINS[0];
   
   const [marketData, setMarketData] = useState<{
     id: bigint;
@@ -460,19 +577,19 @@ export default function PredictionMarket({ userFid, username, initialData, onDat
       const unclaimed: UnclaimedMarket[] = [];
       const historyItems: HistoryItem[] = [];
 
-      // Check each market
+      // Check each market (note: unclaimed markets only works for ETH market currently)
       for (const marketId of marketIds) {
         try {
           const [position, marketInfo] = await Promise.all([
             publicClient.readContract({
-              address: CONTRACT_ADDRESS,
-              abi: CONTRACT_ABI,
+              address: ETH_CONTRACT_ADDRESS,
+              abi: ETH_CONTRACT_ABI,
               functionName: 'getPosition',
               args: [BigInt(marketId), walletAddress],
             }),
             publicClient.readContract({
-              address: CONTRACT_ADDRESS,
-              abi: CONTRACT_ABI,
+              address: ETH_CONTRACT_ADDRESS,
+              abi: ETH_CONTRACT_ABI,
               functionName: 'markets',
               args: [BigInt(marketId)],
             }),
@@ -633,35 +750,42 @@ export default function PredictionMarket({ userFid, username, initialData, onDat
 
   const fetchMarketData = useCallback(async () => {
     try {
+      const contractAddress = activeMarket === 'ETH' ? ETH_CONTRACT_ADDRESS : BYEMONEY_CONTRACT_ADDRESS;
+      const contractAbi = activeMarket === 'ETH' ? ETH_CONTRACT_ABI : BYEMONEY_CONTRACT_ABI;
+      const priceFunction = activeMarket === 'ETH' ? 'getPrice' : 'getPriceInEth';
+      
       const [market, price, betting] = await Promise.all([
         publicClient.readContract({
-          address: CONTRACT_ADDRESS,
-          abi: CONTRACT_ABI,
+          address: contractAddress,
+          abi: contractAbi,
           functionName: 'getCurrentMarket',
-        }),
+          args: [],
+        } as any),
         publicClient.readContract({
-          address: CONTRACT_ADDRESS,
-          abi: CONTRACT_ABI,
-          functionName: 'getPrice',
-        }),
+          address: contractAddress,
+          abi: contractAbi,
+          functionName: priceFunction,
+          args: [],
+        } as any) as Promise<bigint>,
         publicClient.readContract({
-          address: CONTRACT_ADDRESS,
-          abi: CONTRACT_ABI,
+          address: contractAddress,
+          abi: contractAbi,
           functionName: 'isBettingOpen',
-        }),
+          args: [],
+        } as any) as Promise<boolean>,
       ]);
 
       setMarketData({
-        id: market[0],
-        startPrice: market[1],
-        endPrice: market[2],
-        startTime: market[3],
-        endTime: market[4],
-        upPool: market[5],
-        downPool: market[6],
-        status: market[7],
-        result: market[8],
-        totalTickets: market[9],
+        id: (market as any)[0],
+        startPrice: (market as any)[1],
+        endPrice: (market as any)[2],
+        startTime: (market as any)[3],
+        endTime: (market as any)[4],
+        upPool: (market as any)[5],
+        downPool: (market as any)[6],
+        status: (market as any)[7],
+        result: (market as any)[8],
+        totalTickets: (market as any)[9],
       });
       
       // Only update price if we got a valid value
@@ -674,15 +798,18 @@ export default function PredictionMarket({ userFid, username, initialData, onDat
       console.error('Failed to fetch market:', error);
       // Don't reset state on error - keep existing values
     }
-  }, []);
+  }, [activeMarket]);
 
   const fetchUserPosition = useCallback(async () => {
     if (!walletAddress || !marketData || marketData.id === 0n) return;
     
+    const contractAddress = activeMarket === 'ETH' ? ETH_CONTRACT_ADDRESS : BYEMONEY_CONTRACT_ADDRESS;
+    const contractAbi = activeMarket === 'ETH' ? ETH_CONTRACT_ABI : BYEMONEY_CONTRACT_ABI;
+    
     try {
       const position = await publicClient.readContract({
-        address: CONTRACT_ADDRESS,
-        abi: CONTRACT_ABI,
+        address: contractAddress,
+        abi: contractAbi,
         functionName: 'getPosition',
         args: [marketData.id, walletAddress],
       });
@@ -695,23 +822,48 @@ export default function PredictionMarket({ userFid, username, initialData, onDat
     } catch (error) {
       console.error('Failed to fetch position:', error);
     }
-  }, [walletAddress, marketData?.id]);
+  }, [walletAddress, marketData?.id, activeMarket]);
 
   const fetchBalance = useCallback(async () => {
     if (!walletAddress) return;
     try {
+      // Always fetch ETH balance
       const balance = await publicClient.getBalance({ address: walletAddress });
+      setEthBalance(formatEther(balance));
+      
+      // Also fetch BYEMONEY balance
+      const tokenBalance = await publicClient.readContract({
+        address: BYEMONEY_TOKEN_ADDRESS,
+        abi: ERC20_ABI,
+        functionName: 'balanceOf',
+        args: [walletAddress],
+      });
+      setByemoneyBalance(tokenBalance);
       setEthBalance(formatEther(balance));
     } catch (error) {
       console.error('Failed to fetch balance:', error);
     }
   }, [walletAddress]);
 
+  // Sync activeMarket with selectedMarket prop
+  useEffect(() => {
+    if (selectedMarket !== activeMarket) {
+      setActiveMarket(selectedMarket);
+      // Reset market data when switching
+      setMarketData(null);
+      setUserPosition(null);
+      setCurrentPrice(null);
+      setSelectedDirection(null);
+      setTicketCount(1);
+    }
+  }, [selectedMarket]);
+
+  // Refetch when activeMarket changes
   useEffect(() => {
     fetchMarketData();
     const interval = setInterval(fetchMarketData, 30000);
     return () => clearInterval(interval);
-  }, [fetchMarketData]);
+  }, [fetchMarketData, activeMarket]);
 
   useEffect(() => {
     fetchUserPosition();
@@ -836,27 +988,86 @@ export default function PredictionMarket({ userFid, username, initialData, onDat
     setErrorMsg('');
     
     try {
-      const totalCost = parseEther((ticketCount * TICKET_PRICE_ETH).toString());
+      const contractAddress = activeMarket === 'ETH' ? ETH_CONTRACT_ADDRESS : BYEMONEY_CONTRACT_ADDRESS;
       
-      const data = encodeFunctionData({
-        abi: CONTRACT_ABI,
-        functionName: 'buyTickets',
-        args: [selectedDirection === 'up' ? 1 : 2],
-      });
+      if (activeMarket === 'ETH') {
+        // ETH Market: Send ETH with transaction
+        const totalCost = parseEther((ticketCount * TICKET_PRICE_ETH).toString());
+        
+        const data = encodeFunctionData({
+          abi: ETH_CONTRACT_ABI,
+          functionName: 'buyTickets',
+          args: [selectedDirection === 'up' ? 1 : 2],
+        });
 
-      const txHash = await sdk.wallet.ethProvider.request({
-        method: 'eth_sendTransaction',
-        params: [{
-          from: walletAddress,
-          to: CONTRACT_ADDRESS,
-          value: `0x${totalCost.toString(16)}`,
-          data,
-          chainId: `0x${(8453).toString(16)}`, // Base mainnet
-        }],
-      });
+        const txHash = await sdk.wallet.ethProvider.request({
+          method: 'eth_sendTransaction',
+          params: [{
+            from: walletAddress,
+            to: contractAddress,
+            value: `0x${totalCost.toString(16)}`,
+            data,
+            chainId: `0x${(8453).toString(16)}`,
+          }],
+        });
 
-      await publicClient.waitForTransactionReceipt({ hash: txHash });
+        await publicClient.waitForTransactionReceipt({ hash: txHash });
+      } else {
+        // BYEMONEY Market: Approve token then buy
+        const totalCost = BASE_TICKET_PRICE_BYEMONEY * BigInt(ticketCount);
+        
+        // Check current allowance
+        const currentAllowance = await publicClient.readContract({
+          address: BYEMONEY_TOKEN_ADDRESS,
+          abi: ERC20_ABI,
+          functionName: 'allowance',
+          args: [walletAddress, contractAddress],
+        });
 
+        // If allowance insufficient, request exact approval
+        if (currentAllowance < totalCost) {
+          setTxState('buying'); // Show "Approving..." state
+          
+          const approveData = encodeFunctionData({
+            abi: ERC20_ABI,
+            functionName: 'approve',
+            args: [contractAddress, totalCost],
+          });
+
+          const approveTxHash = await sdk.wallet.ethProvider.request({
+            method: 'eth_sendTransaction',
+            params: [{
+              from: walletAddress,
+              to: BYEMONEY_TOKEN_ADDRESS,
+              data: approveData,
+              chainId: `0x${(8453).toString(16)}`,
+            }],
+          });
+
+          await publicClient.waitForTransactionReceipt({ hash: approveTxHash });
+        }
+
+        // Now buy tickets
+        const buyData = encodeFunctionData({
+          abi: BYEMONEY_CONTRACT_ABI,
+          functionName: 'buyTickets',
+          args: [selectedDirection === 'up' ? 1 : 2, totalCost],
+        });
+
+        const buyTxHash = await sdk.wallet.ethProvider.request({
+          method: 'eth_sendTransaction',
+          params: [{
+            from: walletAddress,
+            to: contractAddress,
+            data: buyData,
+            chainId: `0x${(8453).toString(16)}`,
+          }],
+        });
+
+        await publicClient.waitForTransactionReceipt({ hash: buyTxHash });
+      }
+
+      // Log bet to Supabase
       if (userFid && marketData && supabase) {
         try {
           const { data: existingUser } = await supabase
@@ -888,18 +1099,17 @@ export default function PredictionMarket({ userFid, username, initialData, onDat
           console.log('User lookup/create error:', e);
         }
 
+        const betsTable = activeMarket === 'ETH' ? 'prediction_bets' : 'byemoney_bets';
         const betData = {
           fid: userFid,
           wallet_address: walletAddress.toLowerCase(),
           market_id: Number(marketData.id),
           direction: selectedDirection,
           tickets: ticketCount,
-          tx_hash: txHash,
-          price_at_bet: currentPriceUsd,
           timestamp: new Date().toISOString(),
         };
         
-        await supabase.from('prediction_bets').insert(betData);
+        await supabase.from(betsTable).insert(betData);
       }
       
       setTxState('success');
@@ -937,9 +1147,12 @@ export default function PredictionMarket({ userFid, username, initialData, onDat
     setTxState('claiming');
     triggerHaptic('medium');
     
+    const contractAddress = activeMarket === 'ETH' ? ETH_CONTRACT_ADDRESS : BYEMONEY_CONTRACT_ADDRESS;
+    const contractAbi = activeMarket === 'ETH' ? ETH_CONTRACT_ABI : BYEMONEY_CONTRACT_ABI;
+    
     try {
       const data = encodeFunctionData({
-        abi: CONTRACT_ABI,
+        abi: contractAbi,
         functionName: 'claim',
         args: [BigInt(claimMarketId)],
       });
@@ -948,7 +1161,7 @@ export default function PredictionMarket({ userFid, username, initialData, onDat
         method: 'eth_sendTransaction',
         params: [{
           from: walletAddress,
-          to: CONTRACT_ADDRESS,
+          to: contractAddress,
           data,
         }],
       });
@@ -1008,11 +1221,31 @@ export default function PredictionMarket({ userFid, username, initialData, onDat
 
   const canRefund = isCancelled && !hasClaimed && userTotalTickets > 0;
 
-  const totalCostEth = ticketCount * TICKET_PRICE_ETH;
+  // Market-specific calculations
+  const isEthMarket = activeMarket === 'ETH';
+  const tokenSymbol = isEthMarket ? 'ETH' : 'BYEMONEY';
+  const ticketPriceDisplay = isEthMarket ? TICKET_PRICE_ETH : 1000; // 1000 BYEMONEY per ticket
+  const totalCostEth = ticketCount * TICKET_PRICE_ETH; // For ETH market
+  const totalCostByemoney = BASE_TICKET_PRICE_BYEMONEY * BigInt(ticketCount); // For BYEMONEY market
+  const totalCostDisplay = isEthMarket ? totalCostEth.toFixed(3) : (ticketCount * 1000).toLocaleString();
+  
+  // Balance display
+  const currentBalance = isEthMarket ? ethBalance : formatEther(byemoneyBalance);
+  const hasEnoughBalance = isEthMarket 
+    ? Number(ethBalance) >= totalCostEth 
+    : byemoneyBalance >= totalCostByemoney;
+  
+  // Format BYEMONEY balance for display
+  const formatByemoneyBalance = (balance: bigint): string => {
+    const num = Number(formatEther(balance));
+    if (num >= 1000000) return `${(num / 1000000).toFixed(2)}M`;
+    if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
+    return num.toFixed(0);
+  };
   
   // Always calculate what you'd ACTUALLY get if you bet
   // For unselected buttons, show odds for 1 ticket
-  const oneTicketCost = TICKET_PRICE_ETH;
+  const oneTicketCost = isEthMarket ? TICKET_PRICE_ETH : Number(formatEther(BASE_TICKET_PRICE_BYEMONEY));
   
   // Preview multiplier for UP (what you'd get betting 1 ticket on UP)
   const previewUpPool = upPool + oneTicketCost;
@@ -1025,8 +1258,9 @@ export default function PredictionMarket({ userFid, username, initialData, onDat
   const previewDownMultiplier = previewDownPool > 0 ? (previewDownTotal * (1 - houseFee)) / previewDownPool : 1.9;
   
   // When selected, recalculate with actual ticket count
-  const selectedUpPool = upPool + (selectedDirection === 'up' ? totalCostEth : 0);
-  const selectedDownPool = downPool + (selectedDirection === 'down' ? totalCostEth : 0);
+  const selectedCost = isEthMarket ? totalCostEth : Number(formatEther(totalCostByemoney));
+  const selectedUpPool = upPool + (selectedDirection === 'up' ? selectedCost : 0);
+  const selectedDownPool = downPool + (selectedDirection === 'down' ? selectedCost : 0);
   const selectedTotalPool = selectedUpPool + selectedDownPool;
   const selectedPoolAfterFee = selectedTotalPool * (1 - houseFee);
   
@@ -1038,15 +1272,18 @@ export default function PredictionMarket({ userFid, username, initialData, onDat
   const displayDownMultiplier = selectedDirection === 'down' ? realDownMultiplier : previewDownMultiplier;
   
   const potentialWinnings = selectedDirection === 'up' 
-    ? totalCostEth * realUpMultiplier
+    ? selectedCost * realUpMultiplier
     : selectedDirection === 'down' 
-    ? totalCostEth * realDownMultiplier
+    ? selectedCost * realDownMultiplier
     : 0;
 
-  const startPriceUsd = marketData ? Number(marketData.startPrice) / 1e8 : 0;
-  const currentPriceUsd = currentPrice ? Number(currentPrice) / 1e8 : startPriceUsd || 0;
+  // Price display depends on market
+  const startPriceUsd = isEthMarket && marketData ? Number(marketData.startPrice) / 1e8 : 0;
+  const currentPriceUsd = isEthMarket && currentPrice ? Number(currentPrice) / 1e8 : 0;
+  // For BYEMONEY, price is in ETH (from getPriceInEth)
+  const byemoneyPriceInEth = !isEthMarket && currentPrice ? Number(formatEther(currentPrice)) : 0;
   const priceChange = startPriceUsd > 0 ? ((currentPriceUsd - startPriceUsd) / startPriceUsd) * 100 : 0;
-  const hasPriceData = currentPriceUsd > 0;
+  const hasPriceData = isEthMarket ? currentPriceUsd > 0 : byemoneyPriceInEth > 0;
 
   // Calculate time remaining in seconds for parent
   const timeRemainingSeconds = timeLeft.hours * 3600 + timeLeft.minutes * 60 + timeLeft.seconds;
@@ -1172,7 +1409,7 @@ export default function PredictionMarket({ userFid, username, initialData, onDat
                   alt={selectedCoin.symbol}
                   className="w-4 h-4 rounded-full"
                 />
-                <p className="text-[10px] text-white/40 uppercase tracking-wider">{selectedCoin.symbol}/USD</p>
+                <p className="text-[10px] text-white/40 uppercase tracking-wider">{selectedCoin.symbol}/{isEthMarket ? 'USD' : 'ETH'}</p>
                 <svg className="w-2.5 h-2.5 text-white/30" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}>
                   <path d="M19 9l-7 7-7-7" />
                 </svg>
@@ -1182,13 +1419,17 @@ export default function PredictionMarket({ userFid, username, initialData, onDat
                 </div>
               </div>
               <p className="text-3xl font-bold tracking-tight">
-                {currentPriceUsd > 0 
-                  ? `$${currentPriceUsd.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-                  : '$---'
+                {isEthMarket 
+                  ? (currentPriceUsd > 0 
+                      ? `$${currentPriceUsd.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                      : '$---')
+                  : (byemoneyPriceInEth > 0
+                      ? `${(byemoneyPriceInEth * 1e9).toFixed(6)} ETH`
+                      : '--- ETH')
                 }
               </p>
             </div>
-            {hasMarket && !isResolved && startPriceUsd > 0 && (
+            {hasMarket && !isResolved && (isEthMarket ? startPriceUsd > 0 : true) && (
               <div className="text-right">
                 <p className="text-[10px] text-white/40 mb-1">Since Start</p>
                 <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg ${
@@ -1198,18 +1439,23 @@ export default function PredictionMarket({ userFid, username, initialData, onDat
                     <path d="M5 15l7-7 7 7" />
                   </svg>
                   <span className={`text-lg font-bold ${priceChange >= 0 ? 'text-white' : 'text-red-400'}`}>
-                    {Math.abs(priceChange).toFixed(2)}%
+                    {isEthMarket ? `${Math.abs(priceChange).toFixed(2)}%` : '---'}
                   </span>
                 </div>
               </div>
             )}
           </div>
-          {hasMarket && startPriceUsd > 0 && (
+          {hasMarket && isEthMarket && startPriceUsd > 0 && (
             <div className="mt-3 pt-3 border-t border-white/5 flex items-center justify-between text-xs text-white/40">
               <span>Start: ${startPriceUsd.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
               <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-white/5 text-white/60">
                 <span className="text-[10px] font-medium">Chainlink</span>
               </span>
+            </div>
+          )}
+          {hasMarket && !isEthMarket && (
+            <div className="mt-3 pt-3 border-t border-white/5 flex items-center justify-between text-xs text-white/40">
+              <span>Price via Uniswap V4</span>
             </div>
           )}
         </button>
@@ -1332,15 +1578,22 @@ export default function PredictionMarket({ userFid, username, initialData, onDat
                 <span className="text-[8px] text-white/20 px-1.5 py-0.5 rounded bg-white/5">tap to switch</span>
               </div>
               <p className="text-xs">
-                {showUsdValues ? (
-                  <>
-                    <span className="text-white font-semibold">${(totalPool * (currentPriceUsd > 0 ? currentPriceUsd : 2900)).toFixed(2)}</span>
-                    <span className="text-white/40 ml-1">USD</span>
-                  </>
+                {isEthMarket ? (
+                  showUsdValues ? (
+                    <>
+                      <span className="text-white font-semibold">${(totalPool * (currentPriceUsd > 0 ? currentPriceUsd : 2900)).toFixed(2)}</span>
+                      <span className="text-white/40 ml-1">USD</span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="text-white font-semibold">{totalPool.toFixed(4)}</span>
+                      <span className="text-white/40 ml-1">ETH</span>
+                    </>
+                  )
                 ) : (
                   <>
-                    <span className="text-white font-semibold">{totalPool.toFixed(4)}</span>
-                    <span className="text-white/40 ml-1">ETH</span>
+                    <span className="text-white font-semibold">{totalPool >= 1000 ? `${(totalPool / 1000).toFixed(1)}K` : totalPool.toFixed(0)}</span>
+                    <span className="text-white/40 ml-1">BYEMONEY</span>
                   </>
                 )}
               </p>
@@ -1499,7 +1752,12 @@ export default function PredictionMarket({ userFid, username, initialData, onDat
                   <div className="flex items-center justify-between mb-3">
                     <p className="text-[10px] text-white/40 uppercase">Tickets</p>
                     <p className="text-[10px] text-white/40">
-                      Bal: <span className="text-white">{Number(ethBalance).toFixed(4)} ETH</span>
+                      Bal: <span className={`${hasEnoughBalance ? 'text-white' : 'text-red-400'}`}>
+                        {isEthMarket 
+                          ? `${Number(ethBalance).toFixed(4)} ETH`
+                          : `${formatByemoneyBalance(byemoneyBalance)} BYEMONEY`
+                        }
+                      </span>
                     </p>
                   </div>
 
@@ -1523,9 +1781,9 @@ export default function PredictionMarket({ userFid, username, initialData, onDat
                       −
                     </button>
                     
-                    <div className="w-16 text-center px-2">
+                    <div className="w-20 text-center px-2">
                       <p className="text-2xl font-bold">{ticketCount}</p>
-                      <p className="text-[9px] text-white/40">{(ticketCount * TICKET_PRICE_ETH).toFixed(3)} ETH</p>
+                      <p className="text-[9px] text-white/40">{totalCostDisplay} {tokenSymbol}</p>
                     </div>
 
                     <button
@@ -1552,7 +1810,7 @@ export default function PredictionMarket({ userFid, username, initialData, onDat
                 <button
                   ref={buyButtonRef}
                   onClick={handleBuyClick}
-                  disabled={txState !== 'idle'}
+                  disabled={txState !== 'idle' || !hasEnoughBalance}
                   className={`w-full py-4 rounded-xl font-bold transition-all hover:scale-[1.02] active:scale-[0.98] ${
                     selectedDirection === 'up'
                       ? 'bg-gradient-to-r from-white to-white text-black shadow-lg shadow-white/20'
@@ -1565,12 +1823,13 @@ export default function PredictionMarket({ userFid, username, initialData, onDat
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    Starting Round...
+                    {!isEthMarket ? 'Approving...' : 'Starting Round...'}
                   </span>
                 ) : 
                  txState === 'success' ? '✓ Round Started!' :
                  txState === 'error' ? errorMsg || 'Failed' :
-                 `Start Round & Bet ${(ticketCount * TICKET_PRICE_ETH).toFixed(3)} ETH`}
+                 !hasEnoughBalance ? 'Insufficient Balance' :
+                 `Start Round & Bet ${totalCostDisplay} ${tokenSymbol}`}
               </button>
               </div>
             )}
@@ -1644,7 +1903,7 @@ export default function PredictionMarket({ userFid, username, initialData, onDat
                         className="w-full bg-transparent text-center text-2xl font-bold outline-none"
                         min={1}
                       />
-                      <p className="text-[10px] text-white/40">{totalCostEth.toFixed(3)} ETH</p>
+                      <p className="text-[10px] text-white/40">{totalCostDisplay} {tokenSymbol}</p>
                     </div>
 
                     <button
@@ -1672,14 +1931,14 @@ export default function PredictionMarket({ userFid, username, initialData, onDat
                   <div className="mt-3 pt-3 border-t border-white/5 flex justify-between">
                     <span className="text-xs text-white/40">Potential Win</span>
                     <span className={`text-sm font-bold ${selectedDirection === 'up' ? 'text-white' : 'text-red-400'}`}>
-                      {potentialWinnings.toFixed(4)} ETH
+                      {isEthMarket ? potentialWinnings.toFixed(4) : potentialWinnings.toFixed(0)} {tokenSymbol}
                     </span>
                   </div>
                 </div>
 
                 <button
                   onClick={handleBuyClick}
-                  disabled={txState !== 'idle'}
+                  disabled={txState !== 'idle' || !hasEnoughBalance}
                   className={`w-full py-4 rounded-xl font-bold transition-all hover:scale-[1.02] active:scale-[0.98] ${
                     selectedDirection === 'up'
                       ? 'bg-gradient-to-r from-white to-white text-black shadow-lg shadow-white/20'
@@ -1692,12 +1951,13 @@ export default function PredictionMarket({ userFid, username, initialData, onDat
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                       </svg>
-                      Confirming...
+                      {!isEthMarket ? 'Approving...' : 'Confirming...'}
                     </span>
                   ) : 
                    txState === 'success' ? '✓ Done!' :
                    txState === 'error' ? errorMsg || 'Failed' :
-                   `Bet ${totalCostEth.toFixed(3)} ETH`}
+                   !hasEnoughBalance ? 'Insufficient Balance' :
+                   `Bet ${totalCostDisplay} ${tokenSymbol}`}
                 </button>
               </div>
             )}
@@ -1829,18 +2089,12 @@ export default function PredictionMarket({ userFid, username, initialData, onDat
                   key={coin.symbol}
                   onClick={() => {
                     if (coin.active) {
-                      if (coin.symbol === 'BYEMONEY' && onMarketChange) {
-                        onMarketChange('BYEMONEY');
-                        closeCoinSelector();
-                        playClick();
-                        triggerHaptic('medium');
-                      } else if (coin.symbol === 'ETH') {
-                        setSelectedCoinIndex(index);
-                        if (onMarketChange) onMarketChange('ETH');
-                        closeCoinSelector();
-                        playClick();
-                        triggerHaptic('medium');
-                      }
+                      setSelectedCoinIndex(index);
+                      setActiveMarket(coin.symbol as MarketType);
+                      if (onMarketChange) onMarketChange(coin.symbol as MarketType);
+                      closeCoinSelector();
+                      playClick();
+                      triggerHaptic('medium');
                     } else {
                       triggerHaptic('error');
                     }
@@ -1848,7 +2102,7 @@ export default function PredictionMarket({ userFid, username, initialData, onDat
                   style={{ animationDelay: `${index * 50}ms` }}
                   className={`flex-shrink-0 snap-center w-24 rounded-xl p-3 transition-all animate-pop-in ${
                     coin.active 
-                      ? selectedCoinIndex === index
+                      ? (coin.symbol === activeMarket)
                         ? 'bg-white text-black'
                         : 'bg-white/10 border border-white/20 hover:bg-white/20'
                       : 'bg-white/5 border border-white/10 opacity-50'
@@ -2047,7 +2301,7 @@ export default function PredictionMarket({ userFid, username, initialData, onDat
             <h3 className={`text-lg font-bold text-center mb-2 ${selectedDirection === 'up' ? 'text-black' : 'text-white'}`}>Confirm Your Bet</h3>
             
             <p className={`text-sm text-center mb-4 ${selectedDirection === 'up' ? 'text-black/60' : 'text-white/80'}`}>
-              You&apos;re about to bet <span className={`font-semibold ${selectedDirection === 'up' ? 'text-black' : 'text-white'}`}>{totalCostEth.toFixed(3)} ETH</span> on <span className="font-semibold">{selectedDirection === 'up' ? 'PUMP' : 'DUMP'}</span>
+              You&apos;re about to bet <span className={`font-semibold ${selectedDirection === 'up' ? 'text-black' : 'text-white'}`}>{totalCostDisplay} {tokenSymbol}</span> on <span className="font-semibold">{selectedDirection === 'up' ? 'PUMP' : 'DUMP'}</span>
             </p>
 
             <div className={`rounded-xl p-3 mb-4 ${selectedDirection === 'up' ? 'bg-black/5' : 'bg-black/20'}`}>
