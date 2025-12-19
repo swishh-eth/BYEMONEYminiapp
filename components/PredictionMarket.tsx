@@ -586,12 +586,14 @@ export default function PredictionMarket({ userFid, username, initialData, onDat
     
     try {
       // For BYEMONEY market, check previous rounds directly on contract
-      if (activeMarket === 'BYEMONEY' && marketData && marketData.id > 1n) {
+      if (activeMarket === 'BYEMONEY') {
         const unclaimed: UnclaimedMarket[] = [];
         
-        // Check previous rounds (up to 5 back)
-        const currentId = Number(marketData.id);
-        for (let i = currentId - 1; i >= Math.max(1, currentId - 5); i--) {
+        // Always check rounds 1 through current (or reasonable max)
+        const currentId = marketData ? Number(marketData.id) : 2;
+        const maxCheck = Math.max(currentId, 5); // Check at least up to round 5
+        
+        for (let i = 1; i < maxCheck; i++) {
           try {
             const [position, market] = await Promise.all([
               publicClient.readContract({
@@ -611,13 +613,14 @@ export default function PredictionMarket({ userFid, username, initialData, onDat
             const upTickets = Number(position[0]);
             const downTickets = Number(position[1]);
             const claimed = position[2] as boolean;
-            const status = Number(market[7]);
-            const result = Number(market[8]);
-            const upPool = Number(formatEther(market[5] as bigint));
-            const downPool = Number(formatEther(market[6] as bigint));
+            // getMarket has bettingEndsAt at index 5, so pools are at 6 and 7
+            const status = Number(market[8]);
+            const result = Number(market[9]);
+            const upPool = Number(formatEther(market[6] as bigint));
+            const downPool = Number(formatEther(market[7] as bigint));
             const totalPool = upPool + downPool;
             
-            console.log('[BYEMONEY Unclaimed Check] Market', i, { upTickets, downTickets, claimed, status, result });
+            console.log('[BYEMONEY Unclaimed Check] Market', i, { upTickets, downTickets, claimed, status, result, upPool, downPool });
             
             if (!claimed && (upTickets > 0 || downTickets > 0) && status !== 0) {
               // Calculate winnings
@@ -648,11 +651,14 @@ export default function PredictionMarket({ userFid, username, initialData, onDat
               }
             }
           } catch (e) {
-            console.log('[BYEMONEY] Error checking market', i, e);
+            // Market doesn't exist, stop checking
+            console.log('[BYEMONEY] Market', i, 'does not exist or error:', e);
+            break;
           }
         }
         
         setUnclaimedMarkets(unclaimed);
+        setHistory([]); // No Supabase history for BYEMONEY yet
         return;
       }
       

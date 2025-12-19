@@ -145,7 +145,7 @@ export default function HomePage({ predictionData, onNavigate }: HomePageProps) 
           publicClient.readContract({
             address: BYEMONEY_CONTRACT_ADDRESS,
             abi: MARKET_ABI,
-            functionName: 'getPriceInEth',
+            functionName: 'getPrice',
             args: [],
           } as any) as Promise<bigint>,
           // Always fetch ETH price from Chainlink
@@ -162,9 +162,10 @@ export default function HomePage({ predictionData, onNavigate }: HomePageProps) 
         const upPool = Number(formatEther((market as any)[5]));
         const downPool = Number(formatEther((market as any)[6]));
         
-        // Calculate 1M BYEMONEY value in USD using Chainlink ETH price
+        // Calculate 1M BYEMONEY value in USD using calibrated divisor
         const ethPriceUsd = Number(ethPrice) / 1e8;
-        const priceUsd = (Number(priceInEth) / 2e15) * ethPriceUsd;
+        const BYEMONEY_PRICE_DIVISOR = 4e37;
+        const priceUsd = (Number(priceInEth) / BYEMONEY_PRICE_DIVISOR) * ethPriceUsd;
 
         setByemoneyData({
           marketId: Number((market as any)[0]),
