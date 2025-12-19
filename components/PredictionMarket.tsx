@@ -424,6 +424,9 @@ export default function PredictionMarket({ userFid, username, initialData, onDat
     totalTickets: bigint;
   } | null>(null);
   
+  // Track which market the current data is from
+  const [marketDataSource, setMarketDataSource] = useState<MarketType>('ETH');
+  
   const [userPosition, setUserPosition] = useState<{
     up: bigint;
     down: bigint;
@@ -792,6 +795,7 @@ export default function PredictionMarket({ userFid, username, initialData, onDat
         result: (market as any)[8],
         totalTickets: (market as any)[9],
       });
+      setMarketDataSource(activeMarket); // Track which market this data is from
       
       // Only update price if we got a valid value
       if (price && price > 0n) {
@@ -1205,11 +1209,15 @@ export default function PredictionMarket({ userFid, username, initialData, onDat
     }
   };
 
-  const upPool = marketData ? Number(formatEther(marketData.upPool)) : 0;
-  const downPool = marketData ? Number(formatEther(marketData.downPool)) : 0;
+  // Only use pool data if we have valid market data for the CURRENT market
+  // This prevents showing ETH pools when viewing BYEMONEY market during transition
+  const hasValidMarketData = marketData && marketData.id > 0n && marketDataSource === activeMarket;
+  const upPool = hasValidMarketData ? Number(formatEther(marketData.upPool)) : 0;
+  const downPool = hasValidMarketData ? Number(formatEther(marketData.downPool)) : 0;
   const totalPool = upPool + downPool;
-  const upPercent = totalPool > 0 ? (upPool / totalPool) * 100 : 50;
-  const downPercent = totalPool > 0 ? (downPool / totalPool) * 100 : 50;
+  // Default to 50/50 when pool is empty or very small (< 0.0001)
+  const upPercent = totalPool > 0.0001 ? (upPool / totalPool) * 100 : 50;
+  const downPercent = totalPool > 0.0001 ? (downPool / totalPool) * 100 : 50;
 
   const houseFee = 0.05;
   const upMultiplier = upPool > 0 ? ((totalPool * (1 - houseFee)) / upPool) : 1.9;
@@ -1223,7 +1231,7 @@ export default function PredictionMarket({ userFid, username, initialData, onDat
   const isResolved = marketData?.status === 1;
   const isCancelled = marketData?.status === 2;
   const winningDirection = marketData?.result ?? 0;
-  const hasMarket = marketData && marketData.id > 0n;
+  const hasMarket = marketData && marketData.id > 0n && marketDataSource === activeMarket;
 
   const canClaim = isResolved && !hasClaimed && (
     (winningDirection === 1 && userUpTickets > 0) ||
