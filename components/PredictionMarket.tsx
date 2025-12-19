@@ -888,13 +888,21 @@ export default function PredictionMarket({ userFid, username, initialData, onDat
     // Immediate fetch on market change
     fetchMarketData();
     
-    const interval = setInterval(fetchMarketData, 30000);
+    const interval = setInterval(fetchMarketData, 10000); // Refresh every 10s
     return () => clearInterval(interval);
   }, [fetchMarketData]); // fetchMarketData already depends on activeMarket
 
   useEffect(() => {
     fetchUserPosition();
   }, [fetchUserPosition]);
+
+  // Reset user position when market round changes
+  useEffect(() => {
+    if (marketData?.id) {
+      setUserPosition(null); // Clear old position
+      fetchUserPosition(); // Fetch new position for new round
+    }
+  }, [marketData?.id]);
 
   useEffect(() => {
     fetchBalance();
