@@ -425,7 +425,7 @@ export default function PredictionMarket({ userFid, username, initialData, onDat
   } | null>(null);
   
   // Track which market the current data is from
-  const [marketDataSource, setMarketDataSource] = useState<MarketType>('ETH');
+  const [marketDataSource, setMarketDataSource] = useState<MarketType>(selectedMarket);
   
   const [userPosition, setUserPosition] = useState<{
     up: bigint;
@@ -864,6 +864,7 @@ export default function PredictionMarket({ userFid, username, initialData, onDat
       setActiveMarket(selectedMarket);
       // Reset market data when switching
       setMarketData(null);
+      setMarketDataSource(selectedMarket); // Reset source to match new market
       setUserPosition(null);
       setCurrentPrice(null);
       setSelectedDirection(null);
