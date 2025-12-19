@@ -120,6 +120,7 @@ const BYEMONEY_CONTRACT_ABI = [
       { name: 'endPrice', type: 'uint256' },
       { name: 'startTime', type: 'uint256' },
       { name: 'endTime', type: 'uint256' },
+      { name: 'bettingEndsAt', type: 'uint256' },
       { name: 'upPool', type: 'uint256' },
       { name: 'downPool', type: 'uint256' },
       { name: 'status', type: 'uint8' },
@@ -901,14 +902,17 @@ export default function PredictionMarket({ userFid, username, initialData, onDat
         } as any) as Promise<bigint>,
       ]);
 
+      // ETH contract has 10 fields, BYEMONEY V2 has 11 fields (includes bettingEndsAt at index 5)
+      const poolOffset = activeMarket === 'BYEMONEY' ? 6 : 5; // upPool index
+      
       console.log('[fetchMarketData] Got market data:', {
         id: (market as any)[0]?.toString(),
         startPrice: (market as any)[1]?.toString(),
         endTime: (market as any)[4]?.toString(),
-        upPool: (market as any)[5]?.toString(),
-        downPool: (market as any)[6]?.toString(),
-        status: (market as any)[7],
-        result: (market as any)[8],
+        upPool: (market as any)[poolOffset]?.toString(),
+        downPool: (market as any)[poolOffset + 1]?.toString(),
+        status: (market as any)[poolOffset + 2],
+        result: (market as any)[poolOffset + 3],
       }, 'for', activeMarket);
 
       setMarketData({
@@ -917,11 +921,11 @@ export default function PredictionMarket({ userFid, username, initialData, onDat
         endPrice: (market as any)[2],
         startTime: (market as any)[3],
         endTime: (market as any)[4],
-        upPool: (market as any)[5],
-        downPool: (market as any)[6],
-        status: (market as any)[7],
-        result: (market as any)[8],
-        totalTickets: (market as any)[9],
+        upPool: (market as any)[poolOffset],
+        downPool: (market as any)[poolOffset + 1],
+        status: (market as any)[poolOffset + 2],
+        result: (market as any)[poolOffset + 3],
+        totalTickets: (market as any)[poolOffset + 4],
       });
       setMarketDataSource(activeMarket); // Track which market this data is from
       
