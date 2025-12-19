@@ -6,7 +6,7 @@ import { base } from 'viem/chains';
 
 // Contract addresses
 const ETH_CONTRACT_ADDRESS = '0x0625E29C2A71A834482bFc6b4cc012ACeee62DA4' as `0x${string}`;
-const BYEMONEY_CONTRACT_ADDRESS = '0xc5dBe9571B10d76020556b8De77287b04fE8ef3d' as `0x${string}`;
+const BYEMONEY_CONTRACT_ADDRESS = '0x8BD1Ce1E83CA48F33610EdCb9Dc531D0dA23bb55' as `0x${string}`;
 
 // ABIs for fetching data
 const MARKET_ABI = [
@@ -84,7 +84,7 @@ const MARKETS = [
     name: '$BYEMONEY', 
     icon: '/splash.png',
     active: true,
-    contractAddress: '0xc5dBe9571B10d76020556b8De77287b04fE8ef3d',
+    contractAddress: '0x8BD1Ce1E83CA48F33610EdCb9Dc531D0dA23bb55',
   },
   { 
     symbol: 'CLANKER', 

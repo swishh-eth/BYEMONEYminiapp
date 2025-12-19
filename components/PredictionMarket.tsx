@@ -6,7 +6,7 @@ import { base } from 'viem/chains';
 import { createClient } from '@supabase/supabase-js';
 
 const ETH_CONTRACT_ADDRESS = '0x0625E29C2A71A834482bFc6b4cc012ACeee62DA4' as `0x${string}`;
-const BYEMONEY_CONTRACT_ADDRESS = '0xc5dBe9571B10d76020556b8De77287b04fE8ef3d' as `0x${string}`;
+const BYEMONEY_CONTRACT_ADDRESS = '0x8BD1Ce1E83CA48F33610EdCb9Dc531D0dA23bb55' as `0x${string}`;
 const BYEMONEY_TOKEN_ADDRESS = '0xA12A532B0B7024b1D01Ae66a3b8cF77366c7dB07' as `0x${string}`;
 const BASE_TICKET_PRICE_ETH = 0.001;
 const BASE_TICKET_PRICE_BYEMONEY = 1000000n * 10n**18n; // 1,000,000 BYEMONEY per ticket
