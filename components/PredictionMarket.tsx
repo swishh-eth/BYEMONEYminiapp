@@ -1277,11 +1277,23 @@ export default function PredictionMarket({ userFid, username, initialData, onDat
   // Price display depends on market
   const startPriceUsd = isEthMarket && marketData ? Number(marketData.startPrice) / 1e8 : 0;
   const currentPriceUsd = isEthMarket && currentPrice ? Number(currentPrice) / 1e8 : 0;
-  // For BYEMONEY, price is in ETH (from getPriceInEth), convert to USD
-  // Show what 1,000,000 BYEMONEY is worth (matches ticket price)
+  // For BYEMONEY, getPriceInEth returns price of 1 BYEMONEY in ETH (18 decimals)
+  // We want to show the value of 1M BYEMONEY in USD
   const byemoneyPriceInEth = !isEthMarket && currentPrice ? Number(formatEther(currentPrice)) : 0;
   const ethPriceUsd = currentPriceUsd > 0 ? currentPriceUsd : 3500; // Use ETH price if available, else estimate
-  const byemoney1mValueUsd = byemoneyPriceInEth * ethPriceUsd * 1000000; // Value of 1M BYEMONEY
+  // 1 BYEMONEY price in USD * 1,000,000 = 1M BYEMONEY value
+  const byemoney1mValueUsd = byemoneyPriceInEth * ethPriceUsd * 1000000;
+  
+  // Debug: log the values to console
+  if (!isEthMarket && currentPrice) {
+    console.log('BYEMONEY Debug:', {
+      rawPrice: currentPrice?.toString(),
+      priceInEth: byemoneyPriceInEth,
+      ethPriceUsd,
+      value1m: byemoney1mValueUsd,
+    });
+  }
+  
   const priceChange = startPriceUsd > 0 ? ((currentPriceUsd - startPriceUsd) / startPriceUsd) * 100 : 0;
   const hasPriceData = isEthMarket ? currentPriceUsd > 0 : byemoneyPriceInEth > 0;
 
