@@ -6,7 +6,9 @@ import { base } from 'viem/chains';
 import { createClient } from '@supabase/supabase-js';
 
 const CONTRACT_ADDRESS = '0x0625E29C2A71A834482bFc6b4cc012ACeee62DA4' as `0x${string}`;
-const TICKET_PRICE_ETH = 0.001;
+const BASE_TICKET_PRICE_ETH = 0.001;
+const LOCK_PERIOD_SECONDS = 60 * 60; // 1 hour before end = locked
+const SURGE_PERIOD_SECONDS = 12 * 60 * 60; // Last 12 hours = double price
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 
@@ -109,9 +111,11 @@ const publicClient = createPublicClient({
 
 const AVAILABLE_COINS = [
   { symbol: 'ETH', name: 'Ethereum', icon: 'https://assets.coingecko.com/coins/images/279/small/ethereum.png', active: true },
-  { symbol: 'BYEMONEY', name: 'ByeMoney', icon: '/logo.png', active: false },
+  { symbol: 'BYEMONEY', name: 'ByeMoney', icon: '/logo.png', active: true },
   { symbol: 'CLANKER', name: 'Clanker', icon: '/clanker.png', active: false },
 ];
+
+type MarketType = 'ETH' | 'BYEMONEY';
 
 interface PredictionMarketProps {
   userFid?: number;
@@ -138,6 +142,8 @@ interface PredictionMarketProps {
       direction: 'up' | 'down';
     }>;
   }) => void;
+  onMarketChange?: (market: MarketType) => void;
+  selectedMarket?: MarketType;
 }
 
 interface RecentBet {
@@ -176,7 +182,7 @@ interface HistoryItem {
   priceAtBet: number;
 }
 
-export default function PredictionMarket({ userFid, username, initialData, onDataUpdate }: PredictionMarketProps) {
+export default function PredictionMarket({ userFid, username, initialData, onDataUpdate, onMarketChange, selectedMarket = 'ETH' }: PredictionMarketProps) {
   const [walletAddress, setWalletAddress] = useState<`0x${string}` | null>(null);
   const [ethBalance, setEthBalance] = useState<string>('0');
   const [ticketCount, setTicketCount] = useState(1);
@@ -192,6 +198,12 @@ export default function PredictionMarket({ userFid, username, initialData, onDat
     }
     return { hours: 0, minutes: 0, seconds: 0 };
   });
+  
+  // Calculate ticket price based on surge period (must be early for use in callbacks)
+  const timeRemainingSecondsEarly = timeLeft.hours * 3600 + timeLeft.minutes * 60 + timeLeft.seconds;
+  const isInSurgePeriodEarly = timeRemainingSecondsEarly > 0 && timeRemainingSecondsEarly <= SURGE_PERIOD_SECONDS;
+  const TICKET_PRICE_ETH = isInSurgePeriodEarly ? BASE_TICKET_PRICE_ETH * 2 : BASE_TICKET_PRICE_ETH;
+  
   const [txState, setTxState] = useState<'idle' | 'buying' | 'claiming' | 'success' | 'error'>('idle');
   const [errorMsg, setErrorMsg] = useState('');
   const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -487,16 +499,16 @@ export default function PredictionMarket({ userFid, username, initialData, onDat
           const calculateWinnings = (tickets: number, direction: 'up' | 'down') => {
             if (status === 1) { // Resolved
               if (result === 0) { // Tie - refund
-                return tickets * TICKET_PRICE_ETH;
+                return tickets * BASE_TICKET_PRICE_ETH;
               } else if (result === 1 && direction === 'up') { // UP won
                 const poolAfterFee = totalPool * 0.95;
-                return (poolAfterFee * tickets * TICKET_PRICE_ETH) / upPool;
+                return (poolAfterFee * tickets * BASE_TICKET_PRICE_ETH) / upPool;
               } else if (result === 2 && direction === 'down') { // DOWN won
                 const poolAfterFee = totalPool * 0.95;
-                return (poolAfterFee * tickets * TICKET_PRICE_ETH) / downPool;
+                return (poolAfterFee * tickets * BASE_TICKET_PRICE_ETH) / downPool;
               }
             } else if (status === 2) { // Cancelled - refund
-              return tickets * TICKET_PRICE_ETH;
+              return tickets * BASE_TICKET_PRICE_ETH;
             }
             return 0;
           };
@@ -1036,12 +1048,17 @@ export default function PredictionMarket({ userFid, username, initialData, onDat
   const priceChange = startPriceUsd > 0 ? ((currentPriceUsd - startPriceUsd) / startPriceUsd) * 100 : 0;
   const hasPriceData = currentPriceUsd > 0;
 
-  const isLocked = hasMarket && !isResolved && !isCancelled && !isBettingOpen;
-
-  const totalUnclaimed = unclaimedMarkets.reduce((sum, m) => sum + m.estimatedWinnings, 0);
-
   // Calculate time remaining in seconds for parent
   const timeRemainingSeconds = timeLeft.hours * 3600 + timeLeft.minutes * 60 + timeLeft.seconds;
+
+  // Surge pricing already calculated early in component (TICKET_PRICE_ETH)
+  const isInSurgePeriod = timeRemainingSeconds > 0 && timeRemainingSeconds <= SURGE_PERIOD_SECONDS;
+
+  // Lock: last 1 hour OR contract says locked
+  const isLockedByTime = timeRemainingSeconds > 0 && timeRemainingSeconds <= LOCK_PERIOD_SECONDS;
+  const isLocked = hasMarket && !isResolved && !isCancelled && (isLockedByTime || !isBettingOpen);
+
+  const totalUnclaimed = unclaimedMarkets.reduce((sum, m) => sum + m.estimatedWinnings, 0);
 
   // Call onDataUpdate when relevant data changes
   useEffect(() => {
@@ -1229,13 +1246,17 @@ export default function PredictionMarket({ userFid, username, initialData, onDat
               {/* Left: Timer */}
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-1.5">
-                  {isLocked && (
+                  {isLocked ? (
                     <svg className="w-3 h-3 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
                       <path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                     </svg>
-                  )}
-                  <p className="text-[10px] text-white/40 uppercase tracking-wider">
-                    {isLocked ? 'Locked' : 'Ends In'}
+                  ) : isInSurgePeriod ? (
+                    <svg className="w-3 h-3 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                      <path d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                  ) : null}
+                  <p className={`text-[10px] uppercase tracking-wider ${isInSurgePeriod && !isLocked ? 'text-yellow-400' : 'text-white/40'}`}>
+                    {isLocked ? 'Locked' : isInSurgePeriod ? '2x Surge' : 'Ends In'}
                   </p>
                 </div>
                 <p className="text-xl font-bold">
@@ -1692,14 +1713,14 @@ export default function PredictionMarket({ userFid, username, initialData, onDat
               </svg>
             </div>
             <p className="text-white/50 text-sm mt-3">Betting Locked</p>
-            <p className="text-white/30 text-xs">Waiting for resolution</p>
+            <p className="text-white/30 text-xs">{isLockedByTime ? 'Final hour - no new bets' : 'Waiting for resolution'}</p>
           </div>
         )}
 
         {/* Footer */}
         <div className="text-center pt-2">
           <p className="text-[9px] text-black">
-            {username ? `@${username} · ` : ''}{TICKET_PRICE_ETH} ETH/ticket · 5% fee
+            {username ? `@${username} · ` : ''}{TICKET_PRICE_ETH} ETH/ticket{isInSurgePeriod ? ' (2x surge)' : ''} · 5% fee
           </p>
         </div>
       </div>
@@ -1808,10 +1829,18 @@ export default function PredictionMarket({ userFid, username, initialData, onDat
                   key={coin.symbol}
                   onClick={() => {
                     if (coin.active) {
-                      setSelectedCoinIndex(index);
-                      closeCoinSelector();
-                      playClick();
-                      triggerHaptic('medium');
+                      if (coin.symbol === 'BYEMONEY' && onMarketChange) {
+                        onMarketChange('BYEMONEY');
+                        closeCoinSelector();
+                        playClick();
+                        triggerHaptic('medium');
+                      } else if (coin.symbol === 'ETH') {
+                        setSelectedCoinIndex(index);
+                        if (onMarketChange) onMarketChange('ETH');
+                        closeCoinSelector();
+                        playClick();
+                        triggerHaptic('medium');
+                      }
                     } else {
                       triggerHaptic('error');
                     }

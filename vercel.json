@@ -3,6 +3,10 @@
     {
       "path": "/api/resolve",
       "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/resolve-byemoney",
+      "schedule": "*/5 * * * *"
     }
   ]
 }

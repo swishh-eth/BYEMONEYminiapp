@@ -7,7 +7,7 @@ import { privateKeyToAccount } from 'viem/accounts';
 const CONTRACT_ADDRESS = (process.env.PREDICTION_CONTRACT_ADDRESS || '0x0625E29C2A71A834482bFc6b4cc012ACeee62DA4') as `0x${string}`;
 const RESOLVER_PRIVATE_KEY = process.env.RESOLVER_PRIVATE_KEY as `0x${string}`;
 const BASE_RPC = process.env.BASE_RPC_URL || 'https://base-mainnet.g.alchemy.com/v2/jKHNMnfb18wYA1HfaHxo5';
-const SEED_AMOUNT = process.env.SEED_AMOUNT || '0.001'; // ETH to seed new markets
+const SEED_AMOUNT = process.env.SEED_AMOUNT || '0.0001'; // ETH to seed new markets
 
 const CONTRACT_ABI = [
   {

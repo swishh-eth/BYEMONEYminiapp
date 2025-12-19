@@ -29,19 +29,22 @@ const MARKETS = [
     symbol: 'ETH', 
     name: 'Ethereum', 
     icon: '/eth.png',
-    active: true 
+    active: true,
+    contractAddress: '0x0625E29C2A71A834482bFc6b4cc012ACeee62DA4',
   },
   { 
     symbol: 'BYEMONEY', 
     name: '$BYEMONEY', 
     icon: '/splash.png',
-    active: false 
+    active: true,
+    contractAddress: '0xc5dBe9571B10d76020556b8De77287b04fE8ef3d',
   },
   { 
     symbol: 'CLANKER', 
     name: 'Clanker', 
     icon: '/clanker.png',
-    active: false 
+    active: false,
+    contractAddress: '',
   },
 ];
 

@@ -9,9 +9,11 @@ import BottomNav from '@/components/BottomNav';
 import SwipeContainer from '@/components/SwipeContainer';
 import HomePage from '@/components/HomePage';
 import PredictionMarket from '@/components/PredictionMarket';
+import BYEMONEYPredictionMarket from '@/components/BYEMONEYPredictionMarket';
 import InfoPage from '@/components/InfoPage';
 
-const CONTRACT_ADDRESS = '0x0625E29C2A71A834482bFc6b4cc012ACeee62DA4' as const;
+const ETH_CONTRACT_ADDRESS = '0x0625E29C2A71A834482bFc6b4cc012ACeee62DA4' as const;
+const BYEMONEY_CONTRACT_ADDRESS = '0xc5dBe9571B10d76020556b8De77287b04fE8ef3d' as const;
 const TICKET_PRICE_ETH = 0.001;
 
 const supabase = createClient(
@@ -85,26 +87,29 @@ interface PredictionData {
   }>;
 }
 
+export type MarketType = 'ETH' | 'BYEMONEY';
+
 export default function App() {
   const [activeIndex, setActiveIndex] = useState(1);
+  const [selectedMarket, setSelectedMarket] = useState<MarketType>('ETH');
   const [userFid, setUserFid] = useState<number | undefined>();
   const [username, setUsername] = useState<string | undefined>();
   const [pfpUrl, setPfpUrl] = useState<string | undefined>();
   const [predictionData, setPredictionData] = useState<PredictionData | undefined>();
 
-  // Fetch basic market data for HomePage
+  // Fetch basic market data for HomePage (ETH market)
   const fetchBasicMarketData = useCallback(async () => {
     try {
       console.log('Fetching basic market data...');
       
       const [market, price] = await Promise.all([
         publicClient.readContract({
-          address: CONTRACT_ADDRESS,
+          address: ETH_CONTRACT_ADDRESS,
           abi: MARKET_ABI,
           functionName: 'getCurrentMarket',
         }),
         publicClient.readContract({
-          address: CONTRACT_ADDRESS,
+          address: ETH_CONTRACT_ADDRESS,
           abi: MARKET_ABI,
           functionName: 'getPrice',
         }),
@@ -230,14 +235,47 @@ export default function App() {
     setActiveIndex(index);
   };
 
+  const handleMarketChange = (market: MarketType) => {
+    setSelectedMarket(market);
+  };
+
   // Called by PredictionMarket with more detailed data
-  // We ALWAYS keep our own recentWins (global bets), ignore the user-specific ones from PredictionMarket
   const handlePredictionDataUpdate = (data: PredictionData) => {
     setPredictionData(prev => ({
       ...data,
-      // Always keep our globally fetched recent bets, never use the user-specific ones
       recentWins: prev?.recentWins || [],
     }));
+  };
+
+  // Render the appropriate market component
+  const renderMarketComponent = () => {
+    if (selectedMarket === 'BYEMONEY') {
+      return (
+        <BYEMONEYPredictionMarket 
+          userFid={userFid} 
+          username={username}
+          onMarketChange={handleMarketChange}
+        />
+      );
+    }
+    
+    return (
+      <PredictionMarket 
+        userFid={userFid} 
+        username={username} 
+        initialData={predictionData ? {
+          marketId: predictionData.marketId,
+          timeRemaining: predictionData.timeRemaining,
+          totalPool: predictionData.totalPool,
+          upPool: predictionData.upPool,
+          downPool: predictionData.downPool,
+          ethPrice: predictionData.ethPrice,
+        } : undefined}
+        onDataUpdate={handlePredictionDataUpdate}
+        onMarketChange={handleMarketChange}
+        selectedMarket={selectedMarket}
+      />
+    );
   };
 
   return (
@@ -250,19 +288,7 @@ export default function App() {
       />
       
       <SwipeContainer activeIndex={activeIndex} onNavigate={handleNavigate}>
-        <PredictionMarket 
-          userFid={userFid} 
-          username={username} 
-          initialData={predictionData ? {
-            marketId: predictionData.marketId,
-            timeRemaining: predictionData.timeRemaining,
-            totalPool: predictionData.totalPool,
-            upPool: predictionData.upPool,
-            downPool: predictionData.downPool,
-            ethPrice: predictionData.ethPrice,
-          } : undefined}
-          onDataUpdate={handlePredictionDataUpdate}
-        />
+        {renderMarketComponent()}
         <HomePage 
           predictionData={predictionData}
           onNavigate={handleNavigate}
