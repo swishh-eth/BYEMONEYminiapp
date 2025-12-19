@@ -865,18 +865,17 @@ export default function PredictionMarket({ userFid, username, initialData, onDat
       setSelectedDirection(null);
       setTicketCount(1);
     }
-  }, [selectedMarket]);
+  }, [selectedMarket, activeMarket]);
 
   // Refetch when activeMarket changes
   useEffect(() => {
-    // Reset state when market changes to ensure fresh data
-    setMarketData(null);
-    setCurrentPrice(null);
-    
+    // Immediate fetch on market change
     fetchMarketData();
+    fetchUserPosition();
+    
     const interval = setInterval(fetchMarketData, 30000);
     return () => clearInterval(interval);
-  }, [fetchMarketData, activeMarket]);
+  }, [activeMarket]); // Remove fetchMarketData from deps to avoid loop
 
   useEffect(() => {
     fetchUserPosition();
