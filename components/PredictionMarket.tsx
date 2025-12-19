@@ -1317,25 +1317,25 @@ export default function PredictionMarket({ userFid, username, initialData, onDat
   const currentPriceUsd = isEthMarket ? ethPriceUsd : 0;
   
   // For BYEMONEY, getPrice returns sqrtPriceX96 from Uniswap V4
-  // Convert sqrtPriceX96 to price: price = (sqrtPriceX96 / 2^96)^2
-  // For BYEMONEY (token0) / WETH (token1): this gives WETH per BYEMONEY
-  // Then multiply by 1M tokens and ETH price for USD value
+  // sqrtPriceX96 = sqrt(price) * 2^96
+  // price = (sqrtPriceX96 / 2^96)^2 = sqrtPriceX96^2 / 2^192
+  // This gives price of token1 (WETH) per token0 (BYEMONEY)
+  // So for 1M BYEMONEY in USD: price * 1e6 * ethPriceUsd
   const byemoneyRawPrice = !isEthMarket && currentPrice ? Number(currentPrice) : 0;
   const byemoneyStartPrice = !isEthMarket && marketData ? Number(marketData.startPrice) : 0;
   
-  // sqrtPriceX96^2 / 2^192 gives price in WETH per token
-  // Multiply by 1e6 (1M tokens) and ethPriceUsd for USD value of 1M tokens
+  // Calculate price properly avoiding overflow
+  // sqrtPriceX96 is ~6.7e33, so we need to be careful
+  // Divide first, then square to avoid overflow
   const sqrtToPrice = (sqrtPrice: number) => {
     if (sqrtPrice === 0) return 0;
-    // Use BigInt for precision, then convert
-    const sqrtPriceBig = BigInt(Math.floor(sqrtPrice));
-    const priceX192 = sqrtPriceBig * sqrtPriceBig;
-    // Divide by 2^192, multiply by 1e6 tokens, multiply by ETH price
-    // 2^192 = ~6.27e57, so we need to be careful with precision
-    // price_per_token_in_eth = sqrtPrice^2 / 2^192
-    // For 1M tokens in USD: (sqrtPrice^2 / 2^192) * 1e6 * ethPriceUsd
-    const pricePerTokenInEth = Number(priceX192) / (2 ** 192);
-    return pricePerTokenInEth * 1e6 * ethPriceUsd;
+    // sqrtPrice / 2^96 gives sqrt(price)
+    // Then square it to get price
+    const sqrtPriceNormalized = sqrtPrice / (2 ** 96);
+    const pricePerToken = sqrtPriceNormalized * sqrtPriceNormalized;
+    // pricePerToken is WETH per BYEMONEY
+    // For 1M tokens in USD: pricePerToken * 1e6 * ethPriceUsd
+    return pricePerToken * 1e6 * ethPriceUsd;
   };
   
   const byemoney1mValueUsd = sqrtToPrice(byemoneyRawPrice);
