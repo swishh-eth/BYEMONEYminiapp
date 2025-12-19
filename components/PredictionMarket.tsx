@@ -1449,8 +1449,8 @@ const byemoneyStartValueUsd = calculateByemoneyUsdValue(byemoneyStartPrice, ethP
   
   // Calculate price change based on market
   const priceChange = isEthMarket 
-    ? (startPriceUsd > 0 ? ((ethPriceUsd - startPriceUsd) / startPriceUsd) * 100 : 0)
-    : (byemoneyStartPrice > 0 ? ((byemoneyRawPrice - byemoneyStartPrice) / byemoneyStartPrice) * 100 : 0);
+  ? (startPriceUsd > 0 ? ((ethPriceUsd - startPriceUsd) / startPriceUsd) * 100 : 0)
+  : (byemoneyStartValueUsd > 0 ? ((byemoney1mValueUsd - byemoneyStartValueUsd) / byemoneyStartValueUsd) * 100 : 0);
   
   const hasPriceData = isEthMarket ? ethPriceUsd > 0 : byemoneyRawPrice > 0;
 
