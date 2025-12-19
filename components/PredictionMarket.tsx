@@ -166,6 +166,13 @@ const BYEMONEY_CONTRACT_ABI = [
     outputs: [{ name: '', type: 'uint256' }],
   },
   {
+    name: 'getPrice',
+    type: 'function',
+    stateMutability: 'view',
+    inputs: [],
+    outputs: [{ name: '', type: 'uint256' }],
+  },
+  {
     name: 'isBettingOpen',
     type: 'function',
     stateMutability: 'view',
@@ -753,7 +760,7 @@ export default function PredictionMarket({ userFid, username, initialData, onDat
     try {
       const contractAddress = activeMarket === 'ETH' ? ETH_CONTRACT_ADDRESS : BYEMONEY_CONTRACT_ADDRESS;
       const contractAbi = activeMarket === 'ETH' ? ETH_CONTRACT_ABI : BYEMONEY_CONTRACT_ABI;
-      const priceFunction = activeMarket === 'ETH' ? 'getPrice' : 'getPriceInEth';
+      const priceFunction = 'getPrice'; // Both contracts have getPrice - returns raw price
       
       console.log('[fetchMarketData] Fetching for market:', activeMarket, 'contract:', contractAddress);
       
