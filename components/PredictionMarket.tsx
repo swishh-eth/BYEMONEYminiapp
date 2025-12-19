@@ -246,7 +246,7 @@ const ERC20_ABI = [
 
 const publicClient = createPublicClient({
   chain: base,
-  transport: http('https://base-mainnet.g.alchemy.com/v2/jKHNMnfb18wYA1HfaHxo5'),
+  transport: http('https://base.llamarpc.com'),
   cacheTime: 0, // Disable caching to always get fresh data
 });
 
