@@ -9,9 +9,8 @@ const ETH_CONTRACT_ADDRESS = '0x0625E29C2A71A834482bFc6b4cc012ACeee62DA4' as `0x
 const BYEMONEY_CONTRACT_ADDRESS = '0xc5dBe9571B10d76020556b8De77287b04fE8ef3d' as `0x${string}`;
 const BYEMONEY_TOKEN_ADDRESS = '0xA12A532B0B7024b1D01Ae66a3b8cF77366c7dB07' as `0x${string}`;
 const BASE_TICKET_PRICE_ETH = 0.001;
-const BASE_TICKET_PRICE_BYEMONEY = 1000n * 10n**18n; // 1000 BYEMONEY per ticket
+const BASE_TICKET_PRICE_BYEMONEY = 1000000n * 10n**18n; // 1,000,000 BYEMONEY per ticket
 const LOCK_PERIOD_SECONDS = 60 * 60; // 1 hour before end = locked
-const SURGE_PERIOD_SECONDS = 12 * 60 * 60; // Last 12 hours = double price
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 
@@ -316,10 +315,8 @@ export default function PredictionMarket({ userFid, username, initialData, onDat
     return { hours: 0, minutes: 0, seconds: 0 };
   });
   
-  // Calculate ticket price based on surge period (must be early for use in callbacks)
-  const timeRemainingSecondsEarly = timeLeft.hours * 3600 + timeLeft.minutes * 60 + timeLeft.seconds;
-  const isInSurgePeriodEarly = timeRemainingSecondsEarly > 0 && timeRemainingSecondsEarly <= SURGE_PERIOD_SECONDS;
-  const TICKET_PRICE_ETH = isInSurgePeriodEarly ? BASE_TICKET_PRICE_ETH * 2 : BASE_TICKET_PRICE_ETH;
+  // Ticket price (no surge pricing)
+  const TICKET_PRICE_ETH = BASE_TICKET_PRICE_ETH;
   
   const [txState, setTxState] = useState<'idle' | 'buying' | 'claiming' | 'success' | 'error'>('idle');
   const [errorMsg, setErrorMsg] = useState('');
@@ -1224,10 +1221,10 @@ export default function PredictionMarket({ userFid, username, initialData, onDat
   // Market-specific calculations
   const isEthMarket = activeMarket === 'ETH';
   const tokenSymbol = isEthMarket ? 'ETH' : 'BYEMONEY';
-  const ticketPriceDisplay = isEthMarket ? TICKET_PRICE_ETH : 1000; // 1000 BYEMONEY per ticket
+  const ticketPriceDisplay = isEthMarket ? TICKET_PRICE_ETH : 1000000; // 1,000,000 BYEMONEY per ticket
   const totalCostEth = ticketCount * TICKET_PRICE_ETH; // For ETH market
   const totalCostByemoney = BASE_TICKET_PRICE_BYEMONEY * BigInt(ticketCount); // For BYEMONEY market
-  const totalCostDisplay = isEthMarket ? totalCostEth.toFixed(3) : (ticketCount * 1000).toLocaleString();
+  const totalCostDisplay = isEthMarket ? totalCostEth.toFixed(3) : `${ticketCount}M`;
   
   // Balance display
   const currentBalance = isEthMarket ? ethBalance : formatEther(byemoneyBalance);
@@ -1280,16 +1277,16 @@ export default function PredictionMarket({ userFid, username, initialData, onDat
   // Price display depends on market
   const startPriceUsd = isEthMarket && marketData ? Number(marketData.startPrice) / 1e8 : 0;
   const currentPriceUsd = isEthMarket && currentPrice ? Number(currentPrice) / 1e8 : 0;
-  // For BYEMONEY, price is in ETH (from getPriceInEth)
+  // For BYEMONEY, price is in ETH (from getPriceInEth), convert to USD
+  // Show what 1,000,000 BYEMONEY is worth (matches ticket price)
   const byemoneyPriceInEth = !isEthMarket && currentPrice ? Number(formatEther(currentPrice)) : 0;
+  const ethPriceUsd = currentPriceUsd > 0 ? currentPriceUsd : 3500; // Use ETH price if available, else estimate
+  const byemoney1mValueUsd = byemoneyPriceInEth * ethPriceUsd * 1000000; // Value of 1M BYEMONEY
   const priceChange = startPriceUsd > 0 ? ((currentPriceUsd - startPriceUsd) / startPriceUsd) * 100 : 0;
   const hasPriceData = isEthMarket ? currentPriceUsd > 0 : byemoneyPriceInEth > 0;
 
   // Calculate time remaining in seconds for parent
   const timeRemainingSeconds = timeLeft.hours * 3600 + timeLeft.minutes * 60 + timeLeft.seconds;
-
-  // Surge pricing already calculated early in component (TICKET_PRICE_ETH)
-  const isInSurgePeriod = timeRemainingSeconds > 0 && timeRemainingSeconds <= SURGE_PERIOD_SECONDS;
 
   // Lock: last 1 hour OR contract says locked
   const isLockedByTime = timeRemainingSeconds > 0 && timeRemainingSeconds <= LOCK_PERIOD_SECONDS;
@@ -1409,7 +1406,7 @@ export default function PredictionMarket({ userFid, username, initialData, onDat
                   alt={selectedCoin.symbol}
                   className="w-4 h-4 rounded-full"
                 />
-                <p className="text-[10px] text-white/40 uppercase tracking-wider">{selectedCoin.symbol}/{isEthMarket ? 'USD' : 'ETH'}</p>
+                <p className="text-[10px] text-white/40 uppercase tracking-wider">{isEthMarket ? `${selectedCoin.symbol}/USD` : '1M BYEMONEY'}</p>
                 <svg className="w-2.5 h-2.5 text-white/30" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}>
                   <path d="M19 9l-7 7-7-7" />
                 </svg>
@@ -1423,9 +1420,9 @@ export default function PredictionMarket({ userFid, username, initialData, onDat
                   ? (currentPriceUsd > 0 
                       ? `$${currentPriceUsd.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
                       : '$---')
-                  : (byemoneyPriceInEth > 0
-                      ? `${(byemoneyPriceInEth * 1e9).toFixed(6)} ETH`
-                      : '--- ETH')
+                  : (byemoney1mValueUsd > 0
+                      ? `$${byemoney1mValueUsd.toFixed(3)}`
+                      : '$---')
                 }
               </p>
             </div>
@@ -1492,17 +1489,13 @@ export default function PredictionMarket({ userFid, username, initialData, onDat
               {/* Left: Timer */}
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-1.5">
-                  {isLocked ? (
+                  {isLocked && (
                     <svg className="w-3 h-3 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
                       <path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                     </svg>
-                  ) : isInSurgePeriod ? (
-                    <svg className="w-3 h-3 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                      <path d="M13 10V3L4 14h7v7l9-11h-7z" />
-                    </svg>
-                  ) : null}
-                  <p className={`text-[10px] uppercase tracking-wider ${isInSurgePeriod && !isLocked ? 'text-yellow-400' : 'text-white/40'}`}>
-                    {isLocked ? 'Locked' : isInSurgePeriod ? '2x Surge' : 'Ends In'}
+                  )}
+                  <p className="text-[10px] uppercase tracking-wider text-white/40">
+                    {isLocked ? 'Locked' : 'Ends In'}
                   </p>
                 </div>
                 <p className="text-xl font-bold">
@@ -1979,8 +1972,8 @@ export default function PredictionMarket({ userFid, username, initialData, onDat
 
         {/* Footer */}
         <div className="text-center pt-2">
-          <p className="text-[9px] text-black">
-            {username ? `@${username} · ` : ''}{TICKET_PRICE_ETH} ETH/ticket{isInSurgePeriod ? ' (2x surge)' : ''} · 5% fee
+          <p className="text-[9px] text-white/30">
+            {username ? `@${username} · ` : ''}{isEthMarket ? `${TICKET_PRICE_ETH} ETH` : '1M BYEMONEY'}/ticket · 5% fee
           </p>
         </div>
       </div>
