@@ -1593,16 +1593,16 @@ const byemoneyStartValueUsd = calculateByemoneyUsdValue(byemoneyStartPrice, ethP
                   <span className="text-[8px] text-white/40">LIVE</span>
                 </div>
               </div>
-              <p className="text-3xl font-bold tracking-tight">
-                {isEthMarket 
-                  ? (currentPriceUsd > 0 
-                      ? `$${currentPriceUsd.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-                      : '$---')
-                  : (byemoney1mValueUsd > 0
-                      ? `$${byemoney1mValueUsd.toFixed(3)}`
-                      : '$---')
-                }
-              </p>
+<p className="text-3xl font-bold tracking-tight">
+  {isEthMarket 
+    ? (currentPriceUsd > 0 
+        ? `$${currentPriceUsd.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+        : '$---')
+    : (byemoney1mValueUsd > 0 && marketDataSource === 'BYEMONEY'
+        ? `$${byemoney1mValueUsd.toFixed(3)}`
+        : '$---')
+  }
+</p>
             </div>
             {hasMarket && !isResolved && (isEthMarket ? startPriceUsd > 0 : byemoneyStartPrice > 0) && (
               <div className="text-right">
