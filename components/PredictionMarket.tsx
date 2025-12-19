@@ -1549,8 +1549,17 @@ export default function PredictionMarket({ userFid, username, initialData, onDat
                 </div>
               </div>
               <div className="text-right">
-                <p className="text-lg font-bold text-white">{totalUnclaimed.toFixed(4)}</p>
-                <p className="text-[10px] text-white/40">ETH</p>
+                {isEthMarket ? (
+                  <>
+                    <p className="text-lg font-bold text-white">{totalUnclaimed.toFixed(4)}</p>
+                    <p className="text-[10px] text-white/40">ETH</p>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-lg font-bold text-white">{totalUnclaimed.toFixed(1)}M</p>
+                    <p className="text-[10px] text-white/40">BYEMONEY</p>
+                  </>
+                )}
               </div>
             </div>
           </button>
@@ -2403,7 +2412,12 @@ export default function PredictionMarket({ userFid, username, initialData, onDat
                 <div className="bg-white/10 border border-white/20 rounded-xl p-3 mb-2">
                   <div className="flex items-center justify-between mb-2">
                     <p className="text-[10px] text-white/60 uppercase tracking-wider">Unclaimed</p>
-                    <p className="text-sm font-bold text-white">{totalUnclaimed.toFixed(4)} ETH</p>
+                    <p className="text-sm font-bold text-white">
+                      {isEthMarket 
+                        ? `${totalUnclaimed.toFixed(4)} ETH`
+                        : `${totalUnclaimed.toFixed(1)}M BYEMONEY`
+                      }
+                    </p>
                   </div>
                   <div className="space-y-1.5">
                     {unclaimedMarkets.map((m) => (
