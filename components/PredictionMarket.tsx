@@ -1287,16 +1287,25 @@ export default function PredictionMarket({ userFid, username, initialData, onDat
     : 0;
 
   // Price display depends on market
-  const startPriceUsd = isEthMarket && marketData ? Number(marketData.startPrice) / 1e8 : 0;
   // ETH price from Chainlink (always available now)
   const ethPriceUsd = ethPriceFromChainlink ? Number(ethPriceFromChainlink) / 1e8 : 3500;
+  
+  // For ETH market
+  const startPriceUsd = isEthMarket && marketData ? Number(marketData.startPrice) / 1e8 : 0;
   const currentPriceUsd = isEthMarket ? ethPriceUsd : 0;
+  
   // For BYEMONEY, getPriceInEth returns price in a custom format
   // Raw value needs to be divided by 1e12 for 1M tokens
   const byemoneyRawPrice = !isEthMarket && currentPrice ? Number(currentPrice) : 0;
+  const byemoneyStartPrice = !isEthMarket && marketData ? Number(marketData.startPrice) : 0;
   const byemoney1mValueUsd = (byemoneyRawPrice / 1e12) * ethPriceUsd;
+  const byemoneyStartValueUsd = (byemoneyStartPrice / 1e12) * ethPriceUsd;
   
-  const priceChange = startPriceUsd > 0 ? ((ethPriceUsd - startPriceUsd) / startPriceUsd) * 100 : 0;
+  // Calculate price change based on market
+  const priceChange = isEthMarket 
+    ? (startPriceUsd > 0 ? ((ethPriceUsd - startPriceUsd) / startPriceUsd) * 100 : 0)
+    : (byemoneyStartPrice > 0 ? ((byemoneyRawPrice - byemoneyStartPrice) / byemoneyStartPrice) * 100 : 0);
+  
   const hasPriceData = isEthMarket ? ethPriceUsd > 0 : byemoneyRawPrice > 0;
 
   // Calculate time remaining in seconds for parent
@@ -1440,7 +1449,7 @@ export default function PredictionMarket({ userFid, username, initialData, onDat
                 }
               </p>
             </div>
-            {hasMarket && !isResolved && (isEthMarket ? startPriceUsd > 0 : true) && (
+            {hasMarket && !isResolved && (isEthMarket ? startPriceUsd > 0 : byemoneyStartPrice > 0) && (
               <div className="text-right">
                 <p className="text-[10px] text-white/40 mb-1">Since Start</p>
                 <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg ${
@@ -1450,17 +1459,20 @@ export default function PredictionMarket({ userFid, username, initialData, onDat
                     <path d="M5 15l7-7 7 7" />
                   </svg>
                   <span className={`text-lg font-bold ${priceChange >= 0 ? 'text-white' : 'text-red-400'}`}>
-                    {isEthMarket ? `${Math.abs(priceChange).toFixed(2)}%` : '---'}
+                    {`${Math.abs(priceChange).toFixed(2)}%`}
                   </span>
                 </div>
               </div>
             )}
           </div>
-          {hasMarket && isEthMarket && startPriceUsd > 0 && (
+          {hasMarket && (isEthMarket ? startPriceUsd > 0 : byemoneyStartPrice > 0) && (
             <div className="mt-3 pt-3 border-t border-white/5 flex items-center justify-between text-xs text-white/40">
-              <span>Start: ${startPriceUsd.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+              <span>Start: {isEthMarket 
+                ? `$${startPriceUsd.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                : `$${byemoneyStartValueUsd.toFixed(3)}`
+              }</span>
               <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-white/5 text-white/60">
-                <span className="text-[10px] font-medium">Chainlink</span>
+                <span className="text-[10px] font-medium">{isEthMarket ? 'Chainlink' : 'Uniswap V4'}</span>
               </span>
             </div>
           )}
@@ -2021,6 +2033,36 @@ export default function PredictionMarket({ userFid, username, initialData, onDat
             </div>
             
             <div className="overflow-y-auto max-h-[calc(80vh-120px)] space-y-4 text-sm text-white/70 pb-2 scrollbar-hide">
+              {/* Round Info */}
+              {hasMarket && (
+                <div className="p-3 bg-white/5 rounded-xl mb-2">
+                  <div className="flex justify-between text-xs mb-2">
+                    <span className="text-white/50">Round #{Number(marketData?.id || 0)}</span>
+                    <span className="text-white/50">{isEthMarket ? 'ETH/USD' : 'BYEMONEY'}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <div>
+                      <p className="text-white/40 text-[10px]">Start Price</p>
+                      <p className="text-white font-medium">
+                        {isEthMarket 
+                          ? `$${startPriceUsd.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                          : `$${byemoneyStartValueUsd.toFixed(3)}`
+                        }
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-white/40 text-[10px]">Current Price</p>
+                      <p className="text-white font-medium">
+                        {isEthMarket 
+                          ? `$${ethPriceUsd.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                          : `$${byemoney1mValueUsd.toFixed(3)}`
+                        }
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
               <div className="flex gap-3">
                 <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
                   <span className="text-xs font-bold">1</span>
@@ -2032,14 +2074,14 @@ export default function PredictionMarket({ userFid, username, initialData, onDat
                 <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
                   <span className="text-xs font-bold">2</span>
                 </div>
-                <p><span className="text-white font-medium">Bet</span> - Buy tickets at 0.001 ETH each. More tickets = bigger potential win</p>
+                <p><span className="text-white font-medium">Bet</span> - Buy tickets at {isEthMarket ? '0.001 ETH' : '1M BYEMONEY'} each. More tickets = bigger potential win</p>
               </div>
               
               <div className="flex gap-3">
                 <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
                   <span className="text-xs font-bold">3</span>
                 </div>
-                <p><span className="text-white font-medium">Wait</span> - Each round lasts 24 hours. Price is checked via Chainlink oracle</p>
+                <p><span className="text-white font-medium">Wait</span> - Each round lasts 24 hours. Price is checked via {isEthMarket ? 'Chainlink' : 'Uniswap V4'} oracle</p>
               </div>
               
               <div className="flex gap-3">
