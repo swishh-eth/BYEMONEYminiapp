@@ -1316,12 +1316,30 @@ export default function PredictionMarket({ userFid, username, initialData, onDat
   const startPriceUsd = isEthMarket && marketData ? Number(marketData.startPrice) / 1e8 : 0;
   const currentPriceUsd = isEthMarket ? ethPriceUsd : 0;
   
-  // For BYEMONEY, getPriceInEth returns price in a custom format
-  // Raw value needs to be divided by 2e15 for 1M tokens value
+  // For BYEMONEY, getPrice returns sqrtPriceX96 from Uniswap V4
+  // Convert sqrtPriceX96 to price: price = (sqrtPriceX96 / 2^96)^2
+  // For BYEMONEY (token0) / WETH (token1): this gives WETH per BYEMONEY
+  // Then multiply by 1M tokens and ETH price for USD value
   const byemoneyRawPrice = !isEthMarket && currentPrice ? Number(currentPrice) : 0;
   const byemoneyStartPrice = !isEthMarket && marketData ? Number(marketData.startPrice) : 0;
-  const byemoney1mValueUsd = (byemoneyRawPrice / 2e15) * ethPriceUsd;
-  const byemoneyStartValueUsd = (byemoneyStartPrice / 2e15) * ethPriceUsd;
+  
+  // sqrtPriceX96^2 / 2^192 gives price in WETH per token
+  // Multiply by 1e6 (1M tokens) and ethPriceUsd for USD value of 1M tokens
+  const sqrtToPrice = (sqrtPrice: number) => {
+    if (sqrtPrice === 0) return 0;
+    // Use BigInt for precision, then convert
+    const sqrtPriceBig = BigInt(Math.floor(sqrtPrice));
+    const priceX192 = sqrtPriceBig * sqrtPriceBig;
+    // Divide by 2^192, multiply by 1e6 tokens, multiply by ETH price
+    // 2^192 = ~6.27e57, so we need to be careful with precision
+    // price_per_token_in_eth = sqrtPrice^2 / 2^192
+    // For 1M tokens in USD: (sqrtPrice^2 / 2^192) * 1e6 * ethPriceUsd
+    const pricePerTokenInEth = Number(priceX192) / (2 ** 192);
+    return pricePerTokenInEth * 1e6 * ethPriceUsd;
+  };
+  
+  const byemoney1mValueUsd = sqrtToPrice(byemoneyRawPrice);
+  const byemoneyStartValueUsd = sqrtToPrice(byemoneyStartPrice);
   
   // Calculate price change based on market
   const priceChange = isEthMarket 
@@ -1627,10 +1645,23 @@ export default function PredictionMarket({ userFid, username, initialData, onDat
                     </>
                   )
                 ) : (
-                  <>
-                    <span className="text-white font-semibold">{totalPool >= 1000 ? `${(totalPool / 1000).toFixed(1)}K` : totalPool.toFixed(0)}</span>
-                    <span className="text-white/40 ml-1">BYEMONEY</span>
-                  </>
+                  showUsdValues ? (
+                    <>
+                      <span className="text-white font-semibold">${((totalPool / 1e6) * byemoney1mValueUsd).toFixed(2)}</span>
+                      <span className="text-white/40 ml-1">USD</span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="text-white font-semibold">
+                        {totalPool >= 1e6 
+                          ? `${(totalPool / 1e6).toFixed(totalPool >= 10e6 ? 0 : 1)}M` 
+                          : totalPool >= 1000 
+                            ? `${(totalPool / 1000).toFixed(0)}K` 
+                            : totalPool.toFixed(0)}
+                      </span>
+                      <span className="text-white/40 ml-1">BYEMONEY</span>
+                    </>
+                  )
                 )}
               </p>
             </div>
@@ -1691,14 +1722,26 @@ export default function PredictionMarket({ userFid, username, initialData, onDat
                       </div>
                       <div className="text-right">
                         <span className="text-xs text-white/40">to win </span>
-                        {showUsdValues ? (
-                          <span className="text-xs font-bold text-white">
-                            ${(((totalPool * 0.95 / upPool) * userUpTickets * TICKET_PRICE_ETH) * (currentPriceUsd > 0 ? currentPriceUsd : 2900)).toFixed(2)}
-                          </span>
+                        {isEthMarket ? (
+                          showUsdValues ? (
+                            <span className="text-xs font-bold text-white">
+                              ${(((totalPool * 0.95 / upPool) * userUpTickets * TICKET_PRICE_ETH) * (currentPriceUsd > 0 ? currentPriceUsd : 2900)).toFixed(2)}
+                            </span>
+                          ) : (
+                            <span className="text-xs font-bold text-white">
+                              {((totalPool * 0.95 / upPool) * userUpTickets * TICKET_PRICE_ETH).toFixed(4)} ETH
+                            </span>
+                          )
                         ) : (
-                          <span className="text-xs font-bold text-white">
-                            {((totalPool * 0.95 / upPool) * userUpTickets * TICKET_PRICE_ETH).toFixed(4)} ETH
-                          </span>
+                          showUsdValues ? (
+                            <span className="text-xs font-bold text-white">
+                              ${(((totalPool * 0.95 / upPool) * userUpTickets * 1e6 / 1e6) * byemoney1mValueUsd).toFixed(2)}
+                            </span>
+                          ) : (
+                            <span className="text-xs font-bold text-white">
+                              {((totalPool * 0.95 / upPool) * userUpTickets).toFixed(1)}M BYEMONEY
+                            </span>
+                          )
                         )}
                       </div>
                     </div>
@@ -1713,14 +1756,26 @@ export default function PredictionMarket({ userFid, username, initialData, onDat
                       </div>
                       <div className="text-right">
                         <span className="text-xs text-white/40">to win </span>
-                        {showUsdValues ? (
-                          <span className="text-xs font-bold text-red-400">
-                            ${(((totalPool * 0.95 / downPool) * userDownTickets * TICKET_PRICE_ETH) * (currentPriceUsd > 0 ? currentPriceUsd : 2900)).toFixed(2)}
-                          </span>
+                        {isEthMarket ? (
+                          showUsdValues ? (
+                            <span className="text-xs font-bold text-red-400">
+                              ${(((totalPool * 0.95 / downPool) * userDownTickets * TICKET_PRICE_ETH) * (currentPriceUsd > 0 ? currentPriceUsd : 2900)).toFixed(2)}
+                            </span>
+                          ) : (
+                            <span className="text-xs font-bold text-red-400">
+                              {((totalPool * 0.95 / downPool) * userDownTickets * TICKET_PRICE_ETH).toFixed(4)} ETH
+                            </span>
+                          )
                         ) : (
-                          <span className="text-xs font-bold text-red-400">
-                            {((totalPool * 0.95 / downPool) * userDownTickets * TICKET_PRICE_ETH).toFixed(4)} ETH
-                          </span>
+                          showUsdValues ? (
+                            <span className="text-xs font-bold text-red-400">
+                              ${(((totalPool * 0.95 / downPool) * userDownTickets * 1e6 / 1e6) * byemoney1mValueUsd).toFixed(2)}
+                            </span>
+                          ) : (
+                            <span className="text-xs font-bold text-red-400">
+                              {((totalPool * 0.95 / downPool) * userDownTickets).toFixed(1)}M BYEMONEY
+                            </span>
+                          )
                         )}
                       </div>
                     </div>
