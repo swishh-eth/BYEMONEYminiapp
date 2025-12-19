@@ -228,6 +228,7 @@ const ERC20_ABI = [
 const publicClient = createPublicClient({
   chain: base,
   transport: http('https://base-mainnet.g.alchemy.com/v2/jKHNMnfb18wYA1HfaHxo5'),
+  cacheTime: 0, // Disable caching to always get fresh data
 });
 
 const AVAILABLE_COINS = [
@@ -792,7 +793,15 @@ export default function PredictionMarket({ userFid, username, initialData, onDat
         } as any) as Promise<bigint>,
       ]);
 
-      console.log('[fetchMarketData] Got market data:', market, 'for', activeMarket);
+      console.log('[fetchMarketData] Got market data:', {
+        id: (market as any)[0]?.toString(),
+        startPrice: (market as any)[1]?.toString(),
+        endTime: (market as any)[4]?.toString(),
+        upPool: (market as any)[5]?.toString(),
+        downPool: (market as any)[6]?.toString(),
+        status: (market as any)[7],
+        result: (market as any)[8],
+      }, 'for', activeMarket);
 
       setMarketData({
         id: (market as any)[0],
