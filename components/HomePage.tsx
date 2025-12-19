@@ -164,7 +164,7 @@ export default function HomePage({ predictionData, onNavigate }: HomePageProps) 
         
         // Calculate 1M BYEMONEY value in USD using Chainlink ETH price
         const ethPriceUsd = Number(ethPrice) / 1e8;
-        const priceUsd = (Number(priceInEth) / 1e12) * ethPriceUsd;
+        const priceUsd = (Number(priceInEth) / 2e15) * ethPriceUsd;
 
         setByemoneyData({
           marketId: Number((market as any)[0]),

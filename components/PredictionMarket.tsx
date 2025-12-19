@@ -1295,11 +1295,11 @@ export default function PredictionMarket({ userFid, username, initialData, onDat
   const currentPriceUsd = isEthMarket ? ethPriceUsd : 0;
   
   // For BYEMONEY, getPriceInEth returns price in a custom format
-  // Raw value needs to be divided by 1e12 for 1M tokens
+  // Raw value needs to be divided by 2e15 for 1M tokens value
   const byemoneyRawPrice = !isEthMarket && currentPrice ? Number(currentPrice) : 0;
   const byemoneyStartPrice = !isEthMarket && marketData ? Number(marketData.startPrice) : 0;
-  const byemoney1mValueUsd = (byemoneyRawPrice / 1e12) * ethPriceUsd;
-  const byemoneyStartValueUsd = (byemoneyStartPrice / 1e12) * ethPriceUsd;
+  const byemoney1mValueUsd = (byemoneyRawPrice / 2e15) * ethPriceUsd;
+  const byemoneyStartValueUsd = (byemoneyStartPrice / 2e15) * ethPriceUsd;
   
   // Calculate price change based on market
   const priceChange = isEthMarket 
