@@ -18,6 +18,17 @@ const supabase = SUPABASE_URL && SUPABASE_ANON_KEY
   ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
   : null;
 
+const Q96 = 2 ** 96;
+const BYEMONEY_PRICE_CALIBRATION = 0.74;
+
+const calculateByemoneyUsdValue = (sqrtPriceX96: number, ethPriceUsd: number): number => {
+  if (sqrtPriceX96 <= 0 || ethPriceUsd <= 0) return 0;
+  const sqrtPrice = sqrtPriceX96 / Q96;
+  const byemoneyPerWeth = sqrtPrice * sqrtPrice;
+  const wethPer1mByemoney = 1_000_000 / byemoneyPerWeth;
+  return wethPer1mByemoney * ethPriceUsd * BYEMONEY_PRICE_CALIBRATION;
+};
+
 // ETH Market ABI (Chainlink price)
 const ETH_CONTRACT_ABI = [
   {
@@ -1430,17 +1441,11 @@ export default function PredictionMarket({ userFid, username, initialData, onDat
   const startPriceUsd = isEthMarket && marketData ? Number(marketData.startPrice) / 1e8 : 0;
   const currentPriceUsd = isEthMarket ? ethPriceUsd : 0;
   
-  // For BYEMONEY, getPrice returns sqrtPriceX96 from Uniswap V4
-  // Empirically calibrated: raw sqrtPriceX96 ~6.7e33 should give ~$0.50 for 1M tokens
-  // With ETH at $2960: 1M BYEMONEY = 0.000169 ETH
-  // Divisor: 6.7e33 / 0.000169 = ~4e37
-  const byemoneyRawPrice = !isEthMarket && currentPrice ? Number(currentPrice) : 0;
-  const byemoneyStartPrice = !isEthMarket && marketData ? Number(marketData.startPrice) : 0;
-  
-  // Calibrated conversion: divide by 4e37, multiply by ETH price for 1M tokens USD value
-  const BYEMONEY_PRICE_DIVISOR = 4e37;
-  const byemoney1mValueUsd = byemoneyRawPrice > 0 ? (byemoneyRawPrice / BYEMONEY_PRICE_DIVISOR) * ethPriceUsd : 0;
-  const byemoneyStartValueUsd = byemoneyStartPrice > 0 ? (byemoneyStartPrice / BYEMONEY_PRICE_DIVISOR) * ethPriceUsd : 0;
+const byemoneyRawPrice = !isEthMarket && currentPrice ? Number(currentPrice) : 0;
+const byemoneyStartPrice = !isEthMarket && marketData ? Number(marketData.startPrice) : 0;
+
+const byemoney1mValueUsd = calculateByemoneyUsdValue(byemoneyRawPrice, ethPriceUsd);
+const byemoneyStartValueUsd = calculateByemoneyUsdValue(byemoneyStartPrice, ethPriceUsd);
   
   // Calculate price change based on market
   const priceChange = isEthMarket 
