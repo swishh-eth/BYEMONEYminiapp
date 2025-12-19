@@ -247,6 +247,9 @@ const ERC20_ABI = [
 const publicClient = createPublicClient({
   chain: base,
   transport: http('https://base-mainnet.g.alchemy.com/v2/jKHNMnfb18wYA1HfaHxo5'),
+  batch: {
+    multicall: false,
+  },
 });
 
 const AVAILABLE_COINS = [
@@ -860,6 +863,7 @@ export default function PredictionMarket({ userFid, username, initialData, onDat
       const priceFunction = 'getPrice'; // Both contracts have getPrice - returns raw price
       
       console.log('[fetchMarketData] Fetching for market:', activeMarket, 'contract:', contractAddress);
+      console.log('[fetchMarketData] BYEMONEY_CONTRACT_ADDRESS constant:', BYEMONEY_CONTRACT_ADDRESS);
       
       const [market, price, betting, ethPrice] = await Promise.all([
         publicClient.readContract({
