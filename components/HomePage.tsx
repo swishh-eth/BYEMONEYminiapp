@@ -46,7 +46,7 @@ const MARKET_ABI = [
 
 const publicClient = createPublicClient({
   chain: base,
-  transport: http('https://base.llamarpc.com'),
+  transport: http('https://base-mainnet.g.alchemy.com/v2/jKHNMnfb18wYA1HfaHxo5'),
 });
 
 // Types for props from parent
