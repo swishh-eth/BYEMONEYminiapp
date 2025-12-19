@@ -192,6 +192,25 @@ const BYEMONEY_CONTRACT_ABI = [
       { name: 'paused', type: 'bool' },
     ],
   },
+  {
+    name: 'getMarket',
+    type: 'function',
+    stateMutability: 'view',
+    inputs: [{ name: 'marketId', type: 'uint256' }],
+    outputs: [
+      { name: 'id', type: 'uint256' },
+      { name: 'startPrice', type: 'uint256' },
+      { name: 'endPrice', type: 'uint256' },
+      { name: 'startTime', type: 'uint256' },
+      { name: 'endTime', type: 'uint256' },
+      { name: 'bettingEndsAt', type: 'uint256' },
+      { name: 'upPool', type: 'uint256' },
+      { name: 'downPool', type: 'uint256' },
+      { name: 'status', type: 'uint8' },
+      { name: 'result', type: 'uint8' },
+      { name: 'totalTickets', type: 'uint256' },
+    ],
+  },
 ] as const;
 
 // ERC20 ABI for BYEMONEY token approval
@@ -566,6 +585,78 @@ export default function PredictionMarket({ userFid, username, initialData, onDat
     if (!walletAddress || !supabase) return;
     
     try {
+      // For BYEMONEY market, check previous rounds directly on contract
+      if (activeMarket === 'BYEMONEY' && marketData && marketData.id > 1n) {
+        const unclaimed: UnclaimedMarket[] = [];
+        
+        // Check previous rounds (up to 5 back)
+        const currentId = Number(marketData.id);
+        for (let i = currentId - 1; i >= Math.max(1, currentId - 5); i--) {
+          try {
+            const [position, market] = await Promise.all([
+              publicClient.readContract({
+                address: BYEMONEY_CONTRACT_ADDRESS,
+                abi: BYEMONEY_CONTRACT_ABI,
+                functionName: 'getPosition',
+                args: [BigInt(i), walletAddress],
+              }),
+              publicClient.readContract({
+                address: BYEMONEY_CONTRACT_ADDRESS,
+                abi: BYEMONEY_CONTRACT_ABI,
+                functionName: 'getMarket',
+                args: [BigInt(i)],
+              }) as Promise<any>,
+            ]);
+            
+            const upTickets = Number(position[0]);
+            const downTickets = Number(position[1]);
+            const claimed = position[2] as boolean;
+            const status = Number(market[7]);
+            const result = Number(market[8]);
+            const upPool = Number(formatEther(market[5] as bigint));
+            const downPool = Number(formatEther(market[6] as bigint));
+            const totalPool = upPool + downPool;
+            
+            console.log('[BYEMONEY Unclaimed Check] Market', i, { upTickets, downTickets, claimed, status, result });
+            
+            if (!claimed && (upTickets > 0 || downTickets > 0) && status !== 0) {
+              // Calculate winnings
+              let winnings = 0;
+              if (status === 1) { // Resolved
+                if (result === 0) { // Tie
+                  winnings = (upTickets + downTickets); // In M BYEMONEY
+                } else if (result === 1 && upTickets > 0) { // UP won
+                  winnings = (totalPool * 0.95 / upPool) * upTickets;
+                } else if (result === 2 && downTickets > 0) { // DOWN won
+                  winnings = (totalPool * 0.95 / downPool) * downTickets;
+                }
+              } else if (status === 2) { // Cancelled
+                winnings = (upTickets + downTickets);
+              }
+              
+              if (winnings > 0) {
+                unclaimed.push({
+                  marketId: i,
+                  upTickets,
+                  downTickets,
+                  result,
+                  status,
+                  estimatedWinnings: winnings,
+                  upPool,
+                  downPool,
+                });
+              }
+            }
+          } catch (e) {
+            console.log('[BYEMONEY] Error checking market', i, e);
+          }
+        }
+        
+        setUnclaimedMarkets(unclaimed);
+        return;
+      }
+      
+      // ETH market - use Supabase history
       // Get user's bet history from Supabase - limit to last 10 markets
       const { data: bets } = await supabase
         .from('prediction_bets')
@@ -702,7 +793,7 @@ export default function PredictionMarket({ userFid, username, initialData, onDat
     } catch (error) {
       console.error('Failed to fetch unclaimed:', error);
     }
-  }, [walletAddress]);
+  }, [walletAddress, activeMarket, marketData?.id]);
 
   useEffect(() => {
     fetchUnclaimedMarkets();
