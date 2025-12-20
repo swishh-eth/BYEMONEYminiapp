@@ -21,7 +21,7 @@ import { useMarketData, useWallet, useUserPosition, useBetting, useUnclaimedMark
 import { calculateByemoneyUsdValue, calculatePoolPercentages } from './utils';
 
 // Components
-import { PriceCard, PoolCard, BettingControls, TimerCard, UnclaimedBanner } from './components';
+import { PriceCard, PoolCard, PositionCard, BettingControls, TimerCard, UnclaimedBanner } from './components';
 import { CoinSelectorModal, InfoModal, HistoryModal, ConfirmModal } from './components/modals';
 
 // Styles
@@ -345,16 +345,29 @@ export default function PredictionMarket({
               activeMarket={activeMarket}
               upPool={upPool}
               downPool={downPool}
+              ethPriceUsd={ethPriceUsd}
+              byemoney1mValueUsd={byemoney1mValueUsd}
+              showUsdValues={showUsdValues}
+              selectedDirection={selectedDirection}
+              ticketCount={ticketCount}
+              onToggleUsd={() => { setShowUsdValues(!showUsdValues); playClick(); triggerHaptic('light'); }}
+              className={animClass}
+            />
+          )}
+
+          {/* Position Card */}
+          {hasMarket && (
+            <PositionCard
+              activeMarket={activeMarket}
               userPosition={userPosition}
+              upPool={upPool}
+              downPool={downPool}
               ethPriceUsd={ethPriceUsd}
               byemoney1mValueUsd={byemoney1mValueUsd}
               showUsdValues={showUsdValues}
               canClaim={canClaim}
               canRefund={canRefund}
               txState={txState}
-              selectedDirection={selectedDirection}
-              ticketCount={ticketCount}
-              onToggleUsd={() => { setShowUsdValues(!showUsdValues); playClick(); triggerHaptic('light'); }}
               onClaim={() => handleClaim()}
               className={animClass}
             />
