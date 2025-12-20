@@ -47,7 +47,7 @@ export function CoinSelectorModal({ isOpen, activeMarket, onClose, onSelect }: C
           <p className="text-sm text-white/40">Choose a coin to predict</p>
         </div>
 
-        <div className="flex gap-3 overflow-x-auto pb-4 px-2 snap-x snap-mandatory scrollbar-hide justify-center">
+        <div className="flex gap-4 px-4 justify-center">
           {AVAILABLE_COINS.map((coin, index) => (
             <button
               key={coin.symbol}
@@ -58,29 +58,20 @@ export function CoinSelectorModal({ isOpen, activeMarket, onClose, onSelect }: C
                 }
               }}
               style={{ animationDelay: `${index * 50}ms` }}
-              className={`flex-shrink-0 snap-center w-24 rounded-xl p-3 transition-all animate-pop-in ${
-                coin.active
-                  ? coin.symbol === activeMarket
-                    ? 'bg-white text-black'
-                    : 'bg-white/10 border border-white/20 hover:bg-white/20'
-                  : 'bg-white/5 border border-white/10 opacity-50'
+              className={`flex-1 max-w-[160px] rounded-2xl p-5 transition-all animate-pop-in ${
+                coin.symbol === activeMarket
+                  ? 'bg-white text-black'
+                  : 'bg-white/10 border border-white/20 hover:bg-white/20'
               }`}
             >
-              <div className="flex flex-col items-center gap-2">
-                <div className={`relative w-10 h-10 rounded-full overflow-hidden flex items-center justify-center ${coin.symbol === activeMarket ? 'bg-black/10' : 'bg-white/10'} ${!coin.active && 'grayscale'}`}>
+              <div className="flex flex-col items-center gap-3">
+                <div className={`relative w-16 h-16 rounded-full overflow-hidden flex items-center justify-center ${coin.symbol === activeMarket ? 'bg-black/10' : 'bg-white/10'}`}>
                   <img src={coin.icon} alt={coin.symbol} className="w-full h-full object-cover scale-125" />
-                  {!coin.active && (
-                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                      <svg className="w-4 h-4 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                        <path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                      </svg>
-                    </div>
-                  )}
                 </div>
                 <div className="text-center">
-                  <p className={`font-bold text-xs ${coin.active && coin.symbol === activeMarket ? 'text-black' : 'text-white'}`}>{coin.symbol}</p>
-                  <p className={`text-[9px] ${coin.active ? (coin.symbol === activeMarket ? 'text-black/60' : 'text-white/40') : 'text-white/30'}`}>
-                    {coin.active ? coin.name : 'Coming Soon'}
+                  <p className={`font-bold text-base ${coin.symbol === activeMarket ? 'text-black' : 'text-white'}`}>{coin.symbol}</p>
+                  <p className={`text-xs ${coin.symbol === activeMarket ? 'text-black/60' : 'text-white/40'}`}>
+                    {coin.name}
                   </p>
                 </div>
               </div>

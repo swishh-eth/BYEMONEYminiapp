@@ -16,8 +16,7 @@ export const BYEMONEY_PRICE_CALIBRATION = 1;
 // Available Markets
 export const AVAILABLE_COINS = [
   { symbol: 'ETH', name: 'Ethereum', icon: '/eth.png', active: true },
-  { symbol: 'BYEMONEY', name: 'ByeMoney', icon: '/logo.png', active: true },
-  { symbol: 'CLANKER', name: 'Clanker', icon: '/clanker.png', active: false },
+  { symbol: 'BYEMONEY', name: 'ByeMoney', icon: '/byemoney.png', active: true },
 ] as const;
 
 // ETH Market ABI (Chainlink price)

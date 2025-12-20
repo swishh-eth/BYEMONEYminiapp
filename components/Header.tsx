@@ -94,11 +94,12 @@ export default function Header({
         >
           {/* Left side - Logo or Claim Button */}
           <div className="relative h-10 min-w-[100px]">
-            {/* Logo Tile - fades out on non-home pages */}
+            {/* Logo Tile - fades out on non-home pages, fades in with delay */}
             <div 
-              className={`absolute top-0 left-0 w-10 h-10 rounded-xl flex items-center justify-center overflow-hidden transition-all duration-500 ease-in-out ${
+              className={`absolute top-0 left-0 w-10 h-10 rounded-xl flex items-center justify-center overflow-hidden transition-all duration-500 ${
                 isHomePage ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'
               }`}
+              style={{ transitionDelay: isHomePage ? '300ms' : '0ms' }}
             >
               <img 
                 src="/splash.png" 
@@ -182,15 +183,25 @@ export default function Header({
         </div>
       </header>
 
-      {/* No Winnings Popup */}
+      {/* No Winnings Popup with Backdrop */}
       <div 
-        className={`fixed top-20 left-1/2 -translate-x-1/2 z-50 transition-all duration-300 ${
+        className={`fixed inset-0 z-50 flex items-start justify-center pt-20 transition-all duration-300 ${
           showNoWinningsPopup 
-            ? 'opacity-100 translate-y-0' 
-            : 'opacity-0 -translate-y-2 pointer-events-none'
+            ? 'opacity-100 pointer-events-auto' 
+            : 'opacity-0 pointer-events-none'
         }`}
       >
-        <div className="bg-black/90 border border-white/10 rounded-xl px-4 py-3 shadow-xl backdrop-blur-sm">
+        {/* Backdrop */}
+        <div className={`absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-300 ${
+          showNoWinningsPopup ? 'opacity-100' : 'opacity-0'
+        }`} />
+        
+        {/* Popup */}
+        <div className={`relative bg-black/90 border border-white/10 rounded-xl px-5 py-4 shadow-xl transition-all duration-300 ${
+          showNoWinningsPopup 
+            ? 'opacity-100 translate-y-0 scale-100' 
+            : 'opacity-0 -translate-y-4 scale-95'
+        }`}>
           <p className="text-sm text-white/70 text-center">
             No round winnings to claim yet
           </p>
