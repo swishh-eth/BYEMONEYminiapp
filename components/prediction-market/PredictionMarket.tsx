@@ -177,15 +177,17 @@ export default function PredictionMarket({
     if (selectedDirection === direction) {
       setTicketSectionClosing(true);
       
-      // Smooth scroll to top
-      if (mainContainerRef.current) {
-        mainContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
-      }
-      
+      // First collapse the content, then scroll
       setTimeout(() => {
         setSelectedDirection(null);
         setTicketSectionClosing(false);
-      }, 250);
+        // Scroll after content is removed for smoother animation
+        setTimeout(() => {
+          if (mainContainerRef.current) {
+            mainContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+          }
+        }, 50);
+      }, 200);
     } else if (selectedDirection && selectedDirection !== direction) {
       setSelectedDirection(direction);
     } else {
