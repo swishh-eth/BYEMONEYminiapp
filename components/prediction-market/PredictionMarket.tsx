@@ -177,7 +177,7 @@ export default function PredictionMarket({
     if (selectedDirection === direction) {
       setTicketSectionClosing(true);
       
-      // Scroll to top immediately
+      // Smooth scroll to top
       if (mainContainerRef.current) {
         mainContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
       }
@@ -186,20 +186,6 @@ export default function PredictionMarket({
         setSelectedDirection(null);
         setTicketSectionClosing(false);
       }, 250);
-      
-      // Scroll again after content is removed to ensure we're at top
-      setTimeout(() => {
-        if (mainContainerRef.current) {
-          mainContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-      }, 300);
-      
-      // Final scroll to guarantee top position
-      setTimeout(() => {
-        if (mainContainerRef.current) {
-          mainContainerRef.current.scrollTop = 0;
-        }
-      }, 600);
     } else if (selectedDirection && selectedDirection !== direction) {
       setSelectedDirection(direction);
     } else {

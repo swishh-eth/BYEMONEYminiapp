@@ -456,18 +456,20 @@ export default function HomePage({ predictionData, onNavigate }: HomePageProps) 
       </div>
 
       {/* Combined Market + Live Round Tile */}
-      <div className="relative bg-white/[0.03] border border-white/[0.08] rounded-2xl overflow-hidden animate-fade-in" style={{ animationDelay: '75ms' }}>
-        <div className="absolute inset-0 opacity-[0.03]" 
-          style={{
-            backgroundImage: `radial-gradient(circle at 1px 1px, white 1px, transparent 0)`,
-            backgroundSize: '20px 20px',
-          }}
-        />
+      <div className="relative bg-white/[0.03] border border-white/[0.08] rounded-2xl overflow-hidden animate-fade-in min-h-[320px]" style={{ animationDelay: '75ms' }}>
+        {!currentMarket.isAd && (
+          <div className="absolute inset-0 opacity-[0.03]" 
+            style={{
+              backgroundImage: `radial-gradient(circle at 1px 1px, white 1px, transparent 0)`,
+              backgroundSize: '20px 20px',
+            }}
+          />
+        )}
         
-        <div className={`relative transition-all duration-700 ease-in-out ${isTransitioning ? 'opacity-0' : 'opacity-100'}`}>
+        <div className={`relative h-full transition-all duration-700 ease-in-out ${isTransitioning ? 'opacity-0' : 'opacity-100'}`}>
           {/* Ad Spot - Full bleed image */}
           {currentMarket.isAd ? (
-            <div className="relative p-3">
+            <div className="relative h-full">
               {/* Market indicators - positioned over image */}
               <div className="absolute top-3 right-3 z-10 flex gap-1">
                 {MARKETS.map((_, i) => (
@@ -482,7 +484,7 @@ export default function HomePage({ predictionData, onNavigate }: HomePageProps) 
               <img 
                 src="/adspot.png" 
                 alt="Ad Spot"
-                className="w-full h-[280px] rounded-xl object-cover"
+                className="w-full h-full min-h-[320px] object-cover"
               />
             </div>
           ) : (
