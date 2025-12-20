@@ -69,9 +69,12 @@ const MARKETS = [
   { symbol: 'BYEMONEY', name: '$BYEMONEY', icon: '/byemoney.png' },
 ];
 
-// Banner images for carousel
+// Banner images for carousel - cycles through adspot files
 const BANNER_IMAGES = [
   '/adspot.png',
+  '/adspot2.png',
+  '/adspot3.gif',
+  '/adspot4.png',
 ];
 
 // Haptic feedback helper
@@ -197,12 +200,12 @@ export default function HomePage({ predictionData, onNavigate }: HomePageProps) 
     return () => clearInterval(interval);
   }, []);
 
-  // Auto-rotate banners every 5 seconds
+  // Auto-rotate banners in sync with markets (4 seconds)
   useEffect(() => {
     if (BANNER_IMAGES.length <= 1) return;
     const interval = setInterval(() => {
       setCurrentBannerIndex((prev) => (prev + 1) % BANNER_IMAGES.length);
-    }, 5000);
+    }, 4000);
     return () => clearInterval(interval);
   }, []);
 
@@ -241,17 +244,20 @@ export default function HomePage({ predictionData, onNavigate }: HomePageProps) 
   return (
     <div className="flex flex-col h-full p-4 pt-20 overflow-y-auto scrollbar-hide">
       {/* Main content area */}
-      <div className="flex-1 flex flex-col gap-2">
+      <div className="flex-1 flex flex-col gap-3">
         
         {/* Banner Image Carousel */}
         <div className="relative bg-white/[0.03] border border-white/[0.08] rounded-2xl overflow-hidden animate-fade-in" style={{ height: '180px' }}>
-          <img 
-            src={BANNER_IMAGES[currentBannerIndex]} 
-            alt="Banner"
-            className="w-full h-full object-cover"
-          />
+          {BANNER_IMAGES.map((src, i) => (
+            <img 
+              key={src}
+              src={src} 
+              alt="Banner"
+              className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 ${i === currentBannerIndex ? 'opacity-100' : 'opacity-0'}`}
+            />
+          ))}
           {BANNER_IMAGES.length > 1 && (
-            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
+            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1 z-10">
               {BANNER_IMAGES.map((_, i) => (
                 <div 
                   key={i} 
@@ -407,14 +413,28 @@ export default function HomePage({ predictionData, onNavigate }: HomePageProps) 
 
             {/* Price and Pool row */}
             <div className="flex items-center justify-between mb-2">
-              <p className="text-2xl font-bold">
-                {currentMarket.symbol === 'ETH' && predictionData 
-                  ? `$${predictionData.ethPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-                  : currentMarket.symbol === 'BYEMONEY' && byemoneyData
-                  ? `$${byemoneyData.priceUsd.toFixed(3)}`
-                  : '$---'
-                }
-              </p>
+              <div>
+                <p className="text-2xl font-bold">
+                  {currentMarket.symbol === 'ETH' && predictionData 
+                    ? `$${predictionData.ethPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                    : currentMarket.symbol === 'BYEMONEY' && byemoneyData
+                    ? `$${byemoneyData.priceUsd.toFixed(3)}`
+                    : '$---'
+                  }
+                </p>
+                {/* Time remaining */}
+                <p className="text-[10px] text-white/40">
+                  {(() => {
+                    const seconds = currentMarket.symbol === 'ETH' 
+                      ? predictionData?.timeRemaining 
+                      : byemoneyData?.timeRemaining;
+                    if (!seconds || seconds <= 0) return '0h 0m left';
+                    const hours = Math.floor(seconds / 3600);
+                    const minutes = Math.floor((seconds % 3600) / 60);
+                    return `${hours}h ${minutes}m left`;
+                  })()}
+                </p>
+              </div>
               <div className="text-right">
                 <p className="text-sm font-bold">
                   {currentMarket.symbol === 'ETH' 
@@ -460,7 +480,7 @@ export default function HomePage({ predictionData, onNavigate }: HomePageProps) 
       </div>
 
       {/* Bottom Buttons - Chart & Daily Claim */}
-      <div className="grid grid-cols-2 gap-2 pt-3 pb-2">
+      <div className="grid grid-cols-2 gap-3 pt-3">
         <button
           onClick={async () => {
             playClick();
