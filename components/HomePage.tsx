@@ -473,7 +473,10 @@ export default function HomePage({ predictionData, onNavigate }: HomePageProps) 
           />
         )}
         
-        <div className={`relative h-full transition-opacity duration-350 ease-in-out ${isTransitioning ? 'opacity-0' : 'opacity-100'}`}>
+        <div 
+          className={`relative h-full ${isTransitioning ? 'opacity-0' : 'opacity-100'}`}
+          style={{ transition: 'opacity 0.35s ease-in-out' }}
+        >
           {/* Ad Spot - Full bleed image */}
           {currentMarket.isAd ? (
             <>
@@ -491,7 +494,7 @@ export default function HomePage({ predictionData, onNavigate }: HomePageProps) 
               <img 
                 src="/adspot.png" 
                 alt="Ad Spot"
-                className="w-full h-full object-cover rounded-2xl"
+                className="absolute inset-0 w-full h-full object-cover"
               />
             </>
           ) : (

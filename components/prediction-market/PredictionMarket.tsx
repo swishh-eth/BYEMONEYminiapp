@@ -57,7 +57,6 @@ export default function PredictionMarket({
 
   // Refs
   const mainContainerRef = useRef<HTMLDivElement>(null);
-  const topAnchorRef = useRef<HTMLDivElement>(null);
 
   // Hooks
   const { walletAddress, ethBalance, byemoneyBalance, sdk, isLoading: walletLoading, connectWallet, refetchBalance } = useWallet();
@@ -179,9 +178,9 @@ export default function PredictionMarket({
       // Start closing animation AND scroll at the same time
       setTicketSectionClosing(true);
       
-      // Start scrolling immediately
-      if (topAnchorRef.current) {
-        topAnchorRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      // Start scrolling immediately to top
+      if (mainContainerRef.current) {
+        mainContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
       }
       
       // After collapse animation completes, remove content
@@ -327,9 +326,6 @@ export default function PredictionMarket({
         </div>
       ) : (
         <div ref={mainContainerRef} className="relative flex flex-col h-full p-4 pt-20 gap-3 overflow-y-auto scrollbar-hide">
-          {/* Top anchor for scroll */}
-          <div ref={topAnchorRef} className="absolute top-0 left-0" />
-          
           {/* Price Card */}
           <PriceCard
             activeMarket={activeMarket}
@@ -446,7 +442,7 @@ export default function PredictionMarket({
           ) : null}
 
           {/* Footer */}
-          <div className="text-center pt-2 pb-4">
+          <div className="text-center py-1">
             <p className="text-[9px] text-white/30">
               {username ? `@${username} · ` : ''}{isEthMarket ? `${BASE_TICKET_PRICE_ETH} ETH` : '1M BYEMONEY'}/ticket · 5% fee
             </p>
