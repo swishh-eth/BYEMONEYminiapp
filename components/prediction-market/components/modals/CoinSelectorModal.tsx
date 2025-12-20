@@ -68,12 +68,9 @@ export function CoinSelectorModal({ isOpen, activeMarket, onClose, onSelect }: C
                 <div className={`relative w-16 h-16 rounded-full overflow-hidden flex items-center justify-center ${coin.symbol === activeMarket ? 'bg-black/10' : 'bg-white/10'}`}>
                   <img src={coin.icon} alt={coin.symbol} className="w-full h-full object-cover scale-125" />
                 </div>
-                <div className="text-center">
-                  <p className={`font-bold text-base ${coin.symbol === activeMarket ? 'text-black' : 'text-white'}`}>{coin.symbol}</p>
-                  <p className={`text-xs ${coin.symbol === activeMarket ? 'text-black/60' : 'text-white/40'}`}>
-                    {coin.name}
-                  </p>
-                </div>
+                <p className={`font-bold text-base ${coin.symbol === activeMarket ? 'text-black' : 'text-white'}`}>
+                  {coin.symbol === 'ETH' ? 'ETHEREUM' : coin.symbol}
+                </p>
               </div>
             </button>
           ))}

@@ -305,8 +305,11 @@ export default function PredictionMarket({
         <div className="relative flex flex-col h-full p-4 pt-20 gap-3 overflow-y-auto scrollbar-hide">
           {/* Price Card skeleton - matches actual ~124px */}
           <div className="bg-white/[0.03] border border-white/[0.08] rounded-2xl h-[124px] animate-pulse" />
-          {/* Timer Card skeleton - matches actual ~52px */}
-          <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl h-[52px] animate-pulse" />
+          {/* Timer Card skeleton - split into two tiles */}
+          <div className="flex gap-3">
+            <div className="flex-1 bg-white/[0.03] border border-white/[0.08] rounded-xl h-[60px] animate-pulse" />
+            <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl w-[100px] h-[60px] animate-pulse" />
+          </div>
           {/* Pool Card skeleton - matches actual ~88px */}
           <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl h-[88px] animate-pulse" />
           {/* Position Card skeleton - matches actual ~88px */}

@@ -106,10 +106,23 @@ export function HistoryModal({
             history.slice(0, 7).map((item, index) => {
               const betDate = item.timestamp ? new Date(item.timestamp) : null;
               const dayName = betDate ? ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][betDate.getDay()] : '';
-              const betAmountEth = (item.tickets * BASE_TICKET_PRICE_ETH).toFixed(4);
-              const betAmountUsd = (item.tickets * BASE_TICKET_PRICE_ETH * ethPrice).toFixed(2);
-              const winningsEth = item.winnings > 0 ? item.winnings.toFixed(4) : '0';
-              const winningsUsd = item.winnings > 0 ? (item.winnings * ethPrice).toFixed(2) : '0';
+              
+              // Format bet amount based on market
+              const betAmountDisplay = isEthMarket 
+                ? `${(item.tickets * BASE_TICKET_PRICE_ETH).toFixed(4)} ETH`
+                : `${item.tickets}M BYEMONEY`;
+              const betAmountUsd = isEthMarket 
+                ? `$${(item.tickets * BASE_TICKET_PRICE_ETH * ethPrice).toFixed(2)}`
+                : '';
+              
+              // Format winnings based on market
+              const winningsDisplay = isEthMarket
+                ? `+${item.winnings.toFixed(4)} ETH`
+                : `+${(item.winnings / 1000000).toFixed(1)}M`;
+              const winningsUsd = isEthMarket && item.winnings > 0
+                ? `($${(item.winnings * ethPrice).toFixed(2)})`
+                : '';
+              
               const isWin = item.result === (item.direction === 'up' ? 1 : 2);
 
               return (
@@ -134,7 +147,7 @@ export function HistoryModal({
                           {dayName && <span className="text-[8px] text-white/30">{dayName}</span>}
                         </div>
                         <p className="text-[9px] text-white/40">
-                          {item.tickets}x · {betAmountEth} ETH · ${betAmountUsd}
+                          {item.tickets}x · {betAmountDisplay} {betAmountUsd && `· ${betAmountUsd}`}
                         </p>
                       </div>
                     </div>
@@ -146,8 +159,8 @@ export function HistoryModal({
                       ) : isWin ? (
                         <div className="flex items-center gap-1.5">
                           <span className="text-[9px] text-white/50">Won</span>
-                          <span className="text-[10px] font-bold text-white">+{winningsEth} ETH</span>
-                          <span className="text-[9px] text-white/40">(${winningsUsd})</span>
+                          <span className="text-[10px] font-bold text-white">{winningsDisplay}</span>
+                          {winningsUsd && <span className="text-[9px] text-white/40">{winningsUsd}</span>}
                         </div>
                       ) : item.result === 0 ? (
                         <span className="text-[10px] text-white/40 font-medium">Tie</span>
