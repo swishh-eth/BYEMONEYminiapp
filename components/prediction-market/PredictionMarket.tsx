@@ -355,8 +355,8 @@ export default function PredictionMarket({
             />
           )}
 
-          {/* Position Card */}
-          {hasMarket && (
+          {/* Position Card - no animation to prevent jump */}
+          {hasMarket && userPosition && (Number(userPosition.up) > 0 || Number(userPosition.down) > 0) && (
             <PositionCard
               activeMarket={activeMarket}
               userPosition={userPosition}
@@ -369,7 +369,6 @@ export default function PredictionMarket({
               canRefund={canRefund}
               txState={txState}
               onClaim={() => handleClaim()}
-              className={animClass}
             />
           )}
 
