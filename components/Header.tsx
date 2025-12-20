@@ -93,11 +93,11 @@ export default function Header({
           }}
         >
           {/* Left side - Logo or Claim Button */}
-          <div className="relative h-10">
+          <div className="relative h-10 min-w-[100px]">
             {/* Logo Tile - fades out on non-home pages */}
             <div 
-              className={`w-10 h-10 rounded-xl flex items-center justify-center overflow-hidden transition-all duration-500 ease-in-out ${
-                isHomePage ? 'opacity-100 scale-100' : 'opacity-0 scale-95 absolute pointer-events-none'
+              className={`absolute top-0 left-0 w-10 h-10 rounded-xl flex items-center justify-center overflow-hidden transition-all duration-500 ease-in-out ${
+                isHomePage ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'
               }`}
             >
               <img 
@@ -107,16 +107,17 @@ export default function Header({
               />
             </div>
 
-            {/* Claim Winnings Button - fades in on predictions page */}
+            {/* Claim Winnings Button - fades in on predictions page with delay */}
             <button
               onClick={handleClaimClick}
-              className={`flex items-center gap-2 h-10 px-3 rounded-xl border transition-all duration-500 ease-in-out active:scale-95 ${
-                isPredictionsPage ? 'opacity-100 scale-100' : 'opacity-0 scale-95 absolute pointer-events-none'
+              className={`absolute top-0 left-0 flex items-center gap-2 h-10 px-3 rounded-xl border transition-all duration-500 active:scale-95 ${
+                isPredictionsPage ? 'opacity-100 scale-100 delay-300' : 'opacity-0 scale-95 pointer-events-none'
               } ${
                 hasUnclaimed 
                   ? 'bg-white border-white/80 animate-pulse-subtle' 
                   : 'bg-white/[0.03] border-white/[0.08] hover:bg-white/[0.05]'
               }`}
+              style={{ transitionDelay: isPredictionsPage ? '300ms' : '0ms' }}
             >
                 <div className={`w-5 h-5 rounded-full flex items-center justify-center ${
                   hasUnclaimed ? 'bg-black/10' : 'bg-white/10'
@@ -134,18 +135,20 @@ export default function Header({
                     }
                   </svg>
                 </div>
-                <div className="flex flex-col items-start">
-                  <span className={`text-[10px] font-medium leading-none ${
-                    hasUnclaimed ? 'text-black/60' : 'text-white/30'
-                  }`}>
-                    {hasUnclaimed ? 'Claim' : 'Winnings'}
+                {hasUnclaimed ? (
+                  <div className="flex flex-col items-start">
+                    <span className="text-[10px] font-medium leading-none text-black/60">
+                      Claim
+                    </span>
+                    <span className="text-xs font-bold leading-none text-black">
+                      {formatUnclaimedAmount()}
+                    </span>
+                  </div>
+                ) : (
+                  <span className="text-[10px] font-medium text-white/30 uppercase tracking-wider">
+                    Winnings
                   </span>
-                  <span className={`text-xs font-bold leading-none ${
-                    hasUnclaimed ? 'text-black' : 'text-white/20'
-                  }`}>
-                    {hasUnclaimed ? formatUnclaimedAmount() : 'None'}
-                  </span>
-                </div>
+                )}
               </button>
           </div>
           
