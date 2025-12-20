@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { publicClient } from '../client';
 import {
   ETH_CONTRACT_ADDRESS,
@@ -12,6 +12,7 @@ import type { UserPosition, MarketType } from '../types';
 
 interface UseUserPositionReturn {
   userPosition: UserPosition | null;
+  isLoading: boolean;
   refetch: () => Promise<void>;
 }
 
@@ -21,9 +22,15 @@ export function useUserPosition(
   activeMarket: MarketType
 ): UseUserPositionReturn {
   const [userPosition, setUserPosition] = useState<UserPosition | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const lastMarketRef = useRef<string>('');
 
   const fetchUserPosition = useCallback(async () => {
-    if (!walletAddress || !marketId || marketId === 0n) return;
+    if (!walletAddress || !marketId || marketId === 0n) {
+      setUserPosition(null);
+      setIsLoading(false);
+      return;
+    }
 
     const contractAddress = activeMarket === 'ETH' ? ETH_CONTRACT_ADDRESS : BYEMONEY_CONTRACT_ADDRESS;
     const contractAbi = activeMarket === 'ETH' ? ETH_CONTRACT_ABI : BYEMONEY_CONTRACT_ABI;
@@ -43,6 +50,9 @@ export function useUserPosition(
       });
     } catch (error) {
       console.error('Failed to fetch position:', error);
+      setUserPosition(null);
+    } finally {
+      setIsLoading(false);
     }
   }, [walletAddress, marketId, activeMarket]);
 
@@ -50,14 +60,19 @@ export function useUserPosition(
     fetchUserPosition();
   }, [fetchUserPosition]);
 
-  // Reset position when market changes
+  // Reset position and set loading when market changes
   useEffect(() => {
-    setUserPosition(null);
-    fetchUserPosition();
-  }, [marketId]);
+    const marketKey = `${activeMarket}-${marketId}`;
+    if (lastMarketRef.current !== marketKey) {
+      lastMarketRef.current = marketKey;
+      setIsLoading(true);
+      setUserPosition(null);
+    }
+  }, [activeMarket, marketId]);
 
   return {
     userPosition,
+    isLoading,
     refetch: fetchUserPosition,
   };
 }

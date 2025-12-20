@@ -58,7 +58,7 @@ export default function PredictionMarket({
   // Hooks
   const { walletAddress, ethBalance, byemoneyBalance, sdk, isLoading: walletLoading, connectWallet, refetchBalance } = useWallet();
   const { marketData, marketDataSource, currentPrice, ethPriceUsd, isBettingOpen, isMarketSwitching, timeLeft, refetch: refetchMarket } = useMarketData(activeMarket, initialData);
-  const { userPosition, refetch: refetchPosition } = useUserPosition(walletAddress, marketData?.id, activeMarket);
+  const { userPosition, isLoading: positionLoading, refetch: refetchPosition } = useUserPosition(walletAddress, marketData?.id, activeMarket);
   const { unclaimedMarkets, history, totalUnclaimed, refetch: refetchUnclaimed } = useUnclaimedMarkets(walletAddress, activeMarket, marketData?.id);
   const { playClick, playSuccess, triggerHaptic } = useSounds(sdk);
 
@@ -109,8 +109,8 @@ export default function PredictionMarket({
   const winningDirection = marketData?.result ?? 0;
   const hasMarket = hasValidMarketData;
 
-  // Show loading skeleton during market switch
-  const showLoading = !pageReady || isMarketSwitching;
+  // Show loading skeleton during market switch or while position is loading
+  const showLoading = !pageReady || isMarketSwitching || (walletAddress && positionLoading && hasValidMarketData);
 
   const userUpTickets = userPosition ? Number(userPosition.up) : 0;
   const userDownTickets = userPosition ? Number(userPosition.down) : 0;
@@ -152,8 +152,8 @@ export default function PredictionMarket({
     if (selectedDirection === direction) {
       setTicketSectionClosing(true);
       if (mainContainerRef.current) {
-        const container = mainContainerRef.current;
-        container.scrollTo({ top: Math.max(0, container.scrollTop - 280), behavior: 'smooth' });
+        // Scroll to top when closing
+        mainContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
       }
       setTimeout(() => {
         setSelectedDirection(null);
@@ -165,7 +165,7 @@ export default function PredictionMarket({
       setSelectedDirection(direction);
       setTimeout(() => {
         if (mainContainerRef.current) {
-          mainContainerRef.current.scrollTo({ top: mainContainerRef.current.scrollTop + 280, behavior: 'smooth' });
+          mainContainerRef.current.scrollTo({ top: mainContainerRef.current.scrollTop + 320, behavior: 'smooth' });
         }
       }, 100);
     }
