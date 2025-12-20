@@ -70,28 +70,28 @@ interface HomePageProps {
   onNavigate?: (index: number) => void;
 }
 
-// Available markets for carousel
+// Available markets for carousel (ETH, BYEMONEY, Ad Spot)
 const MARKETS = [
   { 
     symbol: 'ETH', 
     name: 'Ethereum', 
     icon: '/eth.png',
     active: true,
-    contractAddress: '0x0625E29C2A71A834482bFc6b4cc012ACeee62DA4',
+    isAd: false,
   },
   { 
     symbol: 'BYEMONEY', 
     name: '$BYEMONEY', 
     icon: '/splash.png',
     active: true,
-    contractAddress: '0x8BD1Ce1E83CA48F33610EdCb9Dc531D0dA23bb55',
+    isAd: false,
   },
   { 
-    symbol: 'CLANKER', 
-    name: 'Clanker', 
-    icon: '/clanker.png',
+    symbol: 'AD', 
+    name: 'Ad Spot', 
+    icon: '/adspot.png',
     active: false,
-    contractAddress: '',
+    isAd: true,
   },
 ];
 
@@ -162,15 +162,15 @@ export default function HomePage({ predictionData, onNavigate }: HomePageProps) 
         const upPool = Number(formatEther((market as any)[5]));
         const downPool = Number(formatEther((market as any)[6]));
         
-// Calculate 1M BYEMONEY value in USD using sqrtPriceX96 formula
-const ethPriceUsd = Number(ethPrice) / 1e8;
-const Q96 = 2 ** 96;
-const BYEMONEY_PRICE_CALIBRATION = 1;
-const sqrtPriceX96 = Number(priceInEth);
-const sqrtPrice = sqrtPriceX96 / Q96;
-const byemoneyPerWeth = sqrtPrice * sqrtPrice;
-const wethPer1mByemoney = 1_000_000 / byemoneyPerWeth;
-const priceUsd = wethPer1mByemoney * ethPriceUsd * BYEMONEY_PRICE_CALIBRATION;
+        // Calculate 1M BYEMONEY value in USD using sqrtPriceX96 formula
+        const ethPriceUsd = Number(ethPrice) / 1e8;
+        const Q96 = 2 ** 96;
+        const BYEMONEY_PRICE_CALIBRATION = 1;
+        const sqrtPriceX96 = Number(priceInEth);
+        const sqrtPrice = sqrtPriceX96 / Q96;
+        const byemoneyPerWeth = sqrtPrice * sqrtPrice;
+        const wethPer1mByemoney = 1_000_000 / byemoneyPerWeth;
+        const priceUsd = wethPer1mByemoney * ethPriceUsd * BYEMONEY_PRICE_CALIBRATION;
 
         setByemoneyData({
           marketId: Number((market as any)[0]),
@@ -338,172 +338,8 @@ const priceUsd = wethPer1mByemoney * ethPriceUsd * BYEMONEY_PRICE_CALIBRATION;
         </button>
       </div>
 
-      {/* Combined Market + Live Round Tile */}
+      {/* Recent Bets Tile - MOVED ABOVE Live Rounds */}
       <div className="relative bg-white/[0.03] border border-white/[0.08] rounded-2xl p-3 overflow-hidden animate-fade-in" style={{ animationDelay: '50ms' }}>
-        <div className="absolute inset-0 opacity-[0.03]" 
-          style={{
-            backgroundImage: `radial-gradient(circle at 1px 1px, white 1px, transparent 0)`,
-            backgroundSize: '20px 20px',
-          }}
-        />
-        
-        <div className={`relative transition-all duration-700 ease-in-out ${isTransitioning ? 'opacity-0 translate-y-2' : 'opacity-100 translate-y-0'}`}>
-          {/* Market Header */}
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-3">
-              <div className={`w-10 h-10 rounded-xl overflow-hidden ${!currentMarket.active && 'opacity-40 grayscale'}`}>
-                <img 
-                  src={currentMarket.icon} 
-                  alt={currentMarket.symbol}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="font-bold text-base">{currentMarket.symbol}</span>
-                  {!currentMarket.active && (
-                    <span className="text-[8px] px-1.5 py-0.5 rounded bg-white/10 text-white/40 uppercase">Coming Soon</span>
-                  )}
-                </div>
-                <span className="text-[11px] text-white/40">{currentMarket.name}</span>
-              </div>
-            </div>
-            {/* Market indicators */}
-            <div className="flex gap-1">
-              {MARKETS.map((_, i) => (
-                <div 
-                  key={i} 
-                  className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${
-                    i === currentMarketIndex ? 'bg-white' : 'bg-white/20'
-                  }`}
-                />
-              ))}
-            </div>
-          </div>
-
-          {/* Price Row */}
-          <div className={`flex items-center justify-between mb-3 ${!currentMarket.active && 'opacity-30'}`}>
-            <div>
-              <p className={`text-[9px] uppercase tracking-wider ${currentMarket.active ? 'text-white/40' : 'text-white/20'}`}>
-                {currentMarket.symbol === 'BYEMONEY' ? '1M BYEMONEY' : `${currentMarket.symbol} Price`}
-              </p>
-              <p className="text-lg font-bold">
-                {currentMarket.symbol === 'ETH' && currentMarket.active && predictionData 
-                  ? `$${predictionData.ethPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-                  : currentMarket.symbol === 'BYEMONEY' && currentMarket.active && byemoneyData
-                  ? `$${byemoneyData.priceUsd.toFixed(3)}`
-                  : '$---.--'
-                }
-              </p>
-            </div>
-            <div className="text-right">
-              <p className={`text-[9px] uppercase tracking-wider ${currentMarket.active ? 'text-white/40' : 'text-white/20'}`}>
-                Round
-              </p>
-              <p className="text-lg font-bold">
-                {currentMarket.symbol === 'ETH' && currentMarket.active 
-                  ? `#${predictionData?.marketId || '--'}`
-                  : currentMarket.symbol === 'BYEMONEY' && currentMarket.active
-                  ? `#${byemoneyData?.marketId || '--'}`
-                  : '#--'
-                }
-              </p>
-            </div>
-          </div>
-
-          {/* Live Round Info */}
-          <div className={`flex items-center justify-between mb-3 ${!currentMarket.active && 'opacity-30'}`}>
-            <div className="flex items-center gap-2">
-              <div className={`w-1.5 h-1.5 rounded-full ${currentMarket.active ? 'bg-green-400 animate-pulse' : 'bg-white/20'}`} />
-              <span className={`text-[9px] uppercase tracking-wider ${currentMarket.active ? 'text-white/40' : 'text-white/20'}`}>
-                {currentMarket.active ? 'Live Round' : 'Coming Soon'}
-              </span>
-            </div>
-          </div>
-
-          <div className={`flex items-center justify-between mb-3 ${!currentMarket.active && 'opacity-30'}`}>
-            <div>
-              <p className="text-xl font-bold">
-                {currentMarket.symbol === 'ETH' && currentMarket.active 
-                  ? formatTime(predictionData?.timeRemaining || 0)
-                  : currentMarket.symbol === 'BYEMONEY' && currentMarket.active
-                  ? formatTime(byemoneyData?.timeRemaining || 0)
-                  : '--h --m'
-                }
-              </p>
-              <p className={`text-[9px] ${currentMarket.active ? 'text-white/40' : 'text-white/20'}`}>remaining</p>
-            </div>
-            <div className="text-right">
-              <p className="text-base font-bold">
-                {currentMarket.symbol === 'ETH' && currentMarket.active 
-                  ? `${predictionData?.totalPool.toFixed(4) || '0.0000'} ETH`
-                  : currentMarket.symbol === 'BYEMONEY' && currentMarket.active
-                  ? `${byemoneyData?.totalPool ? (byemoneyData.totalPool >= 1000000 ? `${(byemoneyData.totalPool / 1000000).toFixed(1)}M` : byemoneyData.totalPool >= 1000 ? `${(byemoneyData.totalPool / 1000).toFixed(1)}K` : byemoneyData.totalPool.toFixed(0)) : '0'} BYEMONEY`
-                  : '0.0000'
-                }
-              </p>
-              <p className={`text-[9px] ${currentMarket.active ? 'text-white/40' : 'text-white/20'}`}>in pool</p>
-            </div>
-          </div>
-
-          {/* Pool Bar */}
-          <div className={`mb-3 ${!currentMarket.active && 'opacity-30'}`}>
-            <div className="relative h-1.5 bg-white/5 rounded-full overflow-hidden">
-              <div 
-                className={`absolute left-0 top-0 h-full transition-all duration-700 ${currentMarket.active ? 'bg-white' : 'bg-white/30'}`}
-                style={{ width: currentMarket.active ? `${upPercent}%` : '50%' }}
-              />
-              <div 
-                className={`absolute right-0 top-0 h-full transition-all duration-700 ${currentMarket.active ? 'bg-red-500' : 'bg-white/20'}`}
-                style={{ width: currentMarket.active ? `${downPercent}%` : '50%' }}
-              />
-            </div>
-            <div className="flex justify-between mt-1.5 text-[11px]">
-              <div className="flex items-center gap-1">
-                <svg className={`w-2.5 h-2.5 ${currentMarket.active ? 'text-white' : 'text-white/30'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}>
-                  <path d="M5 15l7-7 7 7" />
-                </svg>
-                <span className={`font-medium ${currentMarket.active ? 'text-white' : 'text-white/30'}`}>
-                  {currentMarket.active ? `${upPercent.toFixed(0)}%` : '--%'}
-                </span>
-                <span className={currentMarket.active ? 'text-white/30' : 'text-white/20'}>PUMP</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <span className={currentMarket.active ? 'text-white/30' : 'text-white/20'}>DUMP</span>
-                <span className={`font-medium ${currentMarket.active ? 'text-red-400' : 'text-white/30'}`}>
-                  {currentMarket.active ? `${downPercent.toFixed(0)}%` : '--%'}
-                </span>
-                <svg className={`w-2.5 h-2.5 ${currentMarket.active ? 'text-red-400' : 'text-white/30'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}>
-                  <path d="M19 9l-7 7-7-7" />
-                </svg>
-              </div>
-            </div>
-          </div>
-
-          {/* CTA Button */}
-          {currentMarket.active ? (
-            <button
-              onClick={handleBetClick}
-              className="w-full py-2.5 rounded-xl font-bold text-sm bg-white text-black transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2"
-            >
-              Place Your Bet
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                <path d="M13 7l5 5m0 0l-5 5m5-5H6" />
-              </svg>
-            </button>
-          ) : (
-            <div className="w-full py-2.5 rounded-xl font-bold text-sm bg-white/10 text-white/30 flex items-center justify-center gap-2">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                <path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-              </svg>
-              Coming Soon
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Recent Bets Tile */}
-      <div className="relative bg-white/[0.03] border border-white/[0.08] rounded-2xl p-3 overflow-hidden animate-fade-in" style={{ animationDelay: '100ms' }}>
         <div className="absolute inset-0 opacity-[0.03]" 
           style={{
             backgroundImage: `radial-gradient(circle at 1px 1px, white 1px, transparent 0)`,
@@ -615,6 +451,186 @@ const priceUsd = wethPer1mByemoney * ethPriceUsd * BYEMONEY_PRICE_CALIBRATION;
               <p>No recent bets yet</p>
               <p className="text-[10px] mt-0.5">Be the first to bet!</p>
             </div>
+          )}
+        </div>
+      </div>
+
+      {/* Combined Market + Live Round Tile */}
+      <div className="relative bg-white/[0.03] border border-white/[0.08] rounded-2xl p-3 overflow-hidden animate-fade-in" style={{ animationDelay: '75ms' }}>
+        <div className="absolute inset-0 opacity-[0.03]" 
+          style={{
+            backgroundImage: `radial-gradient(circle at 1px 1px, white 1px, transparent 0)`,
+            backgroundSize: '20px 20px',
+          }}
+        />
+        
+        <div className={`relative transition-all duration-700 ease-in-out ${isTransitioning ? 'opacity-0 translate-y-2' : 'opacity-100 translate-y-0'}`}>
+          {/* Ad Spot - Full image tile */}
+          {currentMarket.isAd ? (
+            <div className="flex flex-col">
+              <div className="flex items-center justify-end mb-3">
+                {/* Market indicators */}
+                <div className="flex gap-1">
+                  {MARKETS.map((_, i) => (
+                    <div 
+                      key={i} 
+                      className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${
+                        i === currentMarketIndex ? 'bg-white' : 'bg-white/20'
+                      }`}
+                    />
+                  ))}
+                </div>
+              </div>
+              <div className="relative w-full h-[200px] rounded-xl overflow-hidden">
+                <img 
+                  src="/adspot.png" 
+                  alt="Ad Spot"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            </div>
+          ) : (
+            <>
+              {/* Market Header */}
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl overflow-hidden">
+                    <img 
+                      src={currentMarket.icon} 
+                      alt={currentMarket.symbol}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-base">{currentMarket.symbol}</span>
+                    </div>
+                    <span className="text-[11px] text-white/40">{currentMarket.name}</span>
+                  </div>
+                </div>
+                {/* Market indicators */}
+                <div className="flex gap-1">
+                  {MARKETS.map((_, i) => (
+                    <div 
+                      key={i} 
+                      className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${
+                        i === currentMarketIndex ? 'bg-white' : 'bg-white/20'
+                      }`}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              {/* Price Row */}
+              <div className="flex items-center justify-between mb-3">
+                <div>
+                  <p className="text-[9px] uppercase tracking-wider text-white/40">
+                    {currentMarket.symbol === 'BYEMONEY' ? '1M BYEMONEY' : `${currentMarket.symbol} Price`}
+                  </p>
+                  <p className="text-lg font-bold">
+                    {currentMarket.symbol === 'ETH' && predictionData 
+                      ? `$${predictionData.ethPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                      : currentMarket.symbol === 'BYEMONEY' && byemoneyData
+                      ? `$${byemoneyData.priceUsd.toFixed(3)}`
+                      : '$---.--'
+                    }
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="text-[9px] uppercase tracking-wider text-white/40">
+                    Round
+                  </p>
+                  <p className="text-lg font-bold">
+                    {currentMarket.symbol === 'ETH' 
+                      ? `#${predictionData?.marketId || '--'}`
+                      : currentMarket.symbol === 'BYEMONEY'
+                      ? `#${byemoneyData?.marketId || '--'}`
+                      : '#--'
+                    }
+                  </p>
+                </div>
+              </div>
+
+              {/* Live Round Info */}
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+                  <span className="text-[9px] uppercase tracking-wider text-white/40">
+                    Live Round
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between mb-3">
+                <div>
+                  <p className="text-xl font-bold">
+                    {currentMarket.symbol === 'ETH' 
+                      ? formatTime(predictionData?.timeRemaining || 0)
+                      : currentMarket.symbol === 'BYEMONEY'
+                      ? formatTime(byemoneyData?.timeRemaining || 0)
+                      : '--h --m'
+                    }
+                  </p>
+                  <p className="text-[9px] text-white/40">remaining</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-base font-bold">
+                    {currentMarket.symbol === 'ETH' 
+                      ? `${predictionData?.totalPool.toFixed(4) || '0.0000'} ETH`
+                      : currentMarket.symbol === 'BYEMONEY'
+                      ? `${byemoneyData?.totalPool ? (byemoneyData.totalPool >= 1000000 ? `${(byemoneyData.totalPool / 1000000).toFixed(1)}M` : byemoneyData.totalPool >= 1000 ? `${(byemoneyData.totalPool / 1000).toFixed(1)}K` : byemoneyData.totalPool.toFixed(0)) : '0'} BYEMONEY`
+                      : '0.0000'
+                    }
+                  </p>
+                  <p className="text-[9px] text-white/40">in pool</p>
+                </div>
+              </div>
+
+              {/* Pool Bar */}
+              <div className="mb-3">
+                <div className="relative h-1.5 bg-white/5 rounded-full overflow-hidden">
+                  <div 
+                    className="absolute left-0 top-0 h-full transition-all duration-700 bg-white"
+                    style={{ width: `${upPercent}%` }}
+                  />
+                  <div 
+                    className="absolute right-0 top-0 h-full transition-all duration-700 bg-red-500"
+                    style={{ width: `${downPercent}%` }}
+                  />
+                </div>
+                <div className="flex justify-between mt-1.5 text-[11px]">
+                  <div className="flex items-center gap-1">
+                    <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}>
+                      <path d="M5 15l7-7 7 7" />
+                    </svg>
+                    <span className="font-medium text-white">
+                      {`${upPercent.toFixed(0)}%`}
+                    </span>
+                    <span className="text-white/30">PUMP</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <span className="text-white/30">DUMP</span>
+                    <span className="font-medium text-red-400">
+                      {`${downPercent.toFixed(0)}%`}
+                    </span>
+                    <svg className="w-2.5 h-2.5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}>
+                      <path d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+
+              {/* CTA Button */}
+              <button
+                onClick={handleBetClick}
+                className="w-full py-2.5 rounded-xl font-bold text-sm bg-white text-black transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2"
+              >
+                Place Your Bet
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                  <path d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                </svg>
+              </button>
+            </>
           )}
         </div>
       </div>
