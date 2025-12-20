@@ -276,20 +276,26 @@ export default function HomePage({ predictionData, onNavigate }: HomePageProps) 
             {predictionData?.recentWins && predictionData.recentWins.length > 0 ? (() => {
               const bets = predictionData.recentWins;
               const betsLength = bets.length;
-              const extendedBets = [...bets, ...bets, ...bets];
+              // Create enough copies for seamless scrolling (5 copies = plenty of buffer)
+              const extendedBets = [...bets, ...bets, ...bets, ...bets, ...bets];
+              // Use modulo on extended length to keep scrolling forever
               const scrollOffset = betScrollIndex % betsLength;
+              // Start from the middle copy so we have room to scroll both ways
+              const baseOffset = betsLength * 2;
               
               return (
                 <div className="relative h-[108px] overflow-hidden">
                   <div 
                     className="transition-transform duration-700 ease-in-out"
-                    style={{ transform: `translateY(-${scrollOffset * 36}px)` }}
+                    style={{ transform: `translateY(-${(baseOffset + scrollOffset) * 36}px)` }}
                   >
                     {extendedBets.map((bet, i) => {
-                      const visualPos = i - scrollOffset;
-                      const distanceFromMiddle = Math.abs(visualPos - 1);
+                      // Calculate position relative to current view
+                      const currentTop = baseOffset + scrollOffset;
+                      const visualPos = i - currentTop;
                       const isMiddle = visualPos === 1;
-                      const opacity = isMiddle ? 1 : distanceFromMiddle === 1 ? 0.5 : 0.2;
+                      const distanceFromMiddle = Math.abs(visualPos - 1);
+                      const opacity = isMiddle ? 1 : distanceFromMiddle === 1 ? 0.5 : distanceFromMiddle === 2 ? 0.2 : 0;
                       const isByemoney = bet.market === 'BYEMONEY';
                       
                       // Format amount based on market
