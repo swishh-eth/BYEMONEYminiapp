@@ -55,6 +55,7 @@ interface PredictionData {
     pfp: string;
     amount: number;
     direction: 'up' | 'down';
+    market?: 'ETH' | 'BYEMONEY';
   }>;
 }
 
@@ -256,22 +257,10 @@ export default function HomePage({ predictionData, onNavigate }: HomePageProps) 
               className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 ${i === currentBannerIndex ? 'opacity-100' : 'opacity-0'}`}
             />
           ))}
-          {BANNER_IMAGES.length > 1 && (
-            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1 z-10">
-              {BANNER_IMAGES.map((_, i) => (
-                <div 
-                  key={i} 
-                  className={`w-1.5 h-1.5 rounded-full transition-all ${
-                    i === currentBannerIndex ? 'bg-white' : 'bg-white/40'
-                  }`}
-                />
-              ))}
-            </div>
-          )}
         </div>
 
         {/* Recent Bets Tile */}
-        <div className="relative bg-white/[0.03] border border-white/[0.08] rounded-2xl p-3 overflow-hidden animate-fade-in" style={{ animationDelay: '25ms' }}>
+        <div className="relative bg-white/[0.03] border border-white/[0.08] rounded-2xl p-3 overflow-hidden animate-fade-in" style={{ animationDelay: '25ms', minHeight: '140px' }}>
           <div className="absolute inset-0 opacity-[0.03]" 
             style={{
               backgroundImage: `radial-gradient(circle at 1px 1px, white 1px, transparent 0)`,
@@ -301,6 +290,12 @@ export default function HomePage({ predictionData, onNavigate }: HomePageProps) 
                       const distanceFromMiddle = Math.abs(visualPos - 1);
                       const isMiddle = visualPos === 1;
                       const opacity = isMiddle ? 1 : distanceFromMiddle === 1 ? 0.5 : 0.2;
+                      const isByemoney = bet.market === 'BYEMONEY';
+                      
+                      // Format amount based on market
+                      const amountDisplay = isByemoney 
+                        ? `${bet.amount >= 1000000 ? `${(bet.amount / 1000000).toFixed(0)}M` : bet.amount >= 1000 ? `${(bet.amount / 1000).toFixed(0)}K` : bet.amount.toFixed(0)} BYE`
+                        : `${bet.amount.toFixed(3)} ETH`;
                       
                       return (
                         <div 
@@ -336,7 +331,7 @@ export default function HomePage({ predictionData, onNavigate }: HomePageProps) 
                               className={`font-bold ${bet.direction === 'up' ? 'text-white' : 'text-red-400'}`}
                               style={{ fontSize: isMiddle ? '14px' : '12px' }}
                             >
-                              {bet.amount.toFixed(3)} ETH
+                              {amountDisplay}
                             </span>
                             <div 
                               className={`rounded flex items-center justify-center ${bet.direction === 'up' ? 'bg-white/20' : 'bg-red-500/20'}`}
@@ -364,7 +359,7 @@ export default function HomePage({ predictionData, onNavigate }: HomePageProps) 
                 </div>
               );
             })() : (
-              <div className="text-center py-3 text-white/30 text-xs">
+              <div className="h-[108px] flex flex-col items-center justify-center text-white/30 text-xs">
                 <p>No recent bets yet</p>
                 <p className="text-[10px] mt-0.5">Be the first to bet!</p>
               </div>
