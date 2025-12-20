@@ -12,6 +12,7 @@ import InfoPage from '@/components/InfoPage';
 
 const ETH_CONTRACT_ADDRESS = '0x0625E29C2A71A834482bFc6b4cc012ACeee62DA4' as const;
 const TICKET_PRICE_ETH = 0.001;
+const TICKET_PRICE_BYEMONEY = 1000000; // 1M BYEMONEY per ticket
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL || '',
@@ -63,6 +64,7 @@ interface PredictionData {
     pfp: string;
     amount: number;
     direction: 'up' | 'down';
+    market?: 'ETH' | 'BYEMONEY';
   }>;
 }
 
@@ -109,33 +111,73 @@ export default function App() {
       let recentWins: PredictionData['recentWins'] = [];
       
       try {
-        const { data: bets } = await supabase
-          .from('prediction_bets')
-          .select('market_id, direction, tickets, wallet_address, fid')
-          .eq('market_id', marketId)
-          .order('timestamp', { ascending: false })
-          .limit(50);
+        // Fetch both ETH and BYEMONEY bets
+        const [ethBetsResult, byemoneyBetsResult] = await Promise.all([
+          supabase
+            .from('prediction_bets')
+            .select('market_id, direction, tickets, wallet_address, fid, timestamp')
+            .order('timestamp', { ascending: false })
+            .limit(20),
+          supabase
+            .from('byemoney_bets')
+            .select('market_id, direction, tickets, wallet_address, fid, timestamp')
+            .order('timestamp', { ascending: false })
+            .limit(20),
+        ]);
 
-        if (bets && bets.length > 0) {
-          const fids = [...new Set(bets.map(b => b.fid).filter(Boolean))];
+        const ethBets = ethBetsResult.data || [];
+        const byemoneyBets = byemoneyBetsResult.data || [];
+
+        // Get all unique fids from both
+        const allFids = [...new Set([
+          ...ethBets.map(b => b.fid),
+          ...byemoneyBets.map(b => b.fid),
+        ].filter(Boolean))];
+
+        // Fetch user info
+        let userMap = new Map<number, { username: string; pfp_url: string }>();
+        if (allFids.length > 0) {
           const { data: users } = await supabase
             .from('prediction_users')
             .select('fid, username, pfp_url')
-            .in('fid', fids);
+            .in('fid', allFids);
           
-          const userMap = new Map<number, { username: string; pfp_url: string }>();
           users?.forEach(u => userMap.set(u.fid, u));
-
-          recentWins = bets.map(bet => {
-            const userData = userMap.get(bet.fid);
-            return {
-              username: userData?.username || 'anon',
-              pfp: userData?.pfp_url || `https://api.dicebear.com/7.x/shapes/svg?seed=${bet.fid}`,
-              amount: bet.tickets * TICKET_PRICE_ETH,
-              direction: bet.direction as 'up' | 'down',
-            };
-          });
         }
+
+        // Format ETH bets
+        const formattedEthBets = ethBets.map(bet => {
+          const userData = userMap.get(bet.fid);
+          return {
+            username: userData?.username || 'anon',
+            pfp: userData?.pfp_url || `https://api.dicebear.com/7.x/shapes/svg?seed=${bet.fid}`,
+            amount: bet.tickets * TICKET_PRICE_ETH,
+            direction: bet.direction as 'up' | 'down',
+            market: 'ETH' as const,
+            timestamp: bet.timestamp,
+          };
+        });
+
+        // Format BYEMONEY bets
+        const formattedByemoneyBets = byemoneyBets.map(bet => {
+          const userData = userMap.get(bet.fid);
+          return {
+            username: userData?.username || 'anon',
+            pfp: userData?.pfp_url || `https://api.dicebear.com/7.x/shapes/svg?seed=${bet.fid}`,
+            amount: bet.tickets * TICKET_PRICE_BYEMONEY,
+            direction: bet.direction as 'up' | 'down',
+            market: 'BYEMONEY' as const,
+            timestamp: bet.timestamp,
+          };
+        });
+
+        // Combine and sort by timestamp (newest first)
+        const allBets = [...formattedEthBets, ...formattedByemoneyBets];
+        allBets.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+
+        // Take top 20 most recent
+        recentWins = allBets.slice(0, 20).map(({ timestamp, ...rest }) => rest);
+
       } catch (error) {
         console.error('Failed to fetch recent activity:', error);
       }
