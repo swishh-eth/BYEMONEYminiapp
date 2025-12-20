@@ -278,18 +278,18 @@ export default function PredictionMarket({
       {/* Loading state */}
       {showLoading ? (
         <div className="relative flex flex-col h-full p-4 pt-20 gap-3 overflow-y-auto scrollbar-hide">
-          {/* Price Card skeleton */}
-          <div className="bg-white/[0.03] border border-white/[0.08] rounded-2xl p-4 h-[140px] animate-pulse" />
-          {/* Timer Card skeleton */}
-          <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-3 h-[52px] animate-pulse" />
-          {/* Pool Card skeleton */}
-          <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-4 h-[100px] animate-pulse" />
-          {/* Position Card skeleton - always shown */}
-          <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-3 h-[88px] animate-pulse" />
-          {/* Pump/Dump buttons skeleton */}
+          {/* Price Card skeleton - matches actual ~124px */}
+          <div className="bg-white/[0.03] border border-white/[0.08] rounded-2xl h-[124px] animate-pulse" />
+          {/* Timer Card skeleton - matches actual ~52px */}
+          <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl h-[52px] animate-pulse" />
+          {/* Pool Card skeleton - matches actual ~88px */}
+          <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl h-[88px] animate-pulse" />
+          {/* Position Card skeleton - matches actual ~88px */}
+          <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl h-[88px] animate-pulse" />
+          {/* Pump/Dump buttons skeleton - matches actual ~116px */}
           <div className="grid grid-cols-2 gap-2">
-            <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-4 h-[116px] animate-pulse" />
-            <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-4 h-[116px] animate-pulse" />
+            <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl h-[116px] animate-pulse" />
+            <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl h-[116px] animate-pulse" />
           </div>
         </div>
       ) : (
