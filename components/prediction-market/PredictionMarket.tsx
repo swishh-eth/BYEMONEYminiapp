@@ -21,7 +21,7 @@ import { useMarketData, useWallet, useUserPosition, useBetting, useUnclaimedMark
 import { calculateByemoneyUsdValue, calculatePoolPercentages } from './utils';
 
 // Components
-import { PriceCard, PoolCard, PositionCard, BettingControls, TimerCard, UnclaimedBanner } from './components';
+import { PriceCard, PoolCard, PositionCard, BettingControls, TimerCard } from './components';
 import { CoinSelectorModal, InfoModal, HistoryModal, ConfirmModal } from './components/modals';
 
 // Styles
@@ -33,7 +33,10 @@ export default function PredictionMarket({
   initialData,
   onDataUpdate,
   onMarketChange,
+  onUnclaimedUpdate,
   selectedMarket = 'ETH',
+  showHistoryModal = false,
+  onHistoryModalClose,
 }: PredictionMarketProps) {
   // Core state
   const [activeMarket, setActiveMarket] = useState<MarketType>(selectedMarket);
@@ -88,6 +91,22 @@ export default function PredictionMarket({
     }
   }, [walletLoading]);
 
+  // Sync history modal with external control
+  useEffect(() => {
+    if (showHistoryModal && !showHistory) {
+      setShowHistory(true);
+    }
+  }, [showHistoryModal]);
+
+  // Notify parent of unclaimed data changes
+  useEffect(() => {
+    onUnclaimedUpdate?.({
+      amount: totalUnclaimed,
+      count: unclaimedMarkets.length,
+      isEthMarket,
+    });
+  }, [totalUnclaimed, unclaimedMarkets.length, isEthMarket, onUnclaimedUpdate]);
+
   // Sync with parent's selected market
   useEffect(() => {
     if (selectedMarket !== activeMarket) {
@@ -99,14 +118,19 @@ export default function PredictionMarket({
 
   // Derived state
   const isEthMarket = activeMarket === 'ETH';
-  const hasValidMarketData = marketData && marketData.id > 0n && marketDataSource === activeMarket && !isMarketSwitching;
+  // For display purposes, use market data even during switch (shows stale data briefly)
+  const hasValidMarketData = marketData && marketData.id > 0n;
+  // For data accuracy checks, verify it matches current market
+  const isDataForCurrentMarket = hasValidMarketData && marketDataSource === activeMarket && !isMarketSwitching;
+  
   const upPool = hasValidMarketData ? Number(formatEther(marketData.upPool)) : 0;
   const downPool = hasValidMarketData ? Number(formatEther(marketData.downPool)) : 0;
   const totalPool = upPool + downPool;
 
-  const isResolved = hasValidMarketData && marketData?.status === 1;
-  const isCancelled = hasValidMarketData && marketData?.status === 2;
+  const isResolved = isDataForCurrentMarket && marketData?.status === 1;
+  const isCancelled = isDataForCurrentMarket && marketData?.status === 2;
   const winningDirection = marketData?.result ?? 0;
+  // Always show cards if we have any market data (prevents jump during switch)
   const hasMarket = hasValidMarketData;
 
   // Show loading skeleton only on initial load, not market switches
@@ -294,14 +318,6 @@ export default function PredictionMarket({
         </div>
       ) : (
         <div ref={mainContainerRef} className="relative flex flex-col h-full p-4 pt-20 gap-3 overflow-y-auto scrollbar-hide">
-          {/* Unclaimed Banner */}
-          <UnclaimedBanner
-            totalUnclaimed={totalUnclaimed}
-            unclaimedCount={unclaimedMarkets.length}
-            isEthMarket={isEthMarket}
-            onClick={() => { setShowHistory(true); playClick(); triggerHaptic('medium'); }}
-          />
-
           {/* Price Card */}
           <PriceCard
             activeMarket={activeMarket}
@@ -455,7 +471,7 @@ export default function PredictionMarket({
         currentPriceUsd={ethPriceUsd}
         txState={txState}
         claimingMarketId={claimingMarketId}
-        onClose={() => setShowHistory(false)}
+        onClose={() => { setShowHistory(false); onHistoryModalClose?.(); }}
         onClaim={handleClaim}
       />
 

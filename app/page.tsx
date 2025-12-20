@@ -66,6 +66,12 @@ interface PredictionData {
   }>;
 }
 
+interface UnclaimedData {
+  amount: number;
+  count: number;
+  isEthMarket: boolean;
+}
+
 export type MarketType = 'ETH' | 'BYEMONEY';
 
 export default function App() {
@@ -75,6 +81,8 @@ export default function App() {
   const [username, setUsername] = useState<string | undefined>();
   const [pfpUrl, setPfpUrl] = useState<string | undefined>();
   const [predictionData, setPredictionData] = useState<PredictionData | undefined>();
+  const [unclaimedData, setUnclaimedData] = useState<UnclaimedData>({ amount: 0, count: 0, isEthMarket: true });
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
 
   const fetchBasicMarketData = useCallback(async () => {
     try {
@@ -191,6 +199,10 @@ export default function App() {
         username={username} 
         pfpUrl={pfpUrl}
         activePageIndex={activeIndex}
+        unclaimedAmount={unclaimedData.amount}
+        unclaimedCount={unclaimedData.count}
+        isEthMarket={unclaimedData.isEthMarket}
+        onClaimClick={() => setShowHistoryModal(true)}
       />
       
       <main className="flex-1 overflow-hidden">
@@ -208,7 +220,10 @@ export default function App() {
             } : undefined}
             onDataUpdate={handlePredictionDataUpdate}
             onMarketChange={setSelectedMarket}
+            onUnclaimedUpdate={setUnclaimedData}
             selectedMarket={selectedMarket}
+            showHistoryModal={showHistoryModal}
+            onHistoryModalClose={() => setShowHistoryModal(false)}
           />
         )}
         {activeIndex === 1 && (

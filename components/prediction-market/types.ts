@@ -89,7 +89,10 @@ export interface PredictionMarketProps {
     }>;
   }) => void;
   onMarketChange?: (market: MarketType) => void;
+  onUnclaimedUpdate?: (data: { amount: number; count: number; isEthMarket: boolean }) => void;
   selectedMarket?: MarketType;
+  showHistoryModal?: boolean;
+  onHistoryModalClose?: () => void;
 }
 
 export interface CoinOption {
