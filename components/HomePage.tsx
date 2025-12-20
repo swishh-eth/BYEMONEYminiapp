@@ -461,42 +461,44 @@ export default function HomePage({ predictionData, onNavigate }: HomePageProps) 
 
       {/* Combined Market + Live Round Tile */}
       <div 
-        className={`relative rounded-2xl overflow-hidden animate-fade-in ${currentMarket.isAd ? '' : 'bg-white/[0.03] border border-white/[0.08]'}`} 
+        className="relative rounded-2xl overflow-hidden animate-fade-in bg-white/[0.03] border border-white/[0.08]" 
         style={{ animationDelay: '75ms', height: '320px' }}
       >
-        {!currentMarket.isAd && (
-          <div className="absolute inset-0 opacity-[0.03]" 
-            style={{
-              backgroundImage: `radial-gradient(circle at 1px 1px, white 1px, transparent 0)`,
-              backgroundSize: '20px 20px',
-            }}
-          />
-        )}
+        <div className="absolute inset-0 opacity-[0.03]" 
+          style={{
+            backgroundImage: `radial-gradient(circle at 1px 1px, white 1px, transparent 0)`,
+            backgroundSize: '20px 20px',
+          }}
+        />
         
         <div 
           className={`relative h-full ${isTransitioning ? 'opacity-0' : 'opacity-100'}`}
           style={{ transition: 'opacity 0.35s ease-in-out' }}
         >
-          {/* Ad Spot - Full bleed image */}
+          {/* Ad Spot */}
           {currentMarket.isAd ? (
-            <>
-              {/* Market indicators - positioned over image */}
-              <div className="absolute top-3 right-3 z-10 flex gap-1">
-                {MARKETS.map((_, i) => (
-                  <div 
-                    key={i} 
-                    className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${
-                      i === currentMarketIndex ? 'bg-white' : 'bg-white/40'
-                    }`}
-                  />
-                ))}
+            <div className="p-3 h-full flex flex-col">
+              {/* Market indicators */}
+              <div className="flex justify-end mb-3">
+                <div className="flex gap-1">
+                  {MARKETS.map((_, i) => (
+                    <div 
+                      key={i} 
+                      className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${
+                        i === currentMarketIndex ? 'bg-white' : 'bg-white/20'
+                      }`}
+                    />
+                  ))}
+                </div>
               </div>
-              <img 
-                src="/adspot.png" 
-                alt="Ad Spot"
-                className="absolute inset-0 w-full h-full object-cover"
-              />
-            </>
+              <div className="flex-1 rounded-xl overflow-hidden">
+                <img 
+                  src="/adspot.png" 
+                  alt="Ad Spot"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            </div>
           ) : (
             <div className="p-3 h-full flex flex-col">
               {/* Market Header */}
