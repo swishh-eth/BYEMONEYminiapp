@@ -986,19 +986,16 @@ export default function PredictionMarket({ userFid, username, initialData, onDat
     }
   }, [walletAddress]);
 
-  // Sync activeMarket with selectedMarket prop
-  useEffect(() => {
-    if (selectedMarket !== activeMarket) {
-      setActiveMarket(selectedMarket);
-      // Reset market data when switching
-      setMarketData(null);
-      setMarketDataSource(selectedMarket); // Reset source to match new market
-      setUserPosition(null);
-      setCurrentPrice(null);
-      setSelectedDirection(null);
-      setTicketCount(1);
-    }
-  }, [selectedMarket, activeMarket]);
+useEffect(() => {
+  if (selectedMarket !== activeMarket) {
+    setActiveMarket(selectedMarket);
+    setMarketDataSource(selectedMarket);
+    setUserPosition(null);
+    setCurrentPrice(null);
+    setSelectedDirection(null);
+    setTicketCount(1);
+  }
+}, [selectedMarket, activeMarket]);
 
   // Refetch when activeMarket changes
   useEffect(() => {
