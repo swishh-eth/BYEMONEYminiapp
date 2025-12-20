@@ -15,6 +15,7 @@ interface PositionCardProps {
   canRefund: boolean;
   txState: TxState;
   onClaim: () => void;
+  onOpenHistory: () => void;
   className?: string;
 }
 
@@ -30,6 +31,7 @@ export function PositionCard({
   canRefund,
   txState,
   onClaim,
+  onOpenHistory,
   className = '',
 }: PositionCardProps) {
   const isEthMarket = activeMarket === 'ETH';
@@ -38,9 +40,7 @@ export function PositionCard({
   const userUpTickets = userPosition ? Number(userPosition.up) : 0;
   const userDownTickets = userPosition ? Number(userPosition.down) : 0;
   const userTotalTickets = userUpTickets + userDownTickets;
-
-  if (userTotalTickets === 0) return null;
-
+  const hasPosition = userTotalTickets > 0;
   const hasBothPositions = userUpTickets > 0 && userDownTickets > 0;
 
   // Calculate potential wins
@@ -59,24 +59,36 @@ export function PositionCard({
   };
 
   return (
-    <div className={`bg-white/[0.03] border border-white/[0.08] rounded-xl p-3 ${className}`}>
+    <button
+      onClick={onOpenHistory}
+      className={`bg-white/[0.03] border border-white/[0.08] rounded-xl p-3 text-left w-full active:scale-[0.99] transition-transform ${className}`}
+    >
       <div className="flex items-center justify-between mb-2">
-        <p className="text-[10px] text-white/40 uppercase tracking-wider">Your Position</p>
+        <div className="flex items-center gap-2">
+          <p className="text-[10px] text-white/40 uppercase tracking-wider">Your Position</p>
+          <span className="text-[8px] text-white/20 px-1.5 py-0.5 rounded bg-white/5">
+            tap for history
+          </span>
+        </div>
         {(canClaim || canRefund) && (
-          <button
-            onClick={onClaim}
-            disabled={txState === 'claiming'}
-            className="bg-gradient-to-r from-white to-white text-black text-[10px] font-bold px-3 py-1 rounded-lg disabled:opacity-50 hover:scale-105 transition-transform"
+          <span
+            onClick={(e) => { e.stopPropagation(); onClaim(); }}
+            className="bg-gradient-to-r from-white to-white text-black text-[10px] font-bold px-3 py-1 rounded-lg disabled:opacity-50 hover:scale-105 transition-transform cursor-pointer"
           >
             {txState === 'claiming' ? '...' : canRefund ? 'Refund' : 'Claim'}
-          </button>
+          </span>
         )}
       </div>
 
-      {hasBothPositions ? (
+      {!hasPosition ? (
+        // No position state
+        <div className="flex items-center justify-center rounded-lg px-3 h-[44px] bg-white/[0.02] border border-dashed border-white/10">
+          <p className="text-sm text-white/30">No active bet this round</p>
+        </div>
+      ) : hasBothPositions ? (
         // Side by side layout for both positions
-        <div className="flex gap-2">
-          <div className="flex-1 flex items-center justify-between bg-white/5 rounded-lg px-2.5 py-2">
+        <div className="flex gap-2 h-[44px]">
+          <div className="flex-1 flex items-center justify-between bg-white/5 rounded-lg px-2.5">
             <div className="flex items-center gap-1.5">
               <div className="w-5 h-5 rounded bg-white/10 flex items-center justify-center">
                 <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
@@ -90,7 +102,7 @@ export function PositionCard({
               <p className="text-xs font-bold text-white">{formatWin(upPotentialWin, true)}</p>
             </div>
           </div>
-          <div className="flex-1 flex items-center justify-between bg-red-500/10 rounded-lg px-2.5 py-2">
+          <div className="flex-1 flex items-center justify-between bg-red-500/10 rounded-lg px-2.5">
             <div className="flex items-center gap-1.5">
               <div className="w-5 h-5 rounded bg-red-500/20 flex items-center justify-center">
                 <svg className="w-3 h-3 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
@@ -107,7 +119,7 @@ export function PositionCard({
         </div>
       ) : (
         // Single position layout
-        <div className={`flex items-center justify-between rounded-lg px-3 py-2 ${userUpTickets > 0 ? 'bg-white/5' : 'bg-red-500/10'}`}>
+        <div className={`flex items-center justify-between rounded-lg px-3 h-[44px] ${userUpTickets > 0 ? 'bg-white/5' : 'bg-red-500/10'}`}>
           <div className="flex items-center gap-2">
             <div className={`w-6 h-6 rounded-lg flex items-center justify-center ${userUpTickets > 0 ? 'bg-white/10' : 'bg-red-500/20'}`}>
               <svg
@@ -133,6 +145,6 @@ export function PositionCard({
           </div>
         </div>
       )}
-    </div>
+    </button>
   );
 }

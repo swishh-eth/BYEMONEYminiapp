@@ -9,7 +9,6 @@ interface TimerCardProps {
   isResolved: boolean;
   isCancelled: boolean;
   onOpenInfo: () => void;
-  onOpenHistory: () => void;
   className?: string;
 }
 
@@ -20,7 +19,6 @@ export function TimerCard({
   isResolved,
   isCancelled,
   onOpenInfo,
-  onOpenHistory,
   className = '',
 }: TimerCardProps) {
   if (!hasMarket || isResolved || isCancelled) {
@@ -30,7 +28,7 @@ export function TimerCard({
           <p className="text-[10px] text-white/40 uppercase tracking-wider">
             {isResolved ? 'Round Ended' : isCancelled ? 'Round Cancelled' : 'No Active Round'}
           </p>
-          <ActionButtons onOpenInfo={onOpenInfo} onOpenHistory={onOpenHistory} />
+          <InfoButton onOpenInfo={onOpenInfo} />
         </div>
       </div>
     );
@@ -54,33 +52,23 @@ export function TimerCard({
             {timeLeft.hours}h {timeLeft.minutes}m {timeLeft.seconds}s
           </p>
         </div>
-        <ActionButtons onOpenInfo={onOpenInfo} onOpenHistory={onOpenHistory} />
+        <InfoButton onOpenInfo={onOpenInfo} />
       </div>
     </div>
   );
 }
 
-function ActionButtons({ onOpenInfo, onOpenHistory }: { onOpenInfo: () => void; onOpenHistory: () => void }) {
+function InfoButton({ onOpenInfo }: { onOpenInfo: () => void }) {
   return (
-    <div className="flex items-center gap-2">
-      <button
-        onClick={(e) => { e.stopPropagation(); onOpenInfo(); }}
-        className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center transition-all active:scale-95"
-      >
-        <svg className="w-4 h-4 text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="12" cy="12" r="10" />
-          <line x1="12" y1="16" x2="12" y2="12" />
-          <circle cx="12" cy="8" r="0.5" fill="currentColor" />
-        </svg>
-      </button>
-      <button
-        onClick={(e) => { e.stopPropagation(); onOpenHistory(); }}
-        className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center transition-all active:scale-95"
-      >
-        <svg className="w-4 h-4 text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-          <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-      </button>
-    </div>
+    <button
+      onClick={(e) => { e.stopPropagation(); onOpenInfo(); }}
+      className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center transition-all active:scale-95"
+    >
+      <svg className="w-4 h-4 text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="10" />
+        <line x1="12" y1="16" x2="12" y2="12" />
+        <circle cx="12" cy="8" r="0.5" fill="currentColor" />
+      </svg>
+    </button>
   );
 }

@@ -45,7 +45,6 @@ export default function PredictionMarket({
   const [ticketSectionClosing, setTicketSectionClosing] = useState(false);
   const [dontShowAgain, setDontShowAgain] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
-  const [hadPosition, setHadPosition] = useState(false);
 
   // Modal state
   const [showCoinSelector, setShowCoinSelector] = useState(false);
@@ -62,14 +61,6 @@ export default function PredictionMarket({
   const { userPosition, isLoading: positionLoading, refetch: refetchPosition } = useUserPosition(walletAddress, marketData?.id, activeMarket);
   const { unclaimedMarkets, history, totalUnclaimed, refetch: refetchUnclaimed } = useUnclaimedMarkets(walletAddress, activeMarket, marketData?.id);
   const { playClick, playSuccess, triggerHaptic } = useSounds(sdk);
-
-  // Track if user had a position (to show skeleton placeholder during loading)
-  useEffect(() => {
-    if (userPosition && !positionLoading) {
-      const hasPos = Number(userPosition.up) > 0 || Number(userPosition.down) > 0;
-      setHadPosition(hasPos);
-    }
-  }, [userPosition, positionLoading]);
 
   const handleSuccess = () => {
     playSuccess();
@@ -293,10 +284,8 @@ export default function PredictionMarket({
           <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-3 h-[52px] animate-pulse" />
           {/* Pool Card skeleton */}
           <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-4 h-[100px] animate-pulse" />
-          {/* Position Card skeleton - show if user previously had a position */}
-          {hadPosition && (
-            <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-3 h-[76px] animate-pulse" />
-          )}
+          {/* Position Card skeleton - always shown */}
+          <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-3 h-[88px] animate-pulse" />
           {/* Pump/Dump buttons skeleton */}
           <div className="grid grid-cols-2 gap-2">
             <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-4 h-[116px] animate-pulse" />
@@ -352,7 +341,6 @@ export default function PredictionMarket({
             isResolved={isResolved}
             isCancelled={isCancelled}
             onOpenInfo={() => { setShowInfo(true); playClick(); triggerHaptic('light'); }}
-            onOpenHistory={() => { setShowHistory(true); playClick(); triggerHaptic('light'); }}
             className={animClass}
           />
 
@@ -372,8 +360,8 @@ export default function PredictionMarket({
             />
           )}
 
-          {/* Position Card - no animation to prevent jump */}
-          {hasMarket && userPosition && (Number(userPosition.up) > 0 || Number(userPosition.down) > 0) && (
+          {/* Position Card - always shown */}
+          {hasMarket && (
             <PositionCard
               activeMarket={activeMarket}
               userPosition={userPosition}
@@ -386,6 +374,8 @@ export default function PredictionMarket({
               canRefund={canRefund}
               txState={txState}
               onClaim={() => handleClaim()}
+              onOpenHistory={() => { setShowHistory(true); playClick(); triggerHaptic('light'); }}
+              className={animClass}
             />
           )}
 
