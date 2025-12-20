@@ -98,15 +98,6 @@ export default function PredictionMarket({
     }
   }, [showHistoryModal]);
 
-  // Notify parent of unclaimed data changes
-  useEffect(() => {
-    onUnclaimedUpdate?.({
-      amount: totalUnclaimed,
-      count: unclaimedMarkets.length,
-      isEthMarket,
-    });
-  }, [totalUnclaimed, unclaimedMarkets.length, isEthMarket, onUnclaimedUpdate]);
-
   // Sync with parent's selected market
   useEffect(() => {
     if (selectedMarket !== activeMarket) {
@@ -118,6 +109,16 @@ export default function PredictionMarket({
 
   // Derived state
   const isEthMarket = activeMarket === 'ETH';
+  
+  // Notify parent of unclaimed data changes
+  useEffect(() => {
+    onUnclaimedUpdate?.({
+      amount: totalUnclaimed,
+      count: unclaimedMarkets.length,
+      isEthMarket,
+    });
+  }, [totalUnclaimed, unclaimedMarkets.length, isEthMarket, onUnclaimedUpdate]);
+
   // For display purposes, use market data even during switch (shows stale data briefly)
   const hasValidMarketData = marketData && marketData.id > 0n;
   // For data accuracy checks, verify it matches current market

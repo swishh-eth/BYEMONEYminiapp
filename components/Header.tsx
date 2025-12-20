@@ -113,31 +113,34 @@ export default function Header({
                 onClick={handleClaimClick}
                 className={`flex items-center gap-2 h-10 px-3 rounded-xl border transition-all duration-500 ease-in-out active:scale-95 ${
                   hasUnclaimed 
-                    ? 'bg-gradient-to-r from-emerald-500/20 to-emerald-600/20 border-emerald-500/30 hover:from-emerald-500/30 hover:to-emerald-600/30' 
+                    ? 'bg-white border-white/80 animate-pulse-subtle' 
                     : 'bg-white/[0.03] border-white/[0.08] hover:bg-white/[0.05]'
                 }`}
               >
                 <div className={`w-5 h-5 rounded-full flex items-center justify-center ${
-                  hasUnclaimed ? 'bg-emerald-500/30' : 'bg-white/10'
+                  hasUnclaimed ? 'bg-black/10' : 'bg-white/10'
                 }`}>
                   <svg 
-                    className={`w-3 h-3 ${hasUnclaimed ? 'text-emerald-400' : 'text-white/30'}`} 
+                    className={`w-3 h-3 ${hasUnclaimed ? 'text-black' : 'text-white/30'}`} 
                     fill="none" 
                     stroke="currentColor" 
                     viewBox="0 0 24 24" 
                     strokeWidth={2.5}
                   >
-                    <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    {hasUnclaimed 
+                      ? <path d="M5 13l4 4L19 7" />
+                      : <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    }
                   </svg>
                 </div>
                 <div className="flex flex-col items-start">
                   <span className={`text-[10px] font-medium leading-none ${
-                    hasUnclaimed ? 'text-emerald-400/70' : 'text-white/30'
+                    hasUnclaimed ? 'text-black/60' : 'text-white/30'
                   }`}>
                     {hasUnclaimed ? 'Claim' : 'Winnings'}
                   </span>
                   <span className={`text-xs font-bold leading-none ${
-                    hasUnclaimed ? 'text-emerald-300' : 'text-white/20'
+                    hasUnclaimed ? 'text-black' : 'text-white/20'
                   }`}>
                     {hasUnclaimed ? formatUnclaimedAmount() : 'None'}
                   </span>
@@ -193,6 +196,16 @@ export default function Header({
           </p>
         </div>
       </div>
+
+      <style jsx>{`
+        @keyframes pulse-subtle {
+          0%, 100% { transform: scale(1); }
+          50% { transform: scale(1.03); }
+        }
+        .animate-pulse-subtle {
+          animation: pulse-subtle 2s ease-in-out infinite;
+        }
+      `}</style>
     </>
   );
 }
