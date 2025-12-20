@@ -176,20 +176,30 @@ export default function PredictionMarket({
 
     if (selectedDirection === direction) {
       setTicketSectionClosing(true);
-      // Scroll to top when closing - delay slightly for content to settle
-      setTimeout(() => {
-        if (mainContainerRef.current) {
-          mainContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-      }, 50);
+      
+      // Scroll to top immediately
+      if (mainContainerRef.current) {
+        mainContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+      
       setTimeout(() => {
         setSelectedDirection(null);
         setTicketSectionClosing(false);
-        // Ensure we're at top after direction is cleared
+      }, 250);
+      
+      // Scroll again after content is removed to ensure we're at top
+      setTimeout(() => {
         if (mainContainerRef.current) {
           mainContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
         }
-      }, 250);
+      }, 300);
+      
+      // Final scroll to guarantee top position
+      setTimeout(() => {
+        if (mainContainerRef.current) {
+          mainContainerRef.current.scrollTop = 0;
+        }
+      }, 600);
     } else if (selectedDirection && selectedDirection !== direction) {
       setSelectedDirection(direction);
     } else {

@@ -82,7 +82,7 @@ const MARKETS = [
   { 
     symbol: 'BYEMONEY', 
     name: '$BYEMONEY', 
-    icon: '/splash.png',
+    icon: '/byemoney.png',
     active: true,
     isAd: false,
   },
@@ -456,38 +456,36 @@ export default function HomePage({ predictionData, onNavigate }: HomePageProps) 
       </div>
 
       {/* Combined Market + Live Round Tile */}
-      <div className="relative bg-white/[0.03] border border-white/[0.08] rounded-2xl p-3 overflow-hidden animate-fade-in" style={{ animationDelay: '75ms' }}>
-        <div className="absolute inset-0 opacity-[0.03]" 
-          style={{
-            backgroundImage: `radial-gradient(circle at 1px 1px, white 1px, transparent 0)`,
-            backgroundSize: '20px 20px',
-          }}
-        />
+      <div className={`relative rounded-2xl overflow-hidden animate-fade-in ${currentMarket.isAd ? '' : 'bg-white/[0.03] border border-white/[0.08] p-3'}`} style={{ animationDelay: '75ms' }}>
+        {!currentMarket.isAd && (
+          <div className="absolute inset-0 opacity-[0.03]" 
+            style={{
+              backgroundImage: `radial-gradient(circle at 1px 1px, white 1px, transparent 0)`,
+              backgroundSize: '20px 20px',
+            }}
+          />
+        )}
         
         <div className={`relative transition-all duration-700 ease-in-out ${isTransitioning ? 'opacity-0 translate-y-2' : 'opacity-100 translate-y-0'}`}>
-          {/* Ad Spot - Full image tile */}
+          {/* Ad Spot - Full bleed image */}
           {currentMarket.isAd ? (
-            <div className="flex flex-col">
-              <div className="flex items-center justify-end mb-3">
-                {/* Market indicators */}
-                <div className="flex gap-1">
-                  {MARKETS.map((_, i) => (
-                    <div 
-                      key={i} 
-                      className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${
-                        i === currentMarketIndex ? 'bg-white' : 'bg-white/20'
-                      }`}
-                    />
-                  ))}
-                </div>
+            <div className="relative">
+              {/* Market indicators - positioned over image */}
+              <div className="absolute top-3 right-3 z-10 flex gap-1">
+                {MARKETS.map((_, i) => (
+                  <div 
+                    key={i} 
+                    className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${
+                      i === currentMarketIndex ? 'bg-white' : 'bg-white/40'
+                    }`}
+                  />
+                ))}
               </div>
-              <div className="relative w-full h-[200px] rounded-xl overflow-hidden">
-                <img 
-                  src="/adspot.png" 
-                  alt="Ad Spot"
-                  className="w-full h-full object-cover"
-                />
-              </div>
+              <img 
+                src="/adspot.png" 
+                alt="Ad Spot"
+                className="w-full h-auto rounded-2xl object-cover"
+              />
             </div>
           ) : (
             <>
