@@ -61,11 +61,13 @@ export function PriceCard({
       <div className="flex items-center justify-between">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <img
-              src={selectedCoin.icon}
-              alt={selectedCoin.symbol}
-              className="w-4 h-4 rounded-full"
-            />
+            <div className="w-5 h-5 rounded-full overflow-hidden bg-white/10 flex items-center justify-center">
+              <img
+                src={selectedCoin.icon}
+                alt={selectedCoin.symbol}
+                className="w-full h-full object-cover scale-125"
+              />
+            </div>
             <p className="text-[10px] text-white/40 uppercase tracking-wider">
               {isEthMarket ? `${selectedCoin.symbol}/USD` : '1M BYEMONEY'}
             </p>

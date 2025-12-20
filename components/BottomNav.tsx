@@ -15,13 +15,10 @@ const Icons: Record<string, (active: boolean) => JSX.Element> = {
     </svg>
   ),
   home: (active) => (
-    <svg className="w-6 h-6" viewBox="0 0 24 24" strokeWidth={active ? 2.5 : 2} strokeLinecap="round" strokeLinejoin="round">
-      <path 
-        d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" 
-        fill={active ? 'currentColor' : 'none'} 
-        stroke="currentColor" 
-      />
-      {!active && <polyline points="9 22 9 12 15 12 15 22" stroke="currentColor" fill="none" />}
+    <svg className="w-6 h-6" viewBox="0 0 24 24" strokeWidth={active ? 2.5 : 2} strokeLinecap="round" strokeLinejoin="round" fill="none" stroke="currentColor">
+      <path d="M3 10.5L12 3l9 7.5" />
+      <path d="M5 10v10a1 1 0 001 1h12a1 1 0 001-1V10" />
+      <path d="M9 21v-6h6v6" />
     </svg>
   ),
   info: (active) => (

@@ -97,7 +97,7 @@ export default function Header({
             {/* Logo Tile - fades out on non-home pages */}
             <div 
               className={`w-10 h-10 rounded-xl flex items-center justify-center overflow-hidden transition-all duration-500 ease-in-out ${
-                isHomePage ? 'opacity-100 scale-100' : 'opacity-0 scale-95 absolute'
+                isHomePage ? 'opacity-100 scale-100' : 'opacity-0 scale-95 absolute pointer-events-none'
               }`}
             >
               <img 
@@ -107,16 +107,17 @@ export default function Header({
               />
             </div>
 
-            {/* Claim Winnings Button - always visible on predictions page */}
-            {isPredictionsPage && (
-              <button
-                onClick={handleClaimClick}
-                className={`flex items-center gap-2 h-10 px-3 rounded-xl border transition-all duration-500 ease-in-out active:scale-95 ${
-                  hasUnclaimed 
-                    ? 'bg-white border-white/80 animate-pulse-subtle' 
-                    : 'bg-white/[0.03] border-white/[0.08] hover:bg-white/[0.05]'
-                }`}
-              >
+            {/* Claim Winnings Button - fades in on predictions page */}
+            <button
+              onClick={handleClaimClick}
+              className={`flex items-center gap-2 h-10 px-3 rounded-xl border transition-all duration-500 ease-in-out active:scale-95 ${
+                isPredictionsPage ? 'opacity-100 scale-100' : 'opacity-0 scale-95 absolute pointer-events-none'
+              } ${
+                hasUnclaimed 
+                  ? 'bg-white border-white/80 animate-pulse-subtle' 
+                  : 'bg-white/[0.03] border-white/[0.08] hover:bg-white/[0.05]'
+              }`}
+            >
                 <div className={`w-5 h-5 rounded-full flex items-center justify-center ${
                   hasUnclaimed ? 'bg-black/10' : 'bg-white/10'
                 }`}>
@@ -146,7 +147,6 @@ export default function Header({
                   </span>
                 </div>
               </button>
-            )}
           </div>
           
           {/* User Profile or Connect */}
