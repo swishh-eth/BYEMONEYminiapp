@@ -1,8 +1,19 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { MarketType, UnclaimedMarket, HistoryItem, TxState } from '../../types';
 import { BASE_TICKET_PRICE_ETH } from '../../constants';
+
+interface ConfettiPiece {
+  id: number;
+  x: number;
+  y: number;
+  rotation: number;
+  scale: number;
+  velocityX: number;
+  velocityY: number;
+  rotationSpeed: number;
+}
 
 interface HistoryModalProps {
   isOpen: boolean;
@@ -31,6 +42,9 @@ export function HistoryModal({
 }: HistoryModalProps) {
   const [mounted, setMounted] = useState(false);
   const [closing, setClosing] = useState(false);
+  const [confetti, setConfetti] = useState<ConfettiPiece[]>([]);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const prevTxState = useRef(txState);
   const isEthMarket = activeMarket === 'ETH';
   const ethPrice = currentPriceUsd > 0 ? currentPriceUsd : 2900;
 
@@ -41,6 +55,55 @@ export function HistoryModal({
       return () => clearTimeout(timer);
     }
   }, [isOpen]);
+
+  // Trigger confetti on claim success
+  useEffect(() => {
+    if (prevTxState.current === 'claiming' && txState === 'success') {
+      triggerConfetti();
+      triggerCelebrationHaptics();
+    }
+    prevTxState.current = txState;
+  }, [txState]);
+
+  const triggerConfetti = () => {
+    const pieces: ConfettiPiece[] = [];
+    const numPieces = 30;
+    
+    for (let i = 0; i < numPieces; i++) {
+      pieces.push({
+        id: i,
+        x: 50 + (Math.random() - 0.5) * 20, // Start near center
+        y: 40 + (Math.random() - 0.5) * 10,
+        rotation: Math.random() * 360,
+        scale: 0.5 + Math.random() * 0.5,
+        velocityX: (Math.random() - 0.5) * 15,
+        velocityY: -8 - Math.random() * 8, // Shoot upward
+        rotationSpeed: (Math.random() - 0.5) * 20,
+      });
+    }
+    
+    setConfetti(pieces);
+    setShowConfetti(true);
+    
+    // Clear confetti after animation
+    setTimeout(() => {
+      setShowConfetti(false);
+      setConfetti([]);
+    }, 2500);
+  };
+
+  const triggerCelebrationHaptics = async () => {
+    try {
+      const { sdk } = await import('@farcaster/miniapp-sdk');
+      // Multiple haptic bursts for celebration
+      sdk.haptics.impactOccurred('heavy');
+      setTimeout(() => sdk.haptics.impactOccurred('medium'), 100);
+      setTimeout(() => sdk.haptics.impactOccurred('heavy'), 200);
+      setTimeout(() => sdk.haptics.notificationOccurred('success'), 350);
+      setTimeout(() => sdk.haptics.impactOccurred('medium'), 500);
+      setTimeout(() => sdk.haptics.impactOccurred('light'), 650);
+    } catch {}
+  };
 
   const handleClose = () => {
     setMounted(false);
@@ -87,9 +150,14 @@ export function HistoryModal({
                     <button
                       onClick={(e) => { e.stopPropagation(); onClaim(m.marketId); }}
                       disabled={claimingMarketId === m.marketId}
-                      className="bg-white hover:bg-white/90 text-black text-[10px] font-bold px-3 py-1.5 rounded-lg transition-all disabled:opacity-50 whitespace-nowrap"
+                      className="bg-white hover:bg-white/90 text-black text-[10px] font-bold rounded-lg transition-colors disabled:opacity-50 flex items-center justify-center"
+                      style={{ width: '60px', height: '32px' }}
                     >
-                      {claimingMarketId === m.marketId ? '...' : 'Claim'}
+                      {claimingMarketId === m.marketId ? (
+                        <div className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" />
+                      ) : (
+                        'Claim'
+                      )}
                     </button>
                   </div>
                 ))}
@@ -152,6 +220,9 @@ export function HistoryModal({
                       </div>
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0">
+                      {item.claimed && item.winnings > 0 && (
+                        <span className="text-[9px] text-green-400/70 font-medium">Claimed</span>
+                      )}
                       {item.status === 0 ? (
                         <span className="text-[10px] text-white font-medium">Active</span>
                       ) : item.status === 2 ? (
@@ -177,6 +248,48 @@ export function HistoryModal({
 
         <p className="text-center text-white/20 text-[10px] mt-3 uppercase tracking-wider">tap anywhere above to close</p>
       </div>
+
+      {/* Confetti */}
+      {showConfetti && (
+        <div className="fixed inset-0 pointer-events-none z-[60] overflow-hidden">
+          {confetti.map((piece) => (
+            <div
+              key={piece.id}
+              className="absolute animate-confetti-fall"
+              style={{
+                left: `${piece.x}%`,
+                top: `${piece.y}%`,
+                transform: `rotate(${piece.rotation}deg) scale(${piece.scale})`,
+                '--velocity-x': piece.velocityX,
+                '--velocity-y': piece.velocityY,
+                '--rotation-speed': piece.rotationSpeed,
+              } as React.CSSProperties}
+            >
+              <img 
+                src="/confetti.png" 
+                alt="" 
+                className="w-6 h-6 object-contain"
+              />
+            </div>
+          ))}
+        </div>
+      )}
+
+      <style jsx>{`
+        @keyframes confetti-fall {
+          0% {
+            transform: translate(0, 0) rotate(0deg);
+            opacity: 1;
+          }
+          100% {
+            transform: translate(calc(var(--velocity-x) * 20px), calc(100vh + var(--velocity-y) * -50px)) rotate(calc(var(--rotation-speed) * 20deg));
+            opacity: 0;
+          }
+        }
+        .animate-confetti-fall {
+          animation: confetti-fall 2.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+        }
+      `}</style>
     </div>
   );
 }

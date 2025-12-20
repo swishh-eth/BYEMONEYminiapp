@@ -151,7 +151,8 @@ export default function PredictionMarket({
 
   const timeRemainingSeconds = timeLeft.hours * 3600 + timeLeft.minutes * 60 + timeLeft.seconds;
   const isLockedByTime = timeRemainingSeconds > 0 && timeRemainingSeconds <= LOCK_PERIOD_SECONDS;
-  const isLocked = hasMarket && !isResolved && !isCancelled && (isLockedByTime || !isBettingOpen);
+  // Only lock during final hour - allow betting in pre-round even when isBettingOpen is false
+  const isLocked = hasMarket && !isResolved && !isCancelled && isLockedByTime;
 
   // Animation class - only animate on first load
   const animClass = hasAnimated ? '' : 'animate-fade-in';
