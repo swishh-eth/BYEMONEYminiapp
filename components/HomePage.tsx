@@ -71,10 +71,10 @@ const MARKETS = [
 
 // Banner images for carousel - cycles through adspot files
 const BANNER_IMAGES = [
-  '/adspot.png',
+  '/adspot1.png',
   '/adspot2.png',
-  '/adspot3.gif',
-  '/adspot4.png',
+  '/adspot3.png',
+  '/adspot4.gif',
 ];
 
 // Haptic feedback helper

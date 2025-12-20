@@ -224,8 +224,8 @@ export default function PredictionMarket({
     if (!selectedDirection) return;
     const success = await executeBuy(selectedDirection, ticketCount, userFid, username, marketData?.id);
     if (success) {
+      // Reset ticket count but keep the box open so user can place more bets
       setTimeout(() => {
-        setSelectedDirection(null);
         setTicketCount(1);
       }, 2500);
     }
