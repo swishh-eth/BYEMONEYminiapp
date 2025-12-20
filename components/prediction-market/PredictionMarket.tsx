@@ -109,8 +109,8 @@ export default function PredictionMarket({
   const winningDirection = marketData?.result ?? 0;
   const hasMarket = hasValidMarketData;
 
-  // Show loading skeleton during market switch or while position is loading
-  const showLoading = !pageReady || isMarketSwitching || (walletAddress && positionLoading && hasValidMarketData);
+  // Show loading skeleton only on initial load, not market switches
+  const showLoading = !pageReady;
 
   const userUpTickets = userPosition ? Number(userPosition.up) : 0;
   const userDownTickets = userPosition ? Number(userPosition.down) : 0;
@@ -418,7 +418,7 @@ export default function PredictionMarket({
           ) : null}
 
           {/* Footer */}
-          <div className="text-center pt-2">
+          <div className="text-center pt-2 pb-4">
             <p className="text-[9px] text-white/30">
               {username ? `@${username} · ` : ''}{isEthMarket ? `${BASE_TICKET_PRICE_ETH} ETH` : '1M BYEMONEY'}/ticket · 5% fee
             </p>
