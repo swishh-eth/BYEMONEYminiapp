@@ -456,7 +456,7 @@ export default function HomePage({ predictionData, onNavigate }: HomePageProps) 
       </div>
 
       {/* Combined Market + Live Round Tile */}
-      <div className="relative bg-white/[0.03] border border-white/[0.08] rounded-2xl overflow-hidden animate-fade-in" style={{ animationDelay: '75ms', minHeight: '320px' }}>
+      <div className={`relative rounded-2xl overflow-hidden animate-fade-in ${currentMarket.isAd ? '' : 'bg-white/[0.03] border border-white/[0.08]'}`} style={{ animationDelay: '75ms', minHeight: '320px' }}>
         {!currentMarket.isAd && (
           <div className="absolute inset-0 opacity-[0.03]" 
             style={{
@@ -484,7 +484,8 @@ export default function HomePage({ predictionData, onNavigate }: HomePageProps) 
               <img 
                 src="/adspot.png" 
                 alt="Ad Spot"
-                className="absolute inset-0 w-full h-full object-cover"
+                className="w-full h-full object-cover rounded-2xl"
+                style={{ minHeight: '320px' }}
               />
             </div>
           ) : (

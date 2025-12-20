@@ -57,6 +57,7 @@ export default function PredictionMarket({
 
   // Refs
   const mainContainerRef = useRef<HTMLDivElement>(null);
+  const topAnchorRef = useRef<HTMLDivElement>(null);
 
   // Hooks
   const { walletAddress, ethBalance, byemoneyBalance, sdk, isLoading: walletLoading, connectWallet, refetchBalance } = useWallet();
@@ -177,14 +178,14 @@ export default function PredictionMarket({
     if (selectedDirection === direction) {
       setTicketSectionClosing(true);
       
-      // First collapse the content, then scroll
+      // First collapse the content
       setTimeout(() => {
         setSelectedDirection(null);
         setTicketSectionClosing(false);
-        // Scroll after content is removed for smoother animation
+        // Scroll after content is fully removed
         setTimeout(() => {
-          if (mainContainerRef.current) {
-            mainContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+          if (topAnchorRef.current) {
+            topAnchorRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
           }
         }, 50);
       }, 200);
@@ -326,6 +327,9 @@ export default function PredictionMarket({
         </div>
       ) : (
         <div ref={mainContainerRef} className="relative flex flex-col h-full p-4 pt-20 gap-3 overflow-y-auto scrollbar-hide">
+          {/* Top anchor for scroll */}
+          <div ref={topAnchorRef} className="absolute top-0 left-0" />
+          
           {/* Price Card */}
           <PriceCard
             activeMarket={activeMarket}
