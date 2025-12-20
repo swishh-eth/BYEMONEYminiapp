@@ -40,7 +40,7 @@ export default function PredictionMarket({
   const [selectedDirection, setSelectedDirection] = useState<Direction | null>(null);
   const [ticketCount, setTicketCount] = useState(1);
   const [showUsdValues, setShowUsdValues] = useState(false);
-  const [pageReady, setPageReady] = useState(!!initialData);
+  const [pageReady, setPageReady] = useState(false);
   const [ticketSectionClosing, setTicketSectionClosing] = useState(false);
   const [dontShowAgain, setDontShowAgain] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
@@ -55,7 +55,7 @@ export default function PredictionMarket({
   const mainContainerRef = useRef<HTMLDivElement>(null);
 
   // Hooks
-  const { walletAddress, ethBalance, byemoneyBalance, sdk, connectWallet, refetchBalance } = useWallet();
+  const { walletAddress, ethBalance, byemoneyBalance, sdk, isLoading: walletLoading, connectWallet, refetchBalance } = useWallet();
   const { marketData, marketDataSource, currentPrice, ethPriceUsd, isBettingOpen, isMarketSwitching, timeLeft, refetch: refetchMarket } = useMarketData(activeMarket, initialData);
   const { userPosition, refetch: refetchPosition } = useUserPosition(walletAddress, marketData?.id, activeMarket);
   const { unclaimedMarkets, history, totalUnclaimed, refetch: refetchUnclaimed } = useUnclaimedMarkets(walletAddress, activeMarket, marketData?.id);
@@ -78,12 +78,12 @@ export default function PredictionMarket({
     if (skipModal) setDontShowAgain(true);
   }, []);
 
-  // Set page ready after SDK init
+  // Set page ready after SDK init and wallet check
   useEffect(() => {
-    if (!initialData) {
-      setTimeout(() => setPageReady(true), 50);
+    if (!walletLoading) {
+      setPageReady(true);
     }
-  }, [initialData]);
+  }, [walletLoading]);
 
   // Sync with parent's selected market
   useEffect(() => {

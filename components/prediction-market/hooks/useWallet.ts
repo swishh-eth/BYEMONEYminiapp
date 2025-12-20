@@ -10,6 +10,7 @@ interface UseWalletReturn {
   ethBalance: string;
   byemoneyBalance: bigint;
   sdk: any;
+  isLoading: boolean;
   connectWallet: () => Promise<void>;
   refetchBalance: () => Promise<void>;
 }
@@ -19,6 +20,7 @@ export function useWallet(): UseWalletReturn {
   const [ethBalance, setEthBalance] = useState<string>('0');
   const [byemoneyBalance, setByemoneyBalance] = useState<bigint>(0n);
   const [sdk, setSdk] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Initialize SDK
   useEffect(() => {
@@ -37,6 +39,8 @@ export function useWallet(): UseWalletReturn {
         } catch {}
       } catch (error) {
         console.log('SDK init error:', error);
+      } finally {
+        setIsLoading(false);
       }
     };
     initSDK();
@@ -87,6 +91,7 @@ export function useWallet(): UseWalletReturn {
     ethBalance,
     byemoneyBalance,
     sdk,
+    isLoading,
     connectWallet,
     refetchBalance: fetchBalance,
   };
