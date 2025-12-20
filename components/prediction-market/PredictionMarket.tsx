@@ -176,19 +176,19 @@ export default function PredictionMarket({
     triggerHaptic('light');
 
     if (selectedDirection === direction) {
+      // Start closing animation AND scroll at the same time
       setTicketSectionClosing(true);
       
-      // First collapse the content
+      // Start scrolling immediately
+      if (topAnchorRef.current) {
+        topAnchorRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+      
+      // After collapse animation completes, remove content
       setTimeout(() => {
         setSelectedDirection(null);
         setTicketSectionClosing(false);
-        // Scroll after content is fully removed
-        setTimeout(() => {
-          if (topAnchorRef.current) {
-            topAnchorRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          }
-        }, 50);
-      }, 200);
+      }, 250);
     } else if (selectedDirection && selectedDirection !== direction) {
       setSelectedDirection(direction);
     } else {

@@ -212,10 +212,14 @@ export default function HomePage({ predictionData, onNavigate }: HomePageProps) 
   useEffect(() => {
     const interval = setInterval(() => {
       setIsTransitioning(true);
+      // Change content at 350ms (halfway through fade out)
       setTimeout(() => {
         setCurrentMarketIndex((prev) => (prev + 1) % MARKETS.length);
+      }, 350);
+      // Fade back in after content has changed
+      setTimeout(() => {
         setIsTransitioning(false);
-      }, 700); // Match the 700ms animation duration
+      }, 400);
     }, 4000);
     return () => clearInterval(interval);
   }, []);
@@ -456,7 +460,10 @@ export default function HomePage({ predictionData, onNavigate }: HomePageProps) 
       </div>
 
       {/* Combined Market + Live Round Tile */}
-      <div className={`relative rounded-2xl overflow-hidden animate-fade-in ${currentMarket.isAd ? '' : 'bg-white/[0.03] border border-white/[0.08]'}`} style={{ animationDelay: '75ms', minHeight: '320px' }}>
+      <div 
+        className={`relative rounded-2xl overflow-hidden animate-fade-in ${currentMarket.isAd ? '' : 'bg-white/[0.03] border border-white/[0.08]'}`} 
+        style={{ animationDelay: '75ms', height: '320px' }}
+      >
         {!currentMarket.isAd && (
           <div className="absolute inset-0 opacity-[0.03]" 
             style={{
@@ -466,10 +473,10 @@ export default function HomePage({ predictionData, onNavigate }: HomePageProps) 
           />
         )}
         
-        <div className={`relative transition-all duration-700 ease-in-out ${isTransitioning ? 'opacity-0' : 'opacity-100'}`} style={{ minHeight: '320px' }}>
+        <div className={`relative h-full transition-opacity duration-350 ease-in-out ${isTransitioning ? 'opacity-0' : 'opacity-100'}`}>
           {/* Ad Spot - Full bleed image */}
           {currentMarket.isAd ? (
-            <div className="absolute inset-0">
+            <>
               {/* Market indicators - positioned over image */}
               <div className="absolute top-3 right-3 z-10 flex gap-1">
                 {MARKETS.map((_, i) => (
@@ -485,11 +492,10 @@ export default function HomePage({ predictionData, onNavigate }: HomePageProps) 
                 src="/adspot.png" 
                 alt="Ad Spot"
                 className="w-full h-full object-cover rounded-2xl"
-                style={{ minHeight: '320px' }}
               />
-            </div>
+            </>
           ) : (
-            <div className="p-3">
+            <div className="p-3 h-full flex flex-col">
               {/* Market Header */}
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-3">
@@ -622,7 +628,7 @@ export default function HomePage({ predictionData, onNavigate }: HomePageProps) 
               {/* CTA Button */}
               <button
                 onClick={handleBetClick}
-                className="w-full py-2.5 rounded-xl font-bold text-sm bg-white text-black transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2"
+                className="w-full py-2.5 rounded-xl font-bold text-sm bg-white text-black transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2 mt-auto"
               >
                 Place Your Bet
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
