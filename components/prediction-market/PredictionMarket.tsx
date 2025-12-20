@@ -41,6 +41,7 @@ export default function PredictionMarket({
   const [ticketCount, setTicketCount] = useState(1);
   const [showUsdValues, setShowUsdValues] = useState(false);
   const [pageReady, setPageReady] = useState(false);
+  const [hasAnimated, setHasAnimated] = useState(false);
   const [ticketSectionClosing, setTicketSectionClosing] = useState(false);
   const [dontShowAgain, setDontShowAgain] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
@@ -82,6 +83,8 @@ export default function PredictionMarket({
   useEffect(() => {
     if (!walletLoading) {
       setPageReady(true);
+      // Mark as animated after first render
+      setTimeout(() => setHasAnimated(true), 500);
     }
   }, [walletLoading]);
 
@@ -101,10 +104,13 @@ export default function PredictionMarket({
   const downPool = hasValidMarketData ? Number(formatEther(marketData.downPool)) : 0;
   const totalPool = upPool + downPool;
 
-  const isResolved = marketData?.status === 1;
-  const isCancelled = marketData?.status === 2;
+  const isResolved = hasValidMarketData && marketData?.status === 1;
+  const isCancelled = hasValidMarketData && marketData?.status === 2;
   const winningDirection = marketData?.result ?? 0;
   const hasMarket = hasValidMarketData;
+
+  // Show loading skeleton during market switch
+  const showLoading = !pageReady || isMarketSwitching;
 
   const userUpTickets = userPosition ? Number(userPosition.up) : 0;
   const userDownTickets = userPosition ? Number(userPosition.down) : 0;
@@ -121,6 +127,9 @@ export default function PredictionMarket({
   const timeRemainingSeconds = timeLeft.hours * 3600 + timeLeft.minutes * 60 + timeLeft.seconds;
   const isLockedByTime = timeRemainingSeconds > 0 && timeRemainingSeconds <= LOCK_PERIOD_SECONDS;
   const isLocked = hasMarket && !isResolved && !isCancelled && (isLockedByTime || !isBettingOpen);
+
+  // Animation class - only animate on first load
+  const animClass = hasAnimated ? '' : 'animate-fade-in';
 
   // Price calculations
   const startPriceUsd = isEthMarket && marketData ? Number(marketData.startPrice) / 1e8 : 0;
@@ -267,7 +276,7 @@ export default function PredictionMarket({
       </div>
 
       {/* Loading state */}
-      {!pageReady ? (
+      {showLoading ? (
         <div className="relative flex flex-col h-full p-4 pt-20 gap-3 overflow-y-auto scrollbar-hide">
           <div className="bg-white/[0.03] border border-white/[0.08] rounded-2xl p-4 h-28 animate-pulse" />
           <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-3 h-12 animate-pulse" />
@@ -297,11 +306,12 @@ export default function PredictionMarket({
             hasMarket={hasMarket}
             isResolved={isResolved}
             onOpenCoinSelector={() => { setShowCoinSelector(true); playClick(); triggerHaptic('light'); }}
+            className={animClass}
           />
 
           {/* Resolved State */}
           {isResolved && (
-            <div className="flex flex-col items-center justify-center py-6 animate-fade-in bg-white/[0.03] border border-white/[0.08] rounded-xl">
+            <div className={`flex flex-col items-center justify-center py-6 bg-white/[0.03] border border-white/[0.08] rounded-xl ${animClass}`}>
               <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${winningDirection === 1 ? 'bg-white/20' : 'bg-red-500/20'} animate-bounce-subtle`}>
                 <svg className={`w-7 h-7 ${winningDirection === 1 ? 'text-white' : 'text-red-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
                   <path d={winningDirection === 1 ? 'M5 15l7-7 7 7' : 'M19 9l-7 7-7-7'} />
@@ -326,6 +336,7 @@ export default function PredictionMarket({
             isCancelled={isCancelled}
             onOpenInfo={() => { setShowInfo(true); playClick(); triggerHaptic('light'); }}
             onOpenHistory={() => { setShowHistory(true); playClick(); triggerHaptic('light'); }}
+            className={animClass}
           />
 
           {/* Pool Card */}
@@ -345,6 +356,7 @@ export default function PredictionMarket({
               ticketCount={ticketCount}
               onToggleUsd={() => { setShowUsdValues(!showUsdValues); playClick(); triggerHaptic('light'); }}
               onClaim={() => handleClaim()}
+              className={animClass}
             />
           )}
 
@@ -352,13 +364,12 @@ export default function PredictionMarket({
           {!walletAddress ? (
             <button
               onClick={() => { connectWallet(); playClick(); triggerHaptic('light'); }}
-              className="w-full py-4 rounded-xl bg-white/10 border border-white/20 font-semibold hover:bg-white/20 transition-all hover:scale-[1.02] active:scale-[0.98] animate-fade-in"
-              style={{ animationDelay: '200ms' }}
+              className={`w-full py-4 rounded-xl bg-white/10 border border-white/20 font-semibold hover:bg-white/20 transition-all hover:scale-[1.02] active:scale-[0.98] ${animClass}`}
             >
               Connect Wallet
             </button>
           ) : isLocked ? (
-            <div className="flex flex-col items-center justify-center py-6 bg-white/[0.03] border border-white/[0.08] rounded-xl animate-fade-in" style={{ animationDelay: '200ms' }}>
+            <div className={`flex flex-col items-center justify-center py-6 bg-white/[0.03] border border-white/[0.08] rounded-xl ${animClass}`}>
               <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center">
                 <svg className="w-7 h-7 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
                   <path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
@@ -383,6 +394,7 @@ export default function PredictionMarket({
               onDirectionClick={handleDirectionClick}
               onTicketChange={(count) => { setTicketCount(count); playClick(); triggerHaptic('light'); }}
               onBuy={handleBuyClick}
+              className={animClass}
             />
           ) : null}
 

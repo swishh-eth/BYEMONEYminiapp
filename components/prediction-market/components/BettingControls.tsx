@@ -20,6 +20,7 @@ interface BettingControlsProps {
   onDirectionClick: (direction: Direction) => void;
   onTicketChange: (count: number) => void;
   onBuy: () => void;
+  className?: string;
 }
 
 export function BettingControls({
@@ -37,6 +38,7 @@ export function BettingControls({
   onDirectionClick,
   onTicketChange,
   onBuy,
+  className = '',
 }: BettingControlsProps) {
   const isEthMarket = activeMarket === 'ETH';
   const tokenSymbol = isEthMarket ? 'ETH' : 'BYEMONEY';
@@ -74,7 +76,7 @@ export function BettingControls({
   const displayDownMultiplier = selectedDirection === 'down' ? realDownMultiplier : previewDownMultiplier;
 
   return (
-    <div className="flex flex-col gap-3 animate-fade-in" style={{ animationDelay: '200ms' }}>
+    <div className={`flex flex-col gap-3 ${className}`}>
       {isNewRound && (
         <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-4 text-center">
           <h3 className="text-lg font-bold text-white mb-1">New Round Starting</h3>

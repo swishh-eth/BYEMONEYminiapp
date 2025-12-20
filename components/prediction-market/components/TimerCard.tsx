@@ -10,6 +10,7 @@ interface TimerCardProps {
   isCancelled: boolean;
   onOpenInfo: () => void;
   onOpenHistory: () => void;
+  className?: string;
 }
 
 export function TimerCard({
@@ -20,10 +21,11 @@ export function TimerCard({
   isCancelled,
   onOpenInfo,
   onOpenHistory,
+  className = '',
 }: TimerCardProps) {
   if (!hasMarket || isResolved || isCancelled) {
     return (
-      <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-3 animate-fade-in" style={{ animationDelay: '100ms' }}>
+      <div className={`bg-white/[0.03] border border-white/[0.08] rounded-xl p-3 ${className}`}>
         <div className="flex items-center justify-between">
           <p className="text-[10px] text-white/40 uppercase tracking-wider">
             {isResolved ? 'Round Ended' : isCancelled ? 'Round Cancelled' : 'No Active Round'}
@@ -35,7 +37,7 @@ export function TimerCard({
   }
 
   return (
-    <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-3 animate-fade-in" style={{ animationDelay: '100ms' }}>
+    <div className={`bg-white/[0.03] border border-white/[0.08] rounded-xl p-3 ${className}`}>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1.5">

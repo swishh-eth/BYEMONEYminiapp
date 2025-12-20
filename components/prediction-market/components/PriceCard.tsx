@@ -13,6 +13,7 @@ interface PriceCardProps {
   hasMarket: boolean;
   isResolved: boolean;
   onOpenCoinSelector: () => void;
+  className?: string;
 }
 
 export function PriceCard({
@@ -24,6 +25,7 @@ export function PriceCard({
   hasMarket,
   isResolved,
   onOpenCoinSelector,
+  className = '',
 }: PriceCardProps) {
   const isEthMarket = activeMarket === 'ETH';
   const selectedCoin = AVAILABLE_COINS.find((c) => c.symbol === activeMarket) || AVAILABLE_COINS[0];
@@ -54,8 +56,7 @@ export function PriceCard({
   return (
     <button
       onClick={onOpenCoinSelector}
-      className="bg-white/[0.03] border border-white/[0.08] rounded-2xl p-4 text-left hover:bg-white/[0.05] transition-all active:scale-[0.99] animate-fade-in w-full"
-      style={{ animationDelay: '50ms' }}
+      className={`bg-white/[0.03] border border-white/[0.08] rounded-2xl p-4 text-left hover:bg-white/[0.05] transition-all active:scale-[0.99] w-full ${className}`}
     >
       <div className="flex items-center justify-between">
         <div>

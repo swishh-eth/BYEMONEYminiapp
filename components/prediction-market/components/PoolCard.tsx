@@ -26,6 +26,7 @@ interface PoolCardProps {
   // For multiplier calculation with selection
   selectedDirection: 'up' | 'down' | null;
   ticketCount: number;
+  className?: string;
 }
 
 export function PoolCard({
@@ -43,6 +44,7 @@ export function PoolCard({
   onClaim,
   selectedDirection,
   ticketCount,
+  className = '',
 }: PoolCardProps) {
   const isEthMarket = activeMarket === 'ETH';
   const totalPool = upPool + downPool;
@@ -77,8 +79,7 @@ export function PoolCard({
   return (
     <button
       onClick={onToggleUsd}
-      className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-4 animate-fade-in text-left w-full active:scale-[0.99] transition-transform"
-      style={{ animationDelay: '150ms' }}
+      className={`bg-white/[0.03] border border-white/[0.08] rounded-xl p-4 text-left w-full active:scale-[0.99] transition-transform ${className}`}
     >
       {/* Header */}
       <div className="flex justify-between items-center mb-3">
