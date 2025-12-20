@@ -45,6 +45,7 @@ export default function PredictionMarket({
   const [ticketSectionClosing, setTicketSectionClosing] = useState(false);
   const [dontShowAgain, setDontShowAgain] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
+  const [hadPosition, setHadPosition] = useState(false);
 
   // Modal state
   const [showCoinSelector, setShowCoinSelector] = useState(false);
@@ -61,6 +62,14 @@ export default function PredictionMarket({
   const { userPosition, isLoading: positionLoading, refetch: refetchPosition } = useUserPosition(walletAddress, marketData?.id, activeMarket);
   const { unclaimedMarkets, history, totalUnclaimed, refetch: refetchUnclaimed } = useUnclaimedMarkets(walletAddress, activeMarket, marketData?.id);
   const { playClick, playSuccess, triggerHaptic } = useSounds(sdk);
+
+  // Track if user had a position (to show skeleton placeholder during loading)
+  useEffect(() => {
+    if (userPosition && !positionLoading) {
+      const hasPos = Number(userPosition.up) > 0 || Number(userPosition.down) > 0;
+      setHadPosition(hasPos);
+    }
+  }, [userPosition, positionLoading]);
 
   const handleSuccess = () => {
     playSuccess();
@@ -278,9 +287,17 @@ export default function PredictionMarket({
       {/* Loading state */}
       {showLoading ? (
         <div className="relative flex flex-col h-full p-4 pt-20 gap-3 overflow-y-auto scrollbar-hide">
+          {/* Price Card skeleton */}
           <div className="bg-white/[0.03] border border-white/[0.08] rounded-2xl p-4 h-28 animate-pulse" />
+          {/* Timer Card skeleton */}
           <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-3 h-12 animate-pulse" />
-          <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-4 h-32 animate-pulse" />
+          {/* Pool Card skeleton */}
+          <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-4 h-24 animate-pulse" />
+          {/* Position Card skeleton - show if user previously had a position */}
+          {hadPosition && (
+            <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-3 h-16 animate-pulse" />
+          )}
+          {/* Pump/Dump buttons skeleton */}
           <div className="grid grid-cols-2 gap-2">
             <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-4 h-28 animate-pulse" />
             <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-4 h-28 animate-pulse" />
