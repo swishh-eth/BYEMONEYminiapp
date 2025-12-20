@@ -456,20 +456,18 @@ export default function HomePage({ predictionData, onNavigate }: HomePageProps) 
       </div>
 
       {/* Combined Market + Live Round Tile */}
-      <div className={`relative rounded-2xl overflow-hidden animate-fade-in ${currentMarket.isAd ? '' : 'bg-white/[0.03] border border-white/[0.08] p-3'}`} style={{ animationDelay: '75ms' }}>
-        {!currentMarket.isAd && (
-          <div className="absolute inset-0 opacity-[0.03]" 
-            style={{
-              backgroundImage: `radial-gradient(circle at 1px 1px, white 1px, transparent 0)`,
-              backgroundSize: '20px 20px',
-            }}
-          />
-        )}
+      <div className="relative bg-white/[0.03] border border-white/[0.08] rounded-2xl overflow-hidden animate-fade-in" style={{ animationDelay: '75ms' }}>
+        <div className="absolute inset-0 opacity-[0.03]" 
+          style={{
+            backgroundImage: `radial-gradient(circle at 1px 1px, white 1px, transparent 0)`,
+            backgroundSize: '20px 20px',
+          }}
+        />
         
-        <div className={`relative transition-all duration-700 ease-in-out ${isTransitioning ? 'opacity-0 translate-y-2' : 'opacity-100 translate-y-0'}`}>
+        <div className={`relative transition-all duration-700 ease-in-out ${isTransitioning ? 'opacity-0' : 'opacity-100'}`}>
           {/* Ad Spot - Full bleed image */}
           {currentMarket.isAd ? (
-            <div className="relative">
+            <div className="relative p-3">
               {/* Market indicators - positioned over image */}
               <div className="absolute top-3 right-3 z-10 flex gap-1">
                 {MARKETS.map((_, i) => (
@@ -484,11 +482,11 @@ export default function HomePage({ predictionData, onNavigate }: HomePageProps) 
               <img 
                 src="/adspot.png" 
                 alt="Ad Spot"
-                className="w-full h-auto rounded-2xl object-cover"
+                className="w-full h-[280px] rounded-xl object-cover"
               />
             </div>
           ) : (
-            <>
+            <div className="p-3">
               {/* Market Header */}
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-3">
@@ -628,7 +626,7 @@ export default function HomePage({ predictionData, onNavigate }: HomePageProps) 
                   <path d="M13 7l5 5m0 0l-5 5m5-5H6" />
                 </svg>
               </button>
-            </>
+            </div>
           )}
         </div>
       </div>
