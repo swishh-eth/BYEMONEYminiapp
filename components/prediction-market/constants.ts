@@ -15,7 +15,7 @@ export const BYEMONEY_PRICE_CALIBRATION = 1;
 
 // Available Markets
 export const AVAILABLE_COINS = [
-  { symbol: 'ETH', name: 'Ethereum', icon: 'https://assets.coingecko.com/coins/images/279/small/ethereum.png', active: true },
+  { symbol: 'ETH', name: 'Ethereum', icon: '/eth.png', active: true },
   { symbol: 'BYEMONEY', name: 'ByeMoney', icon: '/logo.png', active: true },
   { symbol: 'CLANKER', name: 'Clanker', icon: '/clanker.png', active: false },
 ] as const;

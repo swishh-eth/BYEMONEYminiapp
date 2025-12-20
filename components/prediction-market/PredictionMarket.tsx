@@ -288,19 +288,19 @@ export default function PredictionMarket({
       {showLoading ? (
         <div className="relative flex flex-col h-full p-4 pt-20 gap-3 overflow-y-auto scrollbar-hide">
           {/* Price Card skeleton */}
-          <div className="bg-white/[0.03] border border-white/[0.08] rounded-2xl p-4 h-28 animate-pulse" />
+          <div className="bg-white/[0.03] border border-white/[0.08] rounded-2xl p-4 h-[140px] animate-pulse" />
           {/* Timer Card skeleton */}
-          <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-3 h-12 animate-pulse" />
+          <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-3 h-[52px] animate-pulse" />
           {/* Pool Card skeleton */}
-          <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-4 h-24 animate-pulse" />
+          <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-4 h-[100px] animate-pulse" />
           {/* Position Card skeleton - show if user previously had a position */}
           {hadPosition && (
-            <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-3 h-16 animate-pulse" />
+            <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-3 h-[76px] animate-pulse" />
           )}
           {/* Pump/Dump buttons skeleton */}
           <div className="grid grid-cols-2 gap-2">
-            <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-4 h-28 animate-pulse" />
-            <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-4 h-28 animate-pulse" />
+            <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-4 h-[116px] animate-pulse" />
+            <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-4 h-[116px] animate-pulse" />
           </div>
         </div>
       ) : (
