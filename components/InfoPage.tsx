@@ -213,6 +213,19 @@ export default function InfoPage() {
                   </p>
                 </div>
               </div>
+
+              {/* Section 4 - Fee breakdown */}
+              <div className="flex gap-3">
+                <div className="w-6 h-6 rounded-lg bg-white/10 flex items-center justify-center flex-shrink-0">
+                  <span className="text-xs font-bold text-white/70">?</span>
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-white mb-0.5">Fee Breakdown</h3>
+                  <p className="text-[11px] text-white/50 leading-relaxed">
+                    2.5% funds the next round, 2.5% burns <span className="text-white">$BYEMONEY</span> forever.
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -247,11 +260,6 @@ export default function InfoPage() {
         >
           GET $BYEMONEY
         </button>
-        
-        {/* Disclaimer */}
-        <p className="text-[9px] text-white/20 text-center animate-fade-in" style={{ animationDelay: '200ms' }}>
-          DYOR · Crypto is volatile · Only invest what you can afford to lose
-        </p>
       </div>
 
       <style jsx>{`

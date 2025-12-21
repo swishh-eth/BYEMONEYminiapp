@@ -152,9 +152,10 @@ export default function PredictionMarket({
   const canRefund = isCancelled && !hasClaimed && userTotalTickets > 0;
 
   const timeRemainingSeconds = timeLeft.hours * 3600 + timeLeft.minutes * 60 + timeLeft.seconds;
-  const isLockedByTime = timeRemainingSeconds > 0 && timeRemainingSeconds <= LOCK_PERIOD_SECONDS;
-  // Only lock during final hour - allow betting in pre-round even when isBettingOpen is false
-  const isLocked = hasMarket && !isResolved && !isCancelled && isLockedByTime;
+  const isInLockPeriod = timeRemainingSeconds > 0 && timeRemainingSeconds <= LOCK_PERIOD_SECONDS;
+  const isRoundEnded = timeRemainingSeconds === 0 && hasMarket && !isResolved && !isCancelled;
+  // Lock during final hour OR when round has ended (waiting for resolution)
+  const isLocked = (hasMarket && !isResolved && !isCancelled && isInLockPeriod) || isRoundEnded;
 
   // Animation class - only animate on first load
   const animClass = hasAnimated ? '' : 'animate-fade-in';
@@ -422,7 +423,7 @@ export default function PredictionMarket({
                 </svg>
               </div>
               <p className="text-white/50 text-sm mt-3">Betting Locked</p>
-              <p className="text-white/30 text-xs">{isLockedByTime ? 'Final hour - no new bets' : 'Waiting for resolution'}</p>
+              <p className="text-white/30 text-xs">{isInLockPeriod ? 'Final hour - no new bets' : 'Waiting for resolution'}</p>
             </div>
           ) : (!hasMarket || isResolved || isCancelled) || !isLocked ? (
             <BettingControls
