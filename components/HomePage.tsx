@@ -100,6 +100,7 @@ export default function HomePage({ predictionData, onNavigate }: HomePageProps) 
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [betScrollIndex, setBetScrollIndex] = useState(0);
+  const [showBuyOptions, setShowBuyOptions] = useState(false);
   const [showDailyClaim, setShowDailyClaim] = useState(false);
   const [dailyClaimMounted, setDailyClaimMounted] = useState(false);
   const [dailyClaimClosing, setDailyClaimClosing] = useState(false);
@@ -242,6 +243,29 @@ export default function HomePage({ predictionData, onNavigate }: HomePageProps) 
     onNavigate?.(0);
   };
 
+  const handleBuyToken = async (token: 'ETH' | 'BYEMONEY') => {
+    playClick();
+    triggerHaptic('heavy');
+    try {
+      const { sdk } = await import('@farcaster/miniapp-sdk');
+      if (token === 'BYEMONEY') {
+        // BYEMONEY token address
+        await sdk.actions.viewToken({ token: `eip155:8453/erc20:0xA12A532B0B7024e3005DD0174966891B009AE5D9` });
+      } else {
+        // ETH - use native token view or swap
+        await sdk.actions.viewToken({ token: `eip155:8453/erc20:0x4200000000000000000000000000000000000006` }); // WETH on Base
+      }
+    } catch {
+      // Fallback to DexScreener
+      const url = token === 'BYEMONEY' 
+        ? 'https://dexscreener.com/base/0x26d915a941c399b81d6cd47aa5d19beed86662164587b38635455a4dc5edb213'
+        : 'https://dexscreener.com/base/eth';
+      window.open(url, '_blank');
+    }
+    // Hide buy options after selection
+    setTimeout(() => setShowBuyOptions(false), 500);
+  };
+
   return (
     <div className="flex flex-col h-full p-4 pt-20 overflow-y-auto scrollbar-hide">
       {/* Main content area */}
@@ -257,6 +281,53 @@ export default function HomePage({ predictionData, onNavigate }: HomePageProps) 
               className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 ${i === currentBannerIndex ? 'opacity-100' : 'opacity-0'}`}
             />
           ))}
+        </div>
+
+        {/* Chart & Daily Claim / Buy Options Buttons */}
+        <div className="grid grid-cols-2 gap-3 animate-fade-in" style={{ animationDelay: '15ms' }}>
+          {!showBuyOptions ? (
+            <>
+              <button
+                onClick={() => {
+                  playClick();
+                  triggerHaptic('light');
+                  setShowBuyOptions(true);
+                }}
+                className="flex items-center justify-center gap-2 bg-white/[0.03] border border-white/[0.08] rounded-xl p-3 text-xs font-medium text-white/70 transition-all hover:bg-white/[0.06] active:scale-95"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                  <path d="M3 13h4v8H3v-8zm7-10h4v18h-4V3zm7 5h4v13h-4V8z" />
+                </svg>
+                Chart
+              </button>
+              <button
+                onClick={openDailyClaim}
+                className="flex items-center justify-center gap-2 bg-white/[0.03] border border-white/[0.08] rounded-xl p-3 text-xs font-medium text-white/70 transition-all hover:bg-white/[0.06] active:scale-95"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                  <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Daily Claim
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                onClick={() => handleBuyToken('ETH')}
+                className="flex items-center justify-center gap-2 bg-white/[0.03] border border-white/[0.08] rounded-xl p-3 text-xs font-medium text-white/70 transition-all hover:bg-white/[0.06] active:scale-95 animate-fade-in"
+              >
+                <img src="/eth.png" alt="ETH" className="w-4 h-4 rounded-full" />
+                ETH
+              </button>
+              <button
+                onClick={() => handleBuyToken('BYEMONEY')}
+                className="flex items-center justify-center gap-2 bg-white/[0.03] border border-white/[0.08] rounded-xl p-3 text-xs font-medium text-white/70 transition-all hover:bg-white/[0.06] active:scale-95 animate-fade-in"
+              >
+                <img src="/byemoney.png" alt="BYEMONEY" className="w-4 h-4 rounded-full" />
+                BYEMONEY
+              </button>
+            </>
+          )}
         </div>
 
         {/* Recent Bets Tile */}
@@ -477,38 +548,6 @@ export default function HomePage({ predictionData, onNavigate }: HomePageProps) 
               </svg>
             </div>
           </div>
-        </button>
-      </div>
-
-      {/* Bottom Buttons - Chart & Daily Claim */}
-      <div className="grid grid-cols-2 gap-3 pt-3">
-        <button
-          onClick={async () => {
-            playClick();
-            triggerHaptic('light');
-            const chartUrl = 'https://dexscreener.com/base/0x26d915a941c399b81d6cd47aa5d19beed86662164587b38635455a4dc5edb213';
-            try {
-              const { sdk } = await import('@farcaster/miniapp-sdk');
-              await sdk.actions.openUrl({ url: chartUrl });
-            } catch {
-              window.open(chartUrl, '_blank');
-            }
-          }}
-          className="flex items-center justify-center gap-2 bg-white/[0.03] border border-white/[0.08] rounded-xl p-3 text-xs font-medium text-white/70 transition-all hover:bg-white/[0.06] active:scale-95"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-            <path d="M3 13h4v8H3v-8zm7-10h4v18h-4V3zm7 5h4v13h-4V8z" />
-          </svg>
-          Chart
-        </button>
-        <button
-          onClick={openDailyClaim}
-          className="flex items-center justify-center gap-2 bg-white/[0.03] border border-white/[0.08] rounded-xl p-3 text-xs font-medium text-white/70 transition-all hover:bg-white/[0.06] active:scale-95"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-            <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          Daily Claim
         </button>
       </div>
 
