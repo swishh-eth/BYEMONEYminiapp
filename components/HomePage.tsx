@@ -101,6 +101,7 @@ export default function HomePage({ predictionData, onNavigate }: HomePageProps) 
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [betScrollIndex, setBetScrollIndex] = useState(0);
   const [showBuyOptions, setShowBuyOptions] = useState(false);
+  const [buyButtonsTransitioning, setBuyButtonsTransitioning] = useState(false);
   const [showDailyClaim, setShowDailyClaim] = useState(false);
   const [dailyClaimMounted, setDailyClaimMounted] = useState(false);
   const [dailyClaimClosing, setDailyClaimClosing] = useState(false);
@@ -277,17 +278,32 @@ export default function HomePage({ predictionData, onNavigate }: HomePageProps) 
     setTimeout(() => setShowBuyOptions(false), 500);
   };
 
-  // Auto-hide buy options after 10 seconds
+  // Auto-hide buy options after 10 seconds with fade
   useEffect(() => {
     if (!showBuyOptions) return;
     const timeout = setTimeout(() => {
-      setShowBuyOptions(false);
+      setBuyButtonsTransitioning(true);
+      setTimeout(() => {
+        setShowBuyOptions(false);
+        setBuyButtonsTransitioning(false);
+      }, 300);
     }, 10000);
     return () => clearTimeout(timeout);
   }, [showBuyOptions]);
 
+  // Handle showing buy options with fade
+  const handleShowBuyOptions = () => {
+    playClick();
+    triggerHaptic('light');
+    setBuyButtonsTransitioning(true);
+    setTimeout(() => {
+      setShowBuyOptions(true);
+      setBuyButtonsTransitioning(false);
+    }, 300);
+  };
+
   return (
-    <div className="flex flex-col h-full p-4 pt-20 overflow-hidden">
+    <div className="flex flex-col h-full p-4 pt-16 overflow-hidden">
       {/* Main content area */}
       <div className="flex-1 flex flex-col gap-3">
         
@@ -305,14 +321,13 @@ export default function HomePage({ predictionData, onNavigate }: HomePageProps) 
 
         {/* Chart & Daily Claim / Buy Options Buttons */}
         <div className="grid grid-cols-2 gap-3 animate-fade-in" style={{ animationDelay: '15ms' }}>
+          <div 
+            className={`col-span-2 grid grid-cols-2 gap-3 transition-opacity duration-300 ${buyButtonsTransitioning ? 'opacity-0' : 'opacity-100'}`}
+          >
           {!showBuyOptions ? (
             <>
               <button
-                onClick={() => {
-                  playClick();
-                  triggerHaptic('light');
-                  setShowBuyOptions(true);
-                }}
+                onClick={handleShowBuyOptions}
                 className="flex items-center justify-center gap-2 bg-white/[0.03] border border-white/[0.08] rounded-xl p-3 text-xs font-medium text-white/70 transition-all hover:bg-white/[0.06] active:scale-95"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
@@ -334,20 +349,21 @@ export default function HomePage({ predictionData, onNavigate }: HomePageProps) 
             <>
               <button
                 onClick={() => handleBuyToken('ETH')}
-                className="flex items-center justify-center gap-2 bg-white/[0.03] border border-white/[0.08] rounded-xl p-3 text-xs font-medium text-white/70 transition-all hover:bg-white/[0.06] active:scale-95 animate-fade-in"
+                className="flex items-center justify-center gap-2 bg-white/[0.03] border border-white/[0.08] rounded-xl p-3 text-xs font-medium text-white/70 transition-all hover:bg-white/[0.06] active:scale-95"
               >
                 <img src="/eth.png" alt="ETH" className="w-4 h-4 rounded-full" />
                 ETH
               </button>
               <button
                 onClick={() => handleBuyToken('BYEMONEY')}
-                className="flex items-center justify-center gap-2 bg-white/[0.03] border border-white/[0.08] rounded-xl p-3 text-xs font-medium text-white/70 transition-all hover:bg-white/[0.06] active:scale-95 animate-fade-in"
+                className="flex items-center justify-center gap-2 bg-white/[0.03] border border-white/[0.08] rounded-xl p-3 text-xs font-medium text-white/70 transition-all hover:bg-white/[0.06] active:scale-95"
               >
                 <img src="/byemoney.png" alt="BYEMONEY" className="w-4 h-4 rounded-full" />
                 BYEMONEY
               </button>
             </>
           )}
+          </div>
         </div>
 
         {/* Compact Market Tile - Same style as PriceCard */}
