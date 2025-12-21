@@ -161,7 +161,7 @@ export function HistoryModal({
             <div className="bg-white/10 border border-white/20 rounded-xl p-3 mb-2">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
-                  <img src="/eth.png" alt="ETH" className="w-4 h-4" />
+                  <img src="/eth.png" alt="ETH" className="w-4 h-4 rounded-full" />
                   <p className="text-[10px] text-white/60 uppercase tracking-wider">ETH Unclaimed</p>
                 </div>
                 <p className="text-sm font-bold text-white">{totalUnclaimedEth.toFixed(4)} ETH</p>
@@ -199,7 +199,7 @@ export function HistoryModal({
             <div className="bg-white/10 border border-white/20 rounded-xl p-3 mb-2">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
-                  <img src="/byemoney.png" alt="BYEMONEY" className="w-4 h-4" />
+                  <img src="/byemoney.png" alt="BYEMONEY" className="w-4 h-4 rounded-full" />
                   <p className="text-[10px] text-white/60 uppercase tracking-wider">BYEMONEY Unclaimed</p>
                 </div>
                 <p className="text-sm font-bold text-white">{totalUnclaimedByemoney.toFixed(1)}M BYE</p>
@@ -238,7 +238,7 @@ export function HistoryModal({
               <p className="text-sm">No betting history yet</p>
             </div>
           ) : (
-            history.slice(0, 10).map((item, index) => {
+            history.slice(0, 20).map((item, index) => {
               const isEthMarket = item.market === 'ETH';
               const betDate = item.timestamp ? new Date(item.timestamp) : null;
               const dayName = betDate ? ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][betDate.getDay()] : '';
@@ -277,7 +277,7 @@ export function HistoryModal({
                           <img 
                             src={isEthMarket ? '/eth.png' : '/byemoney.png'} 
                             alt={item.market} 
-                            className="w-3 h-3"
+                            className="w-3 h-3 rounded-full"
                           />
                           <p className="text-[11px] font-semibold">#{item.marketId}</p>
                           <span className={`text-[8px] px-1 py-0.5 rounded ${item.direction === 'up' ? 'bg-white/10 text-white/70' : 'bg-red-500/20 text-red-400/70'}`}>

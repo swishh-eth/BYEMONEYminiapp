@@ -112,14 +112,15 @@ export default function Header({
     const originX = ((rect.left + rect.width / 2) / window.innerWidth) * 100;
     const originY = ((rect.top + rect.height / 2) / window.innerHeight) * 100;
     
-    // Create confetti pieces
-    const pieces: ConfettiPiece[] = [];
+    // Create confetti pieces with unique batch ID
+    const batchId = Date.now();
+    const newPieces: ConfettiPiece[] = [];
     const numPieces = 20;
     
     for (let i = 0; i < numPieces; i++) {
       const angle = (Math.PI * 2 * i) / numPieces + (Math.random() - 0.5) * 0.5;
-      pieces.push({
-        id: Date.now() + i,
+      newPieces.push({
+        id: batchId + i,
         x: originX,
         y: originY,
         rotation: Math.random() * 360,
@@ -130,12 +131,19 @@ export default function Header({
       });
     }
     
-    setConfetti(pieces);
+    // Add new pieces to existing confetti (accumulate)
+    setConfetti(prev => [...prev, ...newPieces]);
     setShowConfetti(true);
     
+    // Remove only this batch after animation completes
     setTimeout(() => {
-      setShowConfetti(false);
-      setConfetti([]);
+      setConfetti(prev => {
+        const remaining = prev.filter(p => p.id < batchId || p.id >= batchId + numPieces);
+        if (remaining.length === 0) {
+          setShowConfetti(false);
+        }
+        return remaining;
+      });
     }, 1500);
   };
 

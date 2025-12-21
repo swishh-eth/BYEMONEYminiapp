@@ -43,13 +43,9 @@ export function useUnclaimedMarkets(
       // Combine unclaimed markets
       const allUnclaimed = [...ethData.unclaimed, ...byemoneyData.unclaimed];
       
-      // Combine and sort history by marketId descending
+      // Combine and sort history by marketId descending (interleaved, most recent first)
       const allHistory = [...ethData.history, ...byemoneyData.history];
-      allHistory.sort((a, b) => {
-        // Sort by market first (ETH first), then by marketId descending
-        if (a.market !== b.market) return a.market === 'ETH' ? -1 : 1;
-        return b.marketId - a.marketId;
-      });
+      allHistory.sort((a, b) => b.marketId - a.marketId);
 
       setUnclaimedMarkets(allUnclaimed);
       setHistory(allHistory);
