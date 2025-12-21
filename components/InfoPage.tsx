@@ -107,7 +107,7 @@ export default function InfoPage() {
   };
 
   return (
-    <div className="flex flex-col h-full p-4 pt-20 overflow-y-auto scrollbar-hide">
+    <div className="flex flex-col h-full p-4 pt-20 overflow-hidden">
       {/* Main content area */}
       <div className="flex-1 flex flex-col gap-3">
         
@@ -158,31 +158,31 @@ export default function InfoPage() {
           </button>
         </div>
 
-        {/* How It Works Tile - Scrollable */}
-        <div className="relative bg-white/[0.03] border border-white/[0.08] rounded-2xl overflow-hidden animate-fade-in flex-1" style={{ animationDelay: '50ms', minHeight: '280px' }}>
+        {/* How It Works Tile */}
+        <div className="relative bg-white/[0.03] border border-white/[0.08] rounded-2xl overflow-hidden animate-fade-in flex-1" style={{ animationDelay: '50ms' }}>
           <div className="absolute inset-0 opacity-[0.03] pointer-events-none" 
             style={{
               backgroundImage: `radial-gradient(circle at 1px 1px, white 1px, transparent 0)`,
               backgroundSize: '20px 20px',
             }}
           />
-          <div className="relative h-full overflow-y-auto scrollbar-hide p-4">
+          <div className="relative h-full p-4">
             {/* Header */}
-            <div className="flex items-center gap-2 mb-4">
+            <div className="flex items-center gap-2 mb-3">
               <div className="w-1.5 h-1.5 rounded-full bg-white/40" />
               <span className="text-[10px] text-white/40 uppercase tracking-wider">How It Works</span>
             </div>
 
             {/* Content */}
-            <div className="space-y-4">
+            <div className="space-y-3">
               {/* Section 1 */}
               <div className="flex gap-3">
-                <div className="w-6 h-6 rounded-lg bg-white/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <div className="w-6 h-6 rounded-lg bg-white/10 flex items-center justify-center flex-shrink-0">
                   <span className="text-xs font-bold text-white/70">1</span>
                 </div>
                 <div>
-                  <h3 className="text-sm font-semibold text-white mb-1">Predict the Price</h3>
-                  <p className="text-xs text-white/50 leading-relaxed">
+                  <h3 className="text-sm font-semibold text-white mb-0.5">Predict the Price</h3>
+                  <p className="text-[11px] text-white/50 leading-relaxed">
                     Will ETH or BYEMONEY go <span className="text-white">PUMP</span> or <span className="text-red-400">DUMP</span>? Rounds last 24 hours.
                   </p>
                 </div>
@@ -190,52 +190,28 @@ export default function InfoPage() {
 
               {/* Section 2 */}
               <div className="flex gap-3">
-                <div className="w-6 h-6 rounded-lg bg-white/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <div className="w-6 h-6 rounded-lg bg-white/10 flex items-center justify-center flex-shrink-0">
                   <span className="text-xs font-bold text-white/70">2</span>
                 </div>
                 <div>
-                  <h3 className="text-sm font-semibold text-white mb-1">Place Your Bet</h3>
-                  <p className="text-xs text-white/50 leading-relaxed">
-                    Buy tickets: <span className="text-white">0.001 ETH</span> or <span className="text-white">1M BYEMONEY</span> each. Bet on both sides if you want!
+                  <h3 className="text-sm font-semibold text-white mb-0.5">Place Your Bet</h3>
+                  <p className="text-[11px] text-white/50 leading-relaxed">
+                    Buy tickets: <span className="text-white">0.001 ETH</span> or <span className="text-white">1M BYEMONEY</span> each.
                   </p>
                 </div>
               </div>
 
               {/* Section 3 */}
               <div className="flex gap-3">
-                <div className="w-6 h-6 rounded-lg bg-white/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <div className="w-6 h-6 rounded-lg bg-white/10 flex items-center justify-center flex-shrink-0">
                   <span className="text-xs font-bold text-white/70">3</span>
                 </div>
                 <div>
-                  <h3 className="text-sm font-semibold text-white mb-1">Win & Collect</h3>
-                  <p className="text-xs text-white/50 leading-relaxed">
-                    Correct predictions split the losing pool (5% fee). Tap <span className="text-white">Claim</span> in the top-left to collect!
+                  <h3 className="text-sm font-semibold text-white mb-0.5">Win & Collect</h3>
+                  <p className="text-[11px] text-white/50 leading-relaxed">
+                    Winners split the losing pool (5% fee). Tap <span className="text-white">Claim</span> to collect!
                   </p>
                 </div>
-              </div>
-
-              {/* Tips */}
-              <div className="pt-2 border-t border-white/5">
-                <div className="flex items-center gap-2 mb-2">
-                  <svg className="w-3.5 h-3.5 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                    <path d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
-                  <span className="text-[10px] text-white/40 uppercase tracking-wider">Tips</span>
-                </div>
-                <ul className="text-xs text-white/50 space-y-1.5">
-                  <li className="flex items-start gap-2">
-                    <span className="text-white/30">•</span>
-                    <span>Betting closes 1 hour before round ends</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-white/30">•</span>
-                    <span>Underdog bets pay more - check the pool ratio!</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-white/30">•</span>
-                    <span>Tap your profile picture for a surprise 🎉</span>
-                  </li>
-                </ul>
               </div>
             </div>
           </div>
@@ -273,19 +249,12 @@ export default function InfoPage() {
         </button>
         
         {/* Disclaimer */}
-        <p className="text-[9px] text-white/20 text-center py-1 animate-fade-in" style={{ animationDelay: '200ms' }}>
+        <p className="text-[9px] text-white/20 text-center animate-fade-in" style={{ animationDelay: '200ms' }}>
           DYOR · Crypto is volatile · Only invest what you can afford to lose
         </p>
       </div>
 
       <style jsx>{`
-        .scrollbar-hide {
-          -ms-overflow-style: none;
-          scrollbar-width: none;
-        }
-        .scrollbar-hide::-webkit-scrollbar {
-          display: none;
-        }
         @keyframes fade-in {
           from { opacity: 0; transform: translateY(10px); }
           to { opacity: 1; transform: translateY(0); }
