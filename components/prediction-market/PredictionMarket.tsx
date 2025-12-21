@@ -311,18 +311,18 @@ export default function PredictionMarket({
       {/* Loading state */}
       {showLoading ? (
         <div className="relative flex flex-col h-full p-4 pt-20 gap-3 overflow-y-auto scrollbar-hide">
-          {/* Price Card skeleton - matches actual ~124px */}
-          <div className="bg-white/[0.03] border border-white/[0.08] rounded-2xl h-[124px] animate-pulse" />
-          {/* Timer Card skeleton - split into two tiles */}
+          {/* Price Card skeleton - p-4 + content ~140px */}
+          <div className="bg-white/[0.03] border border-white/[0.08] rounded-2xl h-[140px] animate-pulse" />
+          {/* Timer Card skeleton - split into two tiles, p-3 + content ~72px */}
           <div className="flex gap-3">
-            <div className="flex-1 bg-white/[0.03] border border-white/[0.08] rounded-xl h-[60px] animate-pulse" />
-            <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl w-[100px] h-[60px] animate-pulse" />
+            <div className="flex-1 bg-white/[0.03] border border-white/[0.08] rounded-xl h-[72px] animate-pulse" />
+            <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl w-[100px] h-[72px] animate-pulse" />
           </div>
-          {/* Pool Card skeleton - matches actual ~88px */}
-          <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl h-[88px] animate-pulse" />
-          {/* Position Card skeleton - matches actual ~88px */}
-          <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl h-[88px] animate-pulse" />
-          {/* Pump/Dump buttons skeleton - matches actual ~116px */}
+          {/* Pool Card skeleton - p-4 + content ~112px */}
+          <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl h-[112px] animate-pulse" />
+          {/* Position Card skeleton - p-3 + content ~100px */}
+          <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl h-[100px] animate-pulse" />
+          {/* Pump/Dump buttons skeleton - p-4 + icon + text + multiplier ~116px */}
           <div className="grid grid-cols-2 gap-2">
             <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl h-[116px] animate-pulse" />
             <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl h-[116px] animate-pulse" />

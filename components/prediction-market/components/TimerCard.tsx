@@ -46,24 +46,43 @@ export function TimerCard({
     );
   }
 
+  // Check if timer is at 0 (resolving state)
+  const isResolving = timeLeft.hours === 0 && timeLeft.minutes === 0 && timeLeft.seconds === 0;
+
   return (
     <>
       <div className={`flex gap-3 ${className}`}>
         {/* Timer tile */}
         <div className="flex-1 bg-white/[0.03] border border-white/[0.08] rounded-xl p-3">
-          <div className="flex items-center gap-1.5 mb-1">
-            {isLocked && (
-              <svg className="w-3 h-3 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                <path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-              </svg>
-            )}
-            <p className="text-[10px] uppercase tracking-wider text-white/40">
-              {isLocked ? 'Locked' : 'Ends In'}
-            </p>
-          </div>
-          <p className="text-xl font-bold">
-            {timeLeft.hours}h {timeLeft.minutes}m {timeLeft.seconds}s
-          </p>
+          {isResolving ? (
+            <>
+              <div className="flex items-center gap-1.5 mb-1">
+                <div className="w-3 h-3 border border-white/20 border-t-white/60 rounded-full animate-spin" />
+                <p className="text-[10px] uppercase tracking-wider text-white/40">
+                  Resolving
+                </p>
+              </div>
+              <p className="text-xl font-bold text-white/50">
+                Please wait...
+              </p>
+            </>
+          ) : (
+            <>
+              <div className="flex items-center gap-1.5 mb-1">
+                {isLocked && (
+                  <svg className="w-3 h-3 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                    <path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                )}
+                <p className="text-[10px] uppercase tracking-wider text-white/40">
+                  {isLocked ? 'Locked' : 'Ends In'}
+                </p>
+              </div>
+              <p className="text-xl font-bold">
+                {timeLeft.hours}h {timeLeft.minutes}m {timeLeft.seconds}s
+              </p>
+            </>
+          )}
         </div>
         {/* Buttons tile */}
         <ActionButtons onOpenInfo={onOpenInfo} onShare={handleShare} />
