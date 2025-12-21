@@ -4,7 +4,6 @@ import { TOKEN, SOCIALS, DEXSCREENER } from '@/lib/constants';
 import { useState, useEffect, useRef } from 'react';
 
 const links = [
-  { id: 'dexscreener', name: 'Chart', url: DEXSCREENER.tokenUrl, icon: 'chart' },
   { id: 'basescan', name: 'Contract', url: SOCIALS.basescan, icon: 'scan' },
   { id: 'farcaster', name: 'Farcaster', url: SOCIALS.farcaster, inApp: true, icon: 'cast' },
   { id: 'telegram', name: 'Telegram', url: SOCIALS.telegram, icon: 'send' },
@@ -220,12 +219,12 @@ export default function InfoPage() {
         </div>
 
         {/* Quick Links */}
-        <div className="grid grid-cols-4 gap-2 animate-fade-in" style={{ animationDelay: '100ms' }}>
+        <div className="grid grid-cols-3 gap-3 animate-fade-in" style={{ animationDelay: '100ms' }}>
           {links.map((link) => (
             <button
               key={link.id}
               onClick={() => handleLinkClick(link)}
-              className="relative flex flex-col items-center justify-center gap-1.5 bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.08] hover:border-white/[0.15] rounded-xl py-3 text-white/40 hover:text-white/70 transition-all active:scale-95 overflow-hidden"
+              className="relative flex flex-col items-center justify-center gap-2 bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.08] hover:border-white/[0.15] rounded-xl py-4 text-white/40 hover:text-white/70 transition-all active:scale-95 overflow-hidden"
             >
               <div className="absolute inset-0 opacity-[0.03]" 
                 style={{
@@ -233,9 +232,9 @@ export default function InfoPage() {
                   backgroundSize: '20px 20px',
                 }}
               />
-              <div className="relative flex flex-col items-center gap-1.5">
+              <div className="relative flex flex-col items-center gap-2">
                 <LinkIcon type={link.icon} />
-                <span className="text-[10px] font-medium">{link.name}</span>
+                <span className="text-[11px] font-medium">{link.name}</span>
               </div>
             </button>
           ))}

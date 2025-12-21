@@ -370,7 +370,7 @@ export default function HomePage({ predictionData, onNavigate }: HomePageProps) 
         <button
           onClick={handleBetClick}
           className="relative bg-white/[0.03] border border-white/[0.08] rounded-2xl p-3 text-left hover:bg-white/[0.05] transition-all active:scale-[0.99] animate-fade-in"
-          style={{ animationDelay: '25ms' }}
+          style={{ animationDelay: '25ms', minHeight: '172px' }}
         >
           <div className="absolute inset-0 opacity-[0.03] rounded-2xl" 
             style={{
@@ -380,12 +380,12 @@ export default function HomePage({ predictionData, onNavigate }: HomePageProps) 
           />
           
           <div 
-            className={`relative ${isTransitioning ? 'opacity-0' : 'opacity-100'}`}
+            className={`relative h-full ${isTransitioning ? 'opacity-0' : 'opacity-100'}`}
             style={{ transition: 'opacity 0.35s ease-in-out' }}
           >
             {/* Loading State */}
             {!dataLoaded ? (
-              <div className="flex flex-col items-center justify-center py-8">
+              <div className="flex items-center justify-center h-full">
                 <div className="w-6 h-6 border-2 border-white/10 border-t-white/40 rounded-full animate-spin" />
               </div>
             ) : (
@@ -482,14 +482,14 @@ export default function HomePage({ predictionData, onNavigate }: HomePageProps) 
         </button>
 
         {/* Recent Bets Tile */}
-        <div className="relative bg-white/[0.03] border border-white/[0.08] rounded-2xl p-3 overflow-hidden animate-fade-in-opacity" style={{ animationDelay: '50ms', minHeight: '140px' }}>
+        <div className="relative bg-white/[0.03] border border-white/[0.08] rounded-2xl p-3 overflow-hidden animate-fade-in-opacity" style={{ animationDelay: '50ms', minHeight: '156px' }}>
           <div className="absolute inset-0 opacity-[0.03]" 
             style={{
               backgroundImage: `radial-gradient(circle at 1px 1px, white 1px, transparent 0)`,
               backgroundSize: '20px 20px',
             }}
           />
-          <div className="relative">
+          <div className="relative h-full flex flex-col">
             <div className="flex items-center gap-2 mb-2">
               <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
               <span className="text-[9px] text-white/40 uppercase tracking-wider">Recent Bets</span>
@@ -497,7 +497,7 @@ export default function HomePage({ predictionData, onNavigate }: HomePageProps) 
 
             {/* Loading State */}
             {!dataLoaded ? (
-              <div className="h-[108px] flex items-center justify-center">
+              <div className="flex-1 flex items-center justify-center">
                 <div className="w-6 h-6 border-2 border-white/10 border-t-white/40 rounded-full animate-spin" />
               </div>
             ) : predictionData?.recentWins && predictionData.recentWins.length > 0 ? (() => {
