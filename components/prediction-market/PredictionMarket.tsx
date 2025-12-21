@@ -425,6 +425,7 @@ export default function PredictionMarket({
                       <path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                     </svg>
                     <span className="font-bold text-sm text-white/30">PUMP</span>
+                    <span className="text-[10px] text-white/20">{isInLockPeriod ? 'Locked' : 'Ended'}</span>
                   </div>
                 </div>
 
@@ -435,13 +436,9 @@ export default function PredictionMarket({
                       <path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                     </svg>
                     <span className="font-bold text-sm text-white/30">DUMP</span>
+                    <span className="text-[10px] text-white/20">{isInLockPeriod ? 'Locked' : 'Ended'}</span>
                   </div>
                 </div>
-              </div>
-              
-              {/* Locked message */}
-              <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-3 text-center">
-                <p className="text-white/40 text-xs">{isInLockPeriod ? 'Final hour - betting locked' : 'Round ended - waiting for resolution'}</p>
               </div>
             </div>
           ) : (!hasMarket || isResolved || isCancelled) || !isLocked ? (
