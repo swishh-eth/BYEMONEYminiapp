@@ -509,11 +509,13 @@ export default function HomePage({ predictionData, onNavigate }: HomePageProps) 
               const scrollOffset = betScrollIndex % betsLength;
               // Start from the middle copy so we have room to scroll both ways
               const baseOffset = betsLength * 2;
+              // Only enable transitions after first render (when scrollOffset > 0)
+              const enableTransitions = betScrollIndex > 0;
               
               return (
-                <div className="relative h-[108px] overflow-hidden" style={{ opacity: 1 }}>
+                <div className="relative h-[108px] overflow-hidden">
                   <div 
-                    className="transition-transform duration-700 ease-in-out"
+                    className={enableTransitions ? "transition-transform duration-700 ease-in-out" : ""}
                     style={{ transform: `translateY(-${(baseOffset + scrollOffset) * 36}px)` }}
                   >
                     {extendedBets.map((bet, i) => {
@@ -537,7 +539,7 @@ export default function HomePage({ predictionData, onNavigate }: HomePageProps) 
                           style={{ 
                             opacity,
                             transform: isMiddle ? 'scale(1.02)' : 'scale(1)',
-                            transition: 'opacity 0.7s ease-in-out, transform 0.7s ease-in-out'
+                            transition: enableTransitions ? 'opacity 0.7s ease-in-out, transform 0.7s ease-in-out' : 'none'
                           }}
                         >
                           <div className="flex items-center gap-2">
