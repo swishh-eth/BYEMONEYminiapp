@@ -64,6 +64,9 @@ export default function InfoPage() {
   const [copied, setCopied] = useState(false);
   const [muted, setMuted] = useState(true);
   const [videoLoaded, setVideoLoaded] = useState(false);
+  const [showHelpModal, setShowHelpModal] = useState(false);
+  const [helpModalMounted, setHelpModalMounted] = useState(false);
+  const [helpModalClosing, setHelpModalClosing] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
@@ -117,6 +120,22 @@ export default function InfoPage() {
       videoRef.current.muted = !videoRef.current.muted;
       setMuted(!muted);
     }
+  };
+
+  const openHelpModal = () => {
+    playClick();
+    triggerHaptic('medium');
+    setShowHelpModal(true);
+    setTimeout(() => setHelpModalMounted(true), 10);
+  };
+
+  const closeHelpModal = () => {
+    setHelpModalClosing(true);
+    setTimeout(() => {
+      setShowHelpModal(false);
+      setHelpModalMounted(false);
+      setHelpModalClosing(false);
+    }, 400);
   };
 
   return (
@@ -188,10 +207,6 @@ export default function InfoPage() {
           <div className="flex-1 min-w-0">
             <h2 className="text-lg font-bold text-white">$BYEMONEY</h2>
             <p className="text-xs text-white/40">Base Network · ERC-20</p>
-          </div>
-          <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-green-500/10 border border-green-500/20">
-            <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
-            <span className="text-[10px] text-green-400 font-medium">LIVE</span>
           </div>
         </div>
 
@@ -281,6 +296,136 @@ export default function InfoPage() {
         </span>
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-black/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
       </button>
+
+      {/* How It Works Button */}
+      <button 
+        onClick={openHelpModal}
+        className="relative overflow-hidden bg-white/[0.03] border border-white/[0.08] hover:bg-white/[0.06] rounded-2xl py-3.5 text-center font-medium text-white/60 hover:text-white/80 transition-all active:scale-[0.98] animate-fade-in"
+        style={{ animationDelay: '175ms' }}
+      >
+        <span className="flex items-center justify-center gap-2">
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+            <path d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          How It Works
+        </span>
+      </button>
+
+      {/* Help Modal */}
+      {showHelpModal && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center" onClick={closeHelpModal}>
+          <div className={`absolute inset-0 bg-black/70 backdrop-blur-xl transition-opacity duration-500 ease-out ${helpModalMounted && !helpModalClosing ? 'opacity-100' : 'opacity-0'}`} />
+          <div 
+            className={`relative w-full max-w-md max-h-[85vh] bg-gradient-to-t from-black via-black/98 to-black/95 rounded-t-3xl pb-8 overflow-hidden transition-all duration-500 ${helpModalMounted && !helpModalClosing ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-full'}`}
+            style={{ transitionTimingFunction: helpModalClosing ? 'ease-in' : 'cubic-bezier(0.22, 1, 0.36, 1)' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Handle bar */}
+            <div className="flex justify-center pt-3 pb-2">
+              <div className="w-10 h-1 rounded-full bg-white/20" />
+            </div>
+
+            <div className="px-5 overflow-y-auto max-h-[calc(85vh-60px)] scrollbar-hide">
+              {/* Header */}
+              <div className="text-center mb-6">
+                <div className="w-14 h-14 mx-auto mb-3 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center">
+                  <svg className="w-7 h-7 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                    <path d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z" />
+                  </svg>
+                </div>
+                <h2 className="text-xl font-bold text-white">How It Works</h2>
+                <p className="text-sm text-white/40 mt-1">Learn how to play predictions</p>
+              </div>
+
+              {/* Sections */}
+              <div className="space-y-4">
+                {/* Section 1: The Game */}
+                <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-4">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center flex-shrink-0">
+                      <span className="text-sm font-bold text-white">1</span>
+                    </div>
+                    <h3 className="font-semibold text-white">The Game</h3>
+                  </div>
+                  <p className="text-sm text-white/60 leading-relaxed">
+                    Predict whether ETH or BYEMONEY price will go <span className="text-white font-medium">PUMP</span> (up) or <span className="text-red-400 font-medium">DUMP</span> (down) by the end of each round. Rounds last 24 hours and reset daily.
+                  </p>
+                </div>
+
+                {/* Section 2: Placing Bets */}
+                <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-4">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center flex-shrink-0">
+                      <span className="text-sm font-bold text-white">2</span>
+                    </div>
+                    <h3 className="font-semibold text-white">Placing Bets</h3>
+                  </div>
+                  <p className="text-sm text-white/60 leading-relaxed">
+                    Buy tickets to bet on your prediction. ETH market uses <span className="text-white font-medium">0.001 ETH</span> per ticket. BYEMONEY market uses <span className="text-white font-medium">1M BYEMONEY</span> per ticket. You can bet on both directions in the same round!
+                  </p>
+                </div>
+
+                {/* Section 3: Winning */}
+                <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-4">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center flex-shrink-0">
+                      <span className="text-sm font-bold text-white">3</span>
+                    </div>
+                    <h3 className="font-semibold text-white">Winning & Payouts</h3>
+                  </div>
+                  <p className="text-sm text-white/60 leading-relaxed">
+                    If you're right, you win a share of the losing pool! Your payout depends on how many tickets you have vs. other winners. A <span className="text-white font-medium">5% fee</span> is taken from the pool.
+                  </p>
+                </div>
+
+                {/* Section 4: Claiming */}
+                <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-4">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center flex-shrink-0">
+                      <span className="text-sm font-bold text-white">4</span>
+                    </div>
+                    <h3 className="font-semibold text-white">Claiming Winnings</h3>
+                  </div>
+                  <p className="text-sm text-white/60 leading-relaxed">
+                    After a round ends, tap the <span className="text-white font-medium">Claim button</span> in the top-left of the predictions page. Your winnings will be sent directly to your wallet. Don't forget to claim!
+                  </p>
+                </div>
+
+                {/* Section 5: Tips */}
+                <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-4">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center flex-shrink-0">
+                      <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                        <path d="M13 10V3L4 14h7v7l9-11h-7z" />
+                      </svg>
+                    </div>
+                    <h3 className="font-semibold text-white">Pro Tips</h3>
+                  </div>
+                  <ul className="text-sm text-white/60 space-y-2">
+                    <li className="flex items-start gap-2">
+                      <span className="text-white/30 mt-1">•</span>
+                      <span>Betting closes 1 hour before round ends</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-white/30 mt-1">•</span>
+                      <span>Check the pool ratio - underdog bets pay more!</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-white/30 mt-1">•</span>
+                      <span>Tap your profile picture for a surprise 🎉</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="mt-6 text-center">
+                <p className="text-[10px] text-white/30 uppercase tracking-wider">Tap anywhere to close</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       
       {/* Disclaimer */}
       <p className="text-[9px] text-white/20 text-center pb-2 animate-fade-in" style={{ animationDelay: '200ms' }}>
