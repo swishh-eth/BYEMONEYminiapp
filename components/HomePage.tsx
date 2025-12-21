@@ -263,8 +263,8 @@ export default function HomePage({ predictionData, onNavigate }: HomePageProps) 
         // BYEMONEY token address
         await sdk.actions.viewToken({ token: `eip155:8453/erc20:0xA12A532B0B7024b1D01Ae66a3b8cF77366c7dB07` });
       } else {
-        // Native ETH on Base
-        await sdk.actions.viewToken({ token: `eip155:8453/slip44:60` });
+        // Native ETH on Base - use the 0xeeee... address
+        await sdk.actions.viewToken({ token: `eip155:8453/erc20:0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE` });
       }
     } catch {
       // Fallback to DexScreener
@@ -466,7 +466,7 @@ export default function HomePage({ predictionData, onNavigate }: HomePageProps) 
         </button>
 
         {/* Recent Bets Tile */}
-        <div className="relative bg-white/[0.03] border border-white/[0.08] rounded-2xl p-3 overflow-hidden animate-fade-in" style={{ animationDelay: '50ms', minHeight: '140px' }}>
+        <div className="relative bg-white/[0.03] border border-white/[0.08] rounded-2xl p-3 overflow-hidden animate-fade-in-opacity" style={{ animationDelay: '50ms', minHeight: '140px' }}>
           <div className="absolute inset-0 opacity-[0.03]" 
             style={{
               backgroundImage: `radial-gradient(circle at 1px 1px, white 1px, transparent 0)`,
