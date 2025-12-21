@@ -104,6 +104,7 @@ export default function HomePage({ predictionData, onNavigate }: HomePageProps) 
   const [showDailyClaim, setShowDailyClaim] = useState(false);
   const [dailyClaimMounted, setDailyClaimMounted] = useState(false);
   const [dailyClaimClosing, setDailyClaimClosing] = useState(false);
+  const [dataLoaded, setDataLoaded] = useState(false);
   
   // BYEMONEY market data
   const [byemoneyData, setByemoneyData] = useState<{
@@ -114,6 +115,16 @@ export default function HomePage({ predictionData, onNavigate }: HomePageProps) 
     downPool: number;
     priceUsd: number;
   } | null>(null);
+
+  // Check if data is loaded
+  useEffect(() => {
+    const hasEthData = predictionData && predictionData.ethPrice > 0;
+    const hasByemoneyData = byemoneyData && byemoneyData.priceUsd > 0;
+    if (hasEthData || hasByemoneyData) {
+      // Small delay to ensure smooth transition
+      setTimeout(() => setDataLoaded(true), 300);
+    }
+  }, [predictionData, byemoneyData]);
 
   // Fetch BYEMONEY market data
   useEffect(() => {
@@ -250,21 +261,30 @@ export default function HomePage({ predictionData, onNavigate }: HomePageProps) 
       const { sdk } = await import('@farcaster/miniapp-sdk');
       if (token === 'BYEMONEY') {
         // BYEMONEY token address
-        await sdk.actions.viewToken({ token: `eip155:8453/erc20:0xA12A532B0B7024e3005DD0174966891B009AE5D9` });
+        await sdk.actions.viewToken({ token: `eip155:8453/erc20:0xA12A532B0B7024b1D01Ae66a3b8cF77366c7dB07` });
       } else {
-        // ETH - use native token view or swap
-        await sdk.actions.viewToken({ token: `eip155:8453/erc20:0x4200000000000000000000000000000000000006` }); // WETH on Base
+        // Native ETH on Base
+        await sdk.actions.viewToken({ token: `eip155:8453/slip44:60` });
       }
     } catch {
       // Fallback to DexScreener
       const url = token === 'BYEMONEY' 
-        ? 'https://dexscreener.com/base/0x26d915a941c399b81d6cd47aa5d19beed86662164587b38635455a4dc5edb213'
+        ? 'https://dexscreener.com/base/0xA12A532B0B7024b1D01Ae66a3b8cF77366c7dB07'
         : 'https://dexscreener.com/base/eth';
       window.open(url, '_blank');
     }
     // Hide buy options after selection
     setTimeout(() => setShowBuyOptions(false), 500);
   };
+
+  // Auto-hide buy options after 10 seconds
+  useEffect(() => {
+    if (!showBuyOptions) return;
+    const timeout = setTimeout(() => {
+      setShowBuyOptions(false);
+    }, 10000);
+    return () => clearTimeout(timeout);
+  }, [showBuyOptions]);
 
   return (
     <div className="flex flex-col h-full p-4 pt-20 overflow-y-auto scrollbar-hide">
@@ -344,7 +364,12 @@ export default function HomePage({ predictionData, onNavigate }: HomePageProps) 
               <span className="text-[9px] text-white/40 uppercase tracking-wider">Recent Bets</span>
             </div>
 
-            {predictionData?.recentWins && predictionData.recentWins.length > 0 ? (() => {
+            {/* Loading State */}
+            {!dataLoaded ? (
+              <div className="h-[108px] flex items-center justify-center">
+                <div className="w-6 h-6 border-2 border-white/10 border-t-white/40 rounded-full animate-spin" />
+              </div>
+            ) : predictionData?.recentWins && predictionData.recentWins.length > 0 ? (() => {
               const bets = predictionData.recentWins;
               const betsLength = bets.length;
               // Create enough copies for seamless scrolling (5 copies = plenty of buffer)
@@ -461,6 +486,13 @@ export default function HomePage({ predictionData, onNavigate }: HomePageProps) 
             className={`relative ${isTransitioning ? 'opacity-0' : 'opacity-100'}`}
             style={{ transition: 'opacity 0.35s ease-in-out' }}
           >
+            {/* Loading State */}
+            {!dataLoaded ? (
+              <div className="flex flex-col items-center justify-center py-8">
+                <div className="w-6 h-6 border-2 border-white/10 border-t-white/40 rounded-full animate-spin" />
+              </div>
+            ) : (
+              <>
             {/* Header row */}
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
@@ -547,6 +579,8 @@ export default function HomePage({ predictionData, onNavigate }: HomePageProps) 
                 <path d="M13 7l5 5m0 0l-5 5m5-5H6" />
               </svg>
             </div>
+              </>
+            )}
           </div>
         </button>
       </div>
