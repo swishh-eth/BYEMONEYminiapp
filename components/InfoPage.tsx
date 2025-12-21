@@ -96,7 +96,7 @@ export default function InfoPage() {
   };
 
   return (
-    <div className="flex flex-col h-full p-4 pt-16 overflow-hidden">
+    <div className="flex flex-col h-full p-4 pt-18 overflow-hidden">
       {/* Main content area */}
       <div className="flex-1 flex flex-col gap-3">
         
