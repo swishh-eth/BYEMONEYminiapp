@@ -303,7 +303,7 @@ export default function HomePage({ predictionData, onNavigate }: HomePageProps) 
   };
 
   return (
-    <div className="flex flex-col h-full p-4 pt-18 overflow-hidden">
+    <div className="flex flex-col h-full p-4 pt-20 overflow-hidden">
       {/* Main content area */}
       <div className="flex-1 flex flex-col gap-3">
         
