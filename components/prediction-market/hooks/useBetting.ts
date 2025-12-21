@@ -26,8 +26,9 @@ interface UseBettingReturn {
     username?: string,
     marketId?: bigint
   ) => Promise<boolean>;
-  executeClaim: (marketId: number) => Promise<boolean>;
+  executeClaim: (marketId: number, market?: MarketType) => Promise<boolean>;
   claimingMarketId: number | null;
+  claimingMarket: MarketType | null;
 }
 
 export function useBetting(
@@ -39,6 +40,7 @@ export function useBetting(
   const [txState, setTxState] = useState<TxState>('idle');
   const [errorMsg, setErrorMsg] = useState('');
   const [claimingMarketId, setClaimingMarketId] = useState<number | null>(null);
+  const [claimingMarket, setClaimingMarket] = useState<MarketType | null>(null);
 
   const executeBuy = async (
     direction: Direction,
@@ -162,15 +164,17 @@ export function useBetting(
     }
   };
 
-  const executeClaim = async (marketId: number): Promise<boolean> => {
+  const executeClaim = async (marketId: number, market?: MarketType): Promise<boolean> => {
     if (!walletAddress || !sdk) return false;
 
+    const claimMarket = market || activeMarket;
     setClaimingMarketId(marketId);
+    setClaimingMarket(claimMarket);
     setTxState('claiming');
 
     const contractAddress =
-      activeMarket === 'ETH' ? ETH_CONTRACT_ADDRESS : BYEMONEY_CONTRACT_ADDRESS;
-    const contractAbi = activeMarket === 'ETH' ? ETH_CONTRACT_ABI : BYEMONEY_CONTRACT_ABI;
+      claimMarket === 'ETH' ? ETH_CONTRACT_ADDRESS : BYEMONEY_CONTRACT_ADDRESS;
+    const contractAbi = claimMarket === 'ETH' ? ETH_CONTRACT_ABI : BYEMONEY_CONTRACT_ABI;
 
     try {
       const data = encodeFunctionData({
@@ -198,6 +202,7 @@ export function useBetting(
       setTimeout(() => {
         setTxState('idle');
         setClaimingMarketId(null);
+        setClaimingMarket(null);
       }, 2500);
 
       return true;
@@ -208,6 +213,7 @@ export function useBetting(
       setTimeout(() => {
         setTxState('idle');
         setClaimingMarketId(null);
+        setClaimingMarket(null);
       }, 2500);
 
       return false;
@@ -220,6 +226,7 @@ export function useBetting(
     executeBuy,
     executeClaim,
     claimingMarketId,
+    claimingMarket,
   };
 }
 

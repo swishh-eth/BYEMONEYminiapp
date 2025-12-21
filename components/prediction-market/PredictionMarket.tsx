@@ -62,7 +62,7 @@ export default function PredictionMarket({
   const { walletAddress, ethBalance, byemoneyBalance, sdk, isLoading: walletLoading, connectWallet, refetchBalance } = useWallet();
   const { marketData, marketDataSource, currentPrice, ethPriceUsd, isBettingOpen, isMarketSwitching, timeLeft, refetch: refetchMarket } = useMarketData(activeMarket, initialData);
   const { userPosition, isLoading: positionLoading, refetch: refetchPosition } = useUserPosition(walletAddress, marketData?.id, activeMarket);
-  const { unclaimedMarkets, history, totalUnclaimed, refetch: refetchUnclaimed } = useUnclaimedMarkets(walletAddress, activeMarket, marketData?.id);
+  const { unclaimedMarkets, history, totalUnclaimedEth, totalUnclaimedByemoney, refetch: refetchUnclaimed } = useUnclaimedMarkets(walletAddress, activeMarket, marketData?.id);
   const { playClick, playSuccess, triggerHaptic } = useSounds(sdk);
 
   const handleSuccess = () => {
@@ -74,7 +74,7 @@ export default function PredictionMarket({
     refetchUnclaimed();
   };
 
-  const { txState, errorMsg, executeBuy, executeClaim, claimingMarketId } = useBetting(walletAddress, activeMarket, sdk, handleSuccess);
+  const { txState, errorMsg, executeBuy, executeClaim, claimingMarketId, claimingMarket } = useBetting(walletAddress, activeMarket, sdk, handleSuccess);
 
   // Load skip modal preference
   useEffect(() => {
@@ -110,14 +110,16 @@ export default function PredictionMarket({
   // Derived state
   const isEthMarket = activeMarket === 'ETH';
   
-  // Notify parent of unclaimed data changes
+  // Notify parent of unclaimed data changes (show total from both markets)
   useEffect(() => {
+    const hasEthUnclaimed = totalUnclaimedEth > 0;
+    const hasByemoneyUnclaimed = totalUnclaimedByemoney > 0;
     onUnclaimedUpdate?.({
-      amount: totalUnclaimed,
+      amount: hasEthUnclaimed ? totalUnclaimedEth : totalUnclaimedByemoney,
       count: unclaimedMarkets.length,
-      isEthMarket,
+      isEthMarket: hasEthUnclaimed,
     });
-  }, [totalUnclaimed, unclaimedMarkets.length, isEthMarket, onUnclaimedUpdate]);
+  }, [totalUnclaimedEth, totalUnclaimedByemoney, unclaimedMarkets.length, onUnclaimedUpdate]);
 
   // For display purposes, use market data even during switch (shows stale data briefly)
   const hasValidMarketData = marketData && marketData.id > 0n;
@@ -231,10 +233,10 @@ export default function PredictionMarket({
     }
   };
 
-  const handleClaim = async (marketId?: number) => {
+  const handleClaim = async (marketId?: number, market?: MarketType) => {
     const id = marketId ?? (marketData ? Number(marketData.id) : null);
     if (!id) return;
-    const success = await executeClaim(id);
+    const success = await executeClaim(id, market);
     if (success) {
       setShowConfetti(true);
       setTimeout(() => setShowConfetti(false), 3000);
@@ -476,10 +478,12 @@ export default function PredictionMarket({
         activeMarket={activeMarket}
         unclaimedMarkets={unclaimedMarkets}
         history={history}
-        totalUnclaimed={totalUnclaimed}
+        totalUnclaimedEth={totalUnclaimedEth}
+        totalUnclaimedByemoney={totalUnclaimedByemoney}
         currentPriceUsd={ethPriceUsd}
         txState={txState}
         claimingMarketId={claimingMarketId}
+        claimingMarket={claimingMarket}
         onClose={() => { setShowHistory(false); onHistoryModalClose?.(); }}
         onClaim={handleClaim}
       />

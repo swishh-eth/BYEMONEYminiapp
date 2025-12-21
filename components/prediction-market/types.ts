@@ -43,6 +43,7 @@ export interface UnclaimedMarket {
   estimatedWinnings: number;
   upPool: number;
   downPool: number;
+  market: MarketType;
 }
 
 export interface HistoryItem {
@@ -55,6 +56,7 @@ export interface HistoryItem {
   winnings: number;
   timestamp: string;
   priceAtBet: number;
+  market: MarketType;
 }
 
 export interface TimeLeft {

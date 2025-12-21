@@ -17,7 +17,8 @@ import type { MarketType, UnclaimedMarket, HistoryItem } from '../types';
 interface UseUnclaimedMarketsReturn {
   unclaimedMarkets: UnclaimedMarket[];
   history: HistoryItem[];
-  totalUnclaimed: number;
+  totalUnclaimedEth: number;
+  totalUnclaimedByemoney: number;
   refetch: () => Promise<void>;
 }
 
@@ -29,45 +30,63 @@ export function useUnclaimedMarkets(
   const [unclaimedMarkets, setUnclaimedMarkets] = useState<UnclaimedMarket[]>([]);
   const [history, setHistory] = useState<HistoryItem[]>([]);
 
-  const fetchUnclaimedMarkets = useCallback(async () => {
+  const fetchAllUnclaimed = useCallback(async () => {
     if (!walletAddress) return;
 
     try {
-      if (activeMarket === 'BYEMONEY') {
-        await fetchByemoneyUnclaimed(walletAddress, currentMarketId, setUnclaimedMarkets, setHistory);
-        return;
-      }
+      // Fetch BOTH markets in parallel
+      const [ethData, byemoneyData] = await Promise.all([
+        fetchEthUnclaimed(walletAddress),
+        fetchByemoneyUnclaimed(walletAddress, currentMarketId),
+      ]);
 
-      await fetchEthUnclaimed(walletAddress, setUnclaimedMarkets, setHistory);
+      // Combine unclaimed markets
+      const allUnclaimed = [...ethData.unclaimed, ...byemoneyData.unclaimed];
+      
+      // Combine and sort history by marketId descending
+      const allHistory = [...ethData.history, ...byemoneyData.history];
+      allHistory.sort((a, b) => {
+        // Sort by market first (ETH first), then by marketId descending
+        if (a.market !== b.market) return a.market === 'ETH' ? -1 : 1;
+        return b.marketId - a.marketId;
+      });
+
+      setUnclaimedMarkets(allUnclaimed);
+      setHistory(allHistory);
     } catch (error) {
       console.error('Failed to fetch unclaimed:', error);
     }
-  }, [walletAddress, activeMarket, currentMarketId]);
+  }, [walletAddress, currentMarketId]);
 
   useEffect(() => {
-    fetchUnclaimedMarkets();
-  }, [fetchUnclaimedMarkets, currentMarketId]);
+    fetchAllUnclaimed();
+  }, [fetchAllUnclaimed, currentMarketId]);
 
-  const totalUnclaimed = unclaimedMarkets.reduce((sum, m) => sum + m.estimatedWinnings, 0);
+  const totalUnclaimedEth = unclaimedMarkets
+    .filter(m => m.market === 'ETH')
+    .reduce((sum, m) => sum + m.estimatedWinnings, 0);
+  
+  const totalUnclaimedByemoney = unclaimedMarkets
+    .filter(m => m.market === 'BYEMONEY')
+    .reduce((sum, m) => sum + m.estimatedWinnings, 0);
 
   return {
     unclaimedMarkets,
     history,
-    totalUnclaimed,
-    refetch: fetchUnclaimedMarkets,
+    totalUnclaimedEth,
+    totalUnclaimedByemoney,
+    refetch: fetchAllUnclaimed,
   };
 }
 
 async function fetchByemoneyUnclaimed(
   walletAddress: `0x${string}`,
-  currentMarketId: bigint | undefined,
-  setUnclaimedMarkets: (markets: UnclaimedMarket[]) => void,
-  setHistory: (items: HistoryItem[]) => void
-) {
+  currentMarketId: bigint | undefined
+): Promise<{ unclaimed: UnclaimedMarket[]; history: HistoryItem[] }> {
   const unclaimed: UnclaimedMarket[] = [];
   const historyItems: HistoryItem[] = [];
   const currentId = currentMarketId ? Number(currentMarketId) : 2;
-  const maxCheck = Math.max(currentId + 1, 10); // Check up to current + some buffer
+  const maxCheck = Math.max(currentId + 1, 10);
 
   for (let i = 1; i <= maxCheck; i++) {
     try {
@@ -95,24 +114,21 @@ async function fetchByemoneyUnclaimed(
       const downPool = Number(formatEther(market[7] as bigint));
       const totalPool = upPool + downPool;
 
-      // Skip if user has no position in this market
       if (upTickets === 0 && downTickets === 0) continue;
 
-      // Calculate winnings
       let winnings = 0;
-      if (status === 1) { // Resolved
-        if (result === 0) { // Draw/cancelled
+      if (status === 1) {
+        if (result === 0) {
           winnings = upTickets + downTickets;
-        } else if (result === 1 && upTickets > 0) { // Up won
+        } else if (result === 1 && upTickets > 0) {
           winnings = (totalPool * 0.95 / upPool) * upTickets;
-        } else if (result === 2 && downTickets > 0) { // Down won
+        } else if (result === 2 && downTickets > 0) {
           winnings = (totalPool * 0.95 / downPool) * downTickets;
         }
-      } else if (status === 2) { // Cancelled
+      } else if (status === 2) {
         winnings = upTickets + downTickets;
       }
 
-      // Add to history if user has any position
       if (upTickets > 0) {
         const upWinnings = status === 1 && result === 1 
           ? (totalPool * 0.95 / upPool) * upTickets 
@@ -127,6 +143,7 @@ async function fetchByemoneyUnclaimed(
           winnings: upWinnings,
           timestamp: '',
           priceAtBet: 0,
+          market: 'BYEMONEY',
         });
       }
 
@@ -144,10 +161,10 @@ async function fetchByemoneyUnclaimed(
           winnings: downWinnings,
           timestamp: '',
           priceAtBet: 0,
+          market: 'BYEMONEY',
         });
       }
 
-      // Add to unclaimed if has winnings and not claimed
       if (!claimed && winnings > 0 && status !== 0) {
         unclaimed.push({
           marketId: i,
@@ -158,26 +175,22 @@ async function fetchByemoneyUnclaimed(
           estimatedWinnings: winnings,
           upPool,
           downPool,
+          market: 'BYEMONEY',
         });
       }
     } catch (e) {
-      // Market doesn't exist, stop checking
       break;
     }
   }
 
-  // Sort history by market ID descending (newest first)
   historyItems.sort((a, b) => b.marketId - a.marketId);
-  setUnclaimedMarkets(unclaimed);
-  setHistory(historyItems);
+  return { unclaimed, history: historyItems };
 }
 
 async function fetchEthUnclaimed(
-  walletAddress: `0x${string}`,
-  setUnclaimedMarkets: (markets: UnclaimedMarket[]) => void,
-  setHistory: (items: HistoryItem[]) => void
-) {
-  if (!supabase) return;
+  walletAddress: `0x${string}`
+): Promise<{ unclaimed: UnclaimedMarket[]; history: HistoryItem[] }> {
+  if (!supabase) return { unclaimed: [], history: [] };
 
   const { data: bets } = await supabase
     .from('prediction_bets')
@@ -187,9 +200,7 @@ async function fetchEthUnclaimed(
     .limit(50);
 
   if (!bets || bets.length === 0) {
-    setHistory([]);
-    setUnclaimedMarkets([]);
-    return;
+    return { unclaimed: [], history: [] };
   }
 
   const marketIds = [...new Set(bets.map((b) => b.market_id))].slice(0, 5);
@@ -242,6 +253,7 @@ async function fetchEthUnclaimed(
           winnings: upWinnings,
           timestamp: upBets[0]?.timestamp || '',
           priceAtBet: upBets[0]?.price_at_bet || 0,
+          market: 'ETH',
         });
       }
 
@@ -260,6 +272,7 @@ async function fetchEthUnclaimed(
           winnings: downWinnings,
           timestamp: downBets[0]?.timestamp || '',
           priceAtBet: downBets[0]?.price_at_bet || 0,
+          market: 'ETH',
         });
       }
 
@@ -277,6 +290,7 @@ async function fetchEthUnclaimed(
           estimatedWinnings: totalWinnings,
           upPool,
           downPool,
+          market: 'ETH',
         });
       }
     } catch (e) {
@@ -285,6 +299,5 @@ async function fetchEthUnclaimed(
   }
 
   historyItems.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-  setUnclaimedMarkets(unclaimed);
-  setHistory(historyItems);
+  return { unclaimed, history: historyItems };
 }

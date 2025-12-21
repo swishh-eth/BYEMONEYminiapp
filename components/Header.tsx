@@ -1,6 +1,17 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
+
+interface ConfettiPiece {
+  id: number;
+  x: number;
+  y: number;
+  rotation: number;
+  scale: number;
+  angle: number;
+  speed: number;
+  rotationSpeed: number;
+}
 
 interface HeaderProps {
   userFid?: number;
@@ -8,7 +19,6 @@ interface HeaderProps {
   pfpUrl?: string;
   onConnect?: () => void;
   activePageIndex?: number;
-  // New props for unclaimed winnings
   unclaimedAmount?: number;
   unclaimedCount?: number;
   isEthMarket?: boolean;
@@ -30,8 +40,10 @@ export default function Header({
   const [displayName, setDisplayName] = useState<string>(username || '');
   const [isLoading, setIsLoading] = useState(true);
   const [showNoWinningsPopup, setShowNoWinningsPopup] = useState(false);
+  const [confetti, setConfetti] = useState<ConfettiPiece[]>([]);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const pfpRef = useRef<HTMLImageElement>(null);
 
-  // Home page is index 1 (vote=0, home=1, info=2)
   const isHomePage = activePageIndex === 1;
   const isPredictionsPage = activePageIndex === 0;
   const hasUnclaimed = unclaimedCount > 0 && unclaimedAmount > 0;
@@ -80,6 +92,51 @@ export default function Header({
       setShowNoWinningsPopup(true);
       setTimeout(() => setShowNoWinningsPopup(false), 2500);
     }
+  };
+
+  const triggerHaptic = async () => {
+    try {
+      const { sdk } = await import('@farcaster/miniapp-sdk');
+      sdk.haptics.impactOccurred('light');
+    } catch {}
+  };
+
+  const handlePfpClick = () => {
+    if (!pfpRef.current) return;
+    
+    // Trigger haptic
+    triggerHaptic();
+    
+    // Get PFP position for confetti origin
+    const rect = pfpRef.current.getBoundingClientRect();
+    const originX = ((rect.left + rect.width / 2) / window.innerWidth) * 100;
+    const originY = ((rect.top + rect.height / 2) / window.innerHeight) * 100;
+    
+    // Create confetti pieces
+    const pieces: ConfettiPiece[] = [];
+    const numPieces = 20;
+    
+    for (let i = 0; i < numPieces; i++) {
+      const angle = (Math.PI * 2 * i) / numPieces + (Math.random() - 0.5) * 0.5;
+      pieces.push({
+        id: Date.now() + i,
+        x: originX,
+        y: originY,
+        rotation: Math.random() * 360,
+        scale: 0.3 + Math.random() * 0.4,
+        angle,
+        speed: 5 + Math.random() * 8,
+        rotationSpeed: (Math.random() - 0.5) * 25,
+      });
+    }
+    
+    setConfetti(pieces);
+    setShowConfetti(true);
+    
+    setTimeout(() => {
+      setShowConfetti(false);
+      setConfetti([]);
+    }, 1500);
   };
 
   return (
@@ -160,9 +217,11 @@ export default function Header({
                 @{displayName}
               </span>
               <img 
+                ref={pfpRef}
                 src={userPfp || `https://api.dicebear.com/7.x/shapes/svg?seed=${userFid}`}
                 alt={displayName}
-                className="w-8 h-8 rounded-full ring-2 ring-white/20"
+                className="w-8 h-8 rounded-full ring-2 ring-white/20 cursor-pointer active:scale-90 transition-transform"
+                onClick={handlePfpClick}
               />
             </div>
           ) : isLoading ? (
@@ -182,6 +241,40 @@ export default function Header({
           )}
         </div>
       </header>
+
+      {/* PFP Confetti */}
+      {showConfetti && (
+        <div className="fixed inset-0 pointer-events-none z-[100] overflow-hidden">
+          {confetti.map((piece) => (
+            <img
+              key={piece.id}
+              src="/confetti.png"
+              alt=""
+              className="absolute w-5 h-5 object-contain"
+              style={{
+                left: `${piece.x}%`,
+                top: `${piece.y}%`,
+                transform: `rotate(${piece.rotation}deg) scale(${piece.scale})`,
+                animation: `confetti-burst-${piece.id} 1.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards`,
+              }}
+            />
+          ))}
+          <style>
+            {confetti.map((piece) => `
+              @keyframes confetti-burst-${piece.id} {
+                0% {
+                  transform: translate(0, 0) rotate(${piece.rotation}deg) scale(${piece.scale});
+                  opacity: 1;
+                }
+                100% {
+                  transform: translate(${Math.cos(piece.angle) * piece.speed * 12}px, ${Math.sin(piece.angle) * piece.speed * 12 + 150}px) rotate(${piece.rotation + piece.rotationSpeed * 8}deg) scale(${piece.scale * 0.3});
+                  opacity: 0;
+                }
+              }
+            `).join('\n')}
+          </style>
+        </div>
+      )}
 
       {/* No Winnings Popup with Backdrop */}
       <div 
