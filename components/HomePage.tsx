@@ -380,7 +380,7 @@ export default function HomePage({ predictionData, onNavigate }: HomePageProps) 
               const baseOffset = betsLength * 2;
               
               return (
-                <div className="relative h-[108px] overflow-hidden">
+                <div className="relative h-[108px] overflow-hidden animate-fade-in-opacity">
                   <div 
                     className="transition-transform duration-700 ease-in-out"
                     style={{ transform: `translateY(-${(baseOffset + scrollOffset) * 36}px)` }}
@@ -492,7 +492,7 @@ export default function HomePage({ predictionData, onNavigate }: HomePageProps) 
                 <div className="w-6 h-6 border-2 border-white/10 border-t-white/40 rounded-full animate-spin" />
               </div>
             ) : (
-              <>
+              <div className="animate-fade-in-opacity">
             {/* Header row */}
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
@@ -579,7 +579,7 @@ export default function HomePage({ predictionData, onNavigate }: HomePageProps) 
                 <path d="M13 7l5 5m0 0l-5 5m5-5H6" />
               </svg>
             </div>
-              </>
+              </div>
             )}
           </div>
         </button>
@@ -656,6 +656,14 @@ export default function HomePage({ predictionData, onNavigate }: HomePageProps) 
         }
         .animate-fade-in {
           animation: fade-in 0.4s ease-out forwards;
+          opacity: 0;
+        }
+        @keyframes fade-in-opacity {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        .animate-fade-in-opacity {
+          animation: fade-in-opacity 0.4s ease-out forwards;
           opacity: 0;
         }
       `}</style>
