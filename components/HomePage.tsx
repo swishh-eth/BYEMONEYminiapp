@@ -287,7 +287,7 @@ export default function HomePage({ predictionData, onNavigate }: HomePageProps) 
   }, [showBuyOptions]);
 
   return (
-    <div className="flex flex-col h-full p-4 pt-20 overflow-y-auto scrollbar-hide">
+    <div className="flex flex-col h-full p-4 pt-20 overflow-hidden">
       {/* Main content area */}
       <div className="flex-1 flex flex-col gap-3">
         
@@ -350,8 +350,123 @@ export default function HomePage({ predictionData, onNavigate }: HomePageProps) 
           )}
         </div>
 
+        {/* Compact Market Tile - Same style as PriceCard */}
+        <button
+          onClick={handleBetClick}
+          className="relative bg-white/[0.03] border border-white/[0.08] rounded-2xl p-3 text-left hover:bg-white/[0.05] transition-all active:scale-[0.99] animate-fade-in"
+          style={{ animationDelay: '25ms' }}
+        >
+          <div className="absolute inset-0 opacity-[0.03] rounded-2xl" 
+            style={{
+              backgroundImage: `radial-gradient(circle at 1px 1px, white 1px, transparent 0)`,
+              backgroundSize: '20px 20px',
+            }}
+          />
+          
+          <div 
+            className={`relative ${isTransitioning ? 'opacity-0' : 'opacity-100'}`}
+            style={{ transition: 'opacity 0.35s ease-in-out' }}
+          >
+            {/* Loading State */}
+            {!dataLoaded ? (
+              <div className="flex flex-col items-center justify-center py-8">
+                <div className="w-6 h-6 border-2 border-white/10 border-t-white/40 rounded-full animate-spin" />
+              </div>
+            ) : (
+              <>
+            {/* Header row */}
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded-full overflow-hidden bg-white/10">
+                  <img src={currentMarket.icon} alt={currentMarket.symbol} className="w-full h-full object-cover scale-125" />
+                </div>
+                <span className="text-xs text-white/40 uppercase">{currentMarket.symbol}</span>
+                <svg className="w-2 h-2 text-white/30" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}>
+                  <path d="M19 9l-7 7-7-7" />
+                </svg>
+                <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-white/5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
+                  <span className="text-[8px] text-white/40">LIVE</span>
+                </div>
+              </div>
+              <div className="flex gap-1">
+                {MARKETS.map((_, i) => (
+                  <div key={i} className={`w-1.5 h-1.5 rounded-full ${i === currentMarketIndex ? 'bg-white' : 'bg-white/20'}`} />
+                ))}
+              </div>
+            </div>
+
+            {/* Price and Pool row */}
+            <div className="flex items-center justify-between mb-2">
+              <div>
+                <p className="text-2xl font-bold">
+                  {currentMarket.symbol === 'ETH' && predictionData 
+                    ? `$${predictionData.ethPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                    : currentMarket.symbol === 'BYEMONEY' && byemoneyData
+                    ? `$${byemoneyData.priceUsd.toFixed(3)}`
+                    : '$---'
+                  }
+                </p>
+                {/* Time remaining */}
+                <p className="text-[10px] text-white/40">
+                  {(() => {
+                    const seconds = currentMarket.symbol === 'ETH' 
+                      ? predictionData?.timeRemaining 
+                      : byemoneyData?.timeRemaining;
+                    if (!seconds || seconds <= 0) return '0h 0m left';
+                    const hours = Math.floor(seconds / 3600);
+                    const minutes = Math.floor((seconds % 3600) / 60);
+                    return `${hours}h ${minutes}m left`;
+                  })()}
+                </p>
+              </div>
+              <div className="text-right">
+                <p className="text-sm font-bold">
+                  {currentMarket.symbol === 'ETH' 
+                    ? `${predictionData?.totalPool.toFixed(4) || '0'} ETH`
+                    : `${byemoneyData?.totalPool ? (byemoneyData.totalPool >= 1000000 ? `${(byemoneyData.totalPool / 1000000).toFixed(1)}M` : byemoneyData.totalPool >= 1000 ? `${(byemoneyData.totalPool / 1000).toFixed(1)}K` : byemoneyData.totalPool.toFixed(0)) : '0'}`
+                  }
+                </p>
+                <p className="text-[9px] text-white/40">in pool</p>
+              </div>
+            </div>
+
+            {/* Pool Bar */}
+            <div className="mb-3">
+              <div className="relative h-1.5 bg-white/5 rounded-full overflow-hidden">
+                <div className="absolute left-0 top-0 h-full bg-white transition-all duration-700" style={{ width: `${upPercent}%` }} />
+                <div className="absolute right-0 top-0 h-full bg-red-500 transition-all duration-700" style={{ width: `${downPercent}%` }} />
+              </div>
+              <div className="flex justify-between mt-1 text-[10px]">
+                <div className="flex items-center gap-1">
+                  <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}>
+                    <path d="M5 15l7-7 7 7" />
+                  </svg>
+                  <span className="font-medium text-white">{upPercent.toFixed(0)}%</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <span className="font-medium text-red-400">{downPercent.toFixed(0)}%</span>
+                  <svg className="w-2.5 h-2.5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}>
+                    <path d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+
+            {/* Place Bet Button */}
+            <div className="w-full py-2 rounded-xl font-bold text-sm bg-white text-black flex items-center justify-center gap-2">
+              Place Your Bet
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                <path d="M13 7l5 5m0 0l-5 5m5-5H6" />
+              </svg>
+            </div>
+              </>
+            )}
+          </div>
+        </button>
+
         {/* Recent Bets Tile */}
-        <div className="relative bg-white/[0.03] border border-white/[0.08] rounded-2xl p-3 overflow-hidden animate-fade-in" style={{ animationDelay: '25ms', minHeight: '140px' }}>
+        <div className="relative bg-white/[0.03] border border-white/[0.08] rounded-2xl p-3 overflow-hidden animate-fade-in" style={{ animationDelay: '50ms', minHeight: '140px' }}>
           <div className="absolute inset-0 opacity-[0.03]" 
             style={{
               backgroundImage: `radial-gradient(circle at 1px 1px, white 1px, transparent 0)`,
@@ -380,7 +495,7 @@ export default function HomePage({ predictionData, onNavigate }: HomePageProps) 
               const baseOffset = betsLength * 2;
               
               return (
-                <div className="relative h-[108px] overflow-hidden animate-fade-in-opacity">
+                <div className="relative h-[108px] overflow-hidden" style={{ opacity: 1 }}>
                   <div 
                     className="transition-transform duration-700 ease-in-out"
                     style={{ transform: `translateY(-${(baseOffset + scrollOffset) * 36}px)` }}
@@ -468,121 +583,6 @@ export default function HomePage({ predictionData, onNavigate }: HomePageProps) 
             )}
           </div>
         </div>
-
-        {/* Compact Market Tile - Same style as PriceCard */}
-        <button
-          onClick={handleBetClick}
-          className="relative bg-white/[0.03] border border-white/[0.08] rounded-2xl p-3 text-left hover:bg-white/[0.05] transition-all active:scale-[0.99] animate-fade-in"
-          style={{ animationDelay: '50ms' }}
-        >
-          <div className="absolute inset-0 opacity-[0.03] rounded-2xl" 
-            style={{
-              backgroundImage: `radial-gradient(circle at 1px 1px, white 1px, transparent 0)`,
-              backgroundSize: '20px 20px',
-            }}
-          />
-          
-          <div 
-            className={`relative ${isTransitioning ? 'opacity-0' : 'opacity-100'}`}
-            style={{ transition: 'opacity 0.35s ease-in-out' }}
-          >
-            {/* Loading State */}
-            {!dataLoaded ? (
-              <div className="flex flex-col items-center justify-center py-8">
-                <div className="w-6 h-6 border-2 border-white/10 border-t-white/40 rounded-full animate-spin" />
-              </div>
-            ) : (
-              <div className="animate-fade-in-opacity">
-            {/* Header row */}
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded-full overflow-hidden bg-white/10">
-                  <img src={currentMarket.icon} alt={currentMarket.symbol} className="w-full h-full object-cover scale-125" />
-                </div>
-                <span className="text-xs text-white/40 uppercase">{currentMarket.symbol}</span>
-                <svg className="w-2 h-2 text-white/30" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}>
-                  <path d="M19 9l-7 7-7-7" />
-                </svg>
-                <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-white/5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
-                  <span className="text-[8px] text-white/40">LIVE</span>
-                </div>
-              </div>
-              <div className="flex gap-1">
-                {MARKETS.map((_, i) => (
-                  <div key={i} className={`w-1.5 h-1.5 rounded-full ${i === currentMarketIndex ? 'bg-white' : 'bg-white/20'}`} />
-                ))}
-              </div>
-            </div>
-
-            {/* Price and Pool row */}
-            <div className="flex items-center justify-between mb-2">
-              <div>
-                <p className="text-2xl font-bold">
-                  {currentMarket.symbol === 'ETH' && predictionData 
-                    ? `$${predictionData.ethPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-                    : currentMarket.symbol === 'BYEMONEY' && byemoneyData
-                    ? `$${byemoneyData.priceUsd.toFixed(3)}`
-                    : '$---'
-                  }
-                </p>
-                {/* Time remaining */}
-                <p className="text-[10px] text-white/40">
-                  {(() => {
-                    const seconds = currentMarket.symbol === 'ETH' 
-                      ? predictionData?.timeRemaining 
-                      : byemoneyData?.timeRemaining;
-                    if (!seconds || seconds <= 0) return '0h 0m left';
-                    const hours = Math.floor(seconds / 3600);
-                    const minutes = Math.floor((seconds % 3600) / 60);
-                    return `${hours}h ${minutes}m left`;
-                  })()}
-                </p>
-              </div>
-              <div className="text-right">
-                <p className="text-sm font-bold">
-                  {currentMarket.symbol === 'ETH' 
-                    ? `${predictionData?.totalPool.toFixed(4) || '0'} ETH`
-                    : `${byemoneyData?.totalPool ? (byemoneyData.totalPool >= 1000000 ? `${(byemoneyData.totalPool / 1000000).toFixed(1)}M` : byemoneyData.totalPool >= 1000 ? `${(byemoneyData.totalPool / 1000).toFixed(1)}K` : byemoneyData.totalPool.toFixed(0)) : '0'}`
-                  }
-                </p>
-                <p className="text-[9px] text-white/40">in pool</p>
-              </div>
-            </div>
-
-            {/* Pool Bar */}
-            <div className="mb-3">
-              <div className="relative h-1.5 bg-white/5 rounded-full overflow-hidden">
-                <div className="absolute left-0 top-0 h-full bg-white transition-all duration-700" style={{ width: `${upPercent}%` }} />
-                <div className="absolute right-0 top-0 h-full bg-red-500 transition-all duration-700" style={{ width: `${downPercent}%` }} />
-              </div>
-              <div className="flex justify-between mt-1 text-[10px]">
-                <div className="flex items-center gap-1">
-                  <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}>
-                    <path d="M5 15l7-7 7 7" />
-                  </svg>
-                  <span className="font-medium text-white">{upPercent.toFixed(0)}%</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <span className="font-medium text-red-400">{downPercent.toFixed(0)}%</span>
-                  <svg className="w-2.5 h-2.5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}>
-                    <path d="M19 9l-7 7-7-7" />
-                  </svg>
-                </div>
-              </div>
-            </div>
-
-            {/* Place Bet Button */}
-            <div className="w-full py-2 rounded-xl font-bold text-sm bg-white text-black flex items-center justify-center gap-2">
-              Place Your Bet
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                <path d="M13 7l5 5m0 0l-5 5m5-5H6" />
-              </svg>
-            </div>
-              </div>
-            )}
-          </div>
-        </button>
       </div>
 
       {/* Daily Claim Modal */}

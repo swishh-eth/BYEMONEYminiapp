@@ -86,17 +86,6 @@ export default function InfoPage() {
     }
   };
 
-  const handleBuyClick = async () => {
-    playClick();
-    triggerHaptic('heavy');
-    try {
-      const { sdk } = await import('@farcaster/miniapp-sdk');
-      await sdk.actions.viewToken({ token: `eip155:8453/erc20:${TOKEN.address}` });
-    } catch {
-      window.open(DEXSCREENER.tokenUrl, '_blank');
-    }
-  };
-
   const toggleMute = () => {
     playClick();
     triggerHaptic('light');
@@ -251,15 +240,6 @@ export default function InfoPage() {
             </button>
           ))}
         </div>
-        
-        {/* Buy Button */}
-        <button 
-          onClick={handleBuyClick}
-          className="bg-white rounded-2xl py-4 text-center font-bold text-black transition-all hover:scale-[1.02] active:scale-[0.98] animate-fade-in"
-          style={{ animationDelay: '150ms' }}
-        >
-          GET $BYEMONEY
-        </button>
       </div>
 
       <style jsx>{`
