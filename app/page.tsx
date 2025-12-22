@@ -10,7 +10,7 @@ import HomePage from '@/components/HomePage';
 import { PredictionMarket } from '@/components/prediction-market';
 import InfoPage from '@/components/InfoPage';
 
-const ETH_CONTRACT_ADDRESS = '0x0625E29C2A71A834482bFc6b4cc012ACeee62DA4' as const;
+const ETH_CONTRACT_ADDRESS = '0x69035b4a9B45daDa3411a158762Ca30BfADC6045' as const;
 const TICKET_PRICE_ETH = 0.001;
 const TICKET_PRICE_BYEMONEY = 1000000; // 1M BYEMONEY per ticket
 
@@ -82,6 +82,8 @@ export default function App() {
   const [userFid, setUserFid] = useState<number | undefined>();
   const [username, setUsername] = useState<string | undefined>();
   const [pfpUrl, setPfpUrl] = useState<string | undefined>();
+  const [walletAddress, setWalletAddress] = useState<`0x${string}` | null>(null);
+  const [sdk, setSdk] = useState<any>(null);
   const [predictionData, setPredictionData] = useState<PredictionData | undefined>();
   const [unclaimedData, setUnclaimedData] = useState<UnclaimedData>({ amount: 0, count: 0, isEthMarket: true });
   const [showHistoryModal, setShowHistoryModal] = useState(false);
@@ -199,13 +201,27 @@ export default function App() {
   useEffect(() => {
     const initSDK = async () => {
       try {
-        const { sdk } = await import('@farcaster/miniapp-sdk');
-        await sdk.actions.ready();
-        const context = await sdk.context;
+        const { sdk: farcasterSdk } = await import('@farcaster/miniapp-sdk');
+        await farcasterSdk.actions.ready();
+        setSdk(farcasterSdk);
+        
+        const context = await farcasterSdk.context;
         if (context?.user) {
           setUserFid(context.user.fid);
           setUsername(context.user.username);
           setPfpUrl(context.user.pfpUrl);
+        }
+
+        // Get wallet address
+        try {
+          const accounts = await farcasterSdk.wallet.ethProvider.request({
+            method: 'eth_requestAccounts',
+          }) as string[] | null;
+          if (accounts && accounts.length > 0) {
+            setWalletAddress(accounts[0] as `0x${string}`);
+          }
+        } catch (walletError) {
+          console.log('Wallet not connected:', walletError);
         }
       } catch (error) {
         console.log('Running in standalone mode');
@@ -272,6 +288,8 @@ export default function App() {
           <HomePage 
             predictionData={predictionData}
             onNavigate={setActiveIndex}
+            walletAddress={walletAddress}
+            sdk={sdk}
           />
         )}
         {activeIndex === 2 && <InfoPage />}

@@ -76,6 +76,13 @@ const CONTRACT_ABI = [
     inputs: [],
     outputs: [{ name: '', type: 'uint256' }],
   },
+  {
+    name: 'withdrawFees',
+    type: 'function',
+    stateMutability: 'nonpayable',
+    inputs: [],
+    outputs: [],
+  },
 ] as const;
 
 export async function GET(request: Request) {
@@ -284,17 +291,41 @@ export async function GET(request: Request) {
 
     console.log(`[BYEMONEY] New market ${newMarketId} started`);
 
+    // Withdraw accumulated fees to ClaimRewards contract
+    let feesTxHash = null;
+    let feesWithdrawn = '0';
+    try {
+      if (accumulatedFees > 0n) {
+        console.log(`[BYEMONEY] Withdrawing ${formatEther(accumulatedFees)} BYEMONEY in fees...`);
+        
+        feesTxHash = await walletClient.writeContract({
+          chain: base,
+          account,
+          address: CONTRACT_ADDRESS,
+          abi: CONTRACT_ABI,
+          functionName: 'withdrawFees',
+        });
+
+        await publicClient.waitForTransactionReceipt({ hash: feesTxHash, confirmations: 1 });
+        feesWithdrawn = formatEther(accumulatedFees);
+        console.log(`[BYEMONEY] Fees withdrawn: ${feesWithdrawn} BYEMONEY`);
+      }
+    } catch (feeError) {
+      console.log('[BYEMONEY] No fees to withdraw or withdrawal failed:', feeError);
+    }
+
     return NextResponse.json({
       status: 'resolved_and_started',
       resolvedMarketId: id.toString(),
       newMarketId: newMarketId.toString(),
       resolveTxHash: resolveHash,
       startTxHash: startHash,
+      feesTxHash,
+      feesWithdrawn: feesWithdrawn + ' BYEMONEY',
       direction,
       upPool: formatEther(upPool) + ' BYEMONEY',
       downPool: formatEther(downPool) + ' BYEMONEY',
       seedPoolRemaining: formatEther(seedPool) + ' BYEMONEY',
-      accumulatedFees: formatEther(accumulatedFees) + ' BYEMONEY',
       message: 'BYEMONEY market resolved and new market started'
     });
 

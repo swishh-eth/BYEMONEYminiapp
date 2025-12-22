@@ -7,6 +7,14 @@
     {
       "path": "/api/resolve-byemoney",
       "schedule": "* * * * *"
+    },
+    {
+      "path": "/api/sync-tickets",
+      "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/snapshot-day",
+      "schedule": "5 0 * * *"
     }
   ]
 }
