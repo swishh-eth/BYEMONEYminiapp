@@ -30,6 +30,7 @@ export default function Header({
   const [displayName, setDisplayName] = useState<string>(username || '');
   const [isLoading, setIsLoading] = useState(true);
   const [showNoWinningsPopup, setShowNoWinningsPopup] = useState(false);
+  const [confettiParticles, setConfettiParticles] = useState<Array<{ id: number; x: number; y: number }>>([]);
 
   // Home page is index 1 (vote=0, home=1, info=2)
   const isHomePage = activePageIndex === 1;
@@ -80,6 +81,25 @@ export default function Header({
       setShowNoWinningsPopup(true);
       setTimeout(() => setShowNoWinningsPopup(false), 2500);
     }
+  };
+
+  const handlePfpClick = async () => {
+    // Trigger haptic
+    try {
+      const { sdk } = await import('@farcaster/miniapp-sdk');
+      sdk.haptics.impactOccurred('medium');
+    } catch {}
+
+    // Spawn confetti particles
+    const newParticles = Array.from({ length: 12 }, (_, i) => ({
+      id: Date.now() + i,
+      x: Math.random() * 60 - 30, // Random spread -30 to 30
+      y: Math.random() * 20 - 40, // Upward bias
+    }));
+    setConfettiParticles(newParticles);
+
+    // Clear particles after animation
+    setTimeout(() => setConfettiParticles([]), 1000);
   };
 
   return (
@@ -146,16 +166,36 @@ export default function Header({
           
           {/* User Profile or Connect */}
           {isConnected ? (
-            <div className="flex items-center gap-2">
+            <button 
+              onClick={handlePfpClick}
+              className="relative flex items-center gap-2 active:scale-95 transition-transform"
+            >
               <span className="text-sm text-white/60 font-medium">
                 @{displayName}
               </span>
-              <img 
-                src={userPfp || `https://api.dicebear.com/7.x/shapes/svg?seed=${userFid}`}
-                alt={displayName}
-                className="w-8 h-8 rounded-full ring-2 ring-white/20"
-              />
-            </div>
+              <div className="relative">
+                <img 
+                  src={userPfp || `https://api.dicebear.com/7.x/shapes/svg?seed=${userFid}`}
+                  alt={displayName}
+                  className="w-8 h-8 rounded-full ring-2 ring-white/20"
+                />
+                {/* Confetti particles */}
+                {confettiParticles.map((particle) => (
+                  <img
+                    key={particle.id}
+                    src="/confetti.png"
+                    alt=""
+                    className="absolute w-4 h-4 pointer-events-none animate-confetti-burst"
+                    style={{
+                      left: '50%',
+                      top: '50%',
+                      '--x': `${particle.x}px`,
+                      '--y': `${particle.y}px`,
+                    } as React.CSSProperties}
+                  />
+                ))}
+              </div>
+            </button>
           ) : isLoading ? (
             <div className="w-8 h-8 rounded-full bg-white/5 animate-pulse" />
           ) : (
@@ -209,6 +249,19 @@ export default function Header({
         }
         .animate-pulse-subtle {
           animation: pulse-subtle 2s ease-in-out infinite;
+        }
+        @keyframes confetti-burst {
+          0% {
+            transform: translate(-50%, -50%) scale(1);
+            opacity: 1;
+          }
+          100% {
+            transform: translate(calc(-50% + var(--x)), calc(-50% + var(--y))) scale(0.5);
+            opacity: 0;
+          }
+        }
+        .animate-confetti-burst {
+          animation: confetti-burst 0.8s ease-out forwards;
         }
       `}</style>
     </>

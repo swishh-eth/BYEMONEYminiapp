@@ -15,10 +15,9 @@ const Icons: Record<string, (active: boolean) => JSX.Element> = {
     </svg>
   ),
   home: (active) => (
-    <svg className="w-6 h-6" viewBox="0 0 24 24" strokeWidth={active ? 2.5 : 2} strokeLinecap="round" strokeLinejoin="round" fill="none" stroke="currentColor">
-      <path d="M3 10.5L12 3l9 7.5" />
-      <path d="M5 10v10a1 1 0 001 1h12a1 1 0 001-1V10" />
-      <path d="M9 21v-6h6v6" />
+    <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2 : 1.5} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 9.5L12 3l9 6.5" />
+      <path d="M19 9.5V19a1 1 0 01-1 1H6a1 1 0 01-1-1V9.5" />
     </svg>
   ),
   info: (active) => (
