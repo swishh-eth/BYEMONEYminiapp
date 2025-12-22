@@ -14,7 +14,7 @@
     },
     {
       "path": "/api/snapshot-day",
-      "schedule": "5 0 * * *"
+      "schedule": "10 18 * * *"
     }
   ]
 }
