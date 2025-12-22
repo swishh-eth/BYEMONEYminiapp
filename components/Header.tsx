@@ -174,37 +174,37 @@ export default function Header({
           
           {/* User Profile or Connect */}
           {isConnected ? (
-            <button 
-              onClick={handlePfpClick}
-              className="relative flex items-center gap-2 active:scale-95 transition-transform"
-            >
-              <span className="text-sm text-white/60 font-medium">
-                @{displayName}
-              </span>
-              <div className="relative">
+            <div className="relative flex items-center gap-2">
+              <button 
+                onClick={handlePfpClick}
+                className="flex items-center gap-2 active:scale-95 transition-transform"
+              >
+                <span className="text-sm text-white/60 font-medium">
+                  @{displayName}
+                </span>
                 <img 
                   src={userPfp || `https://api.dicebear.com/7.x/shapes/svg?seed=${userFid}`}
                   alt={displayName}
                   className="w-8 h-8 rounded-full ring-2 ring-white/20"
                 />
-                {/* Confetti particles */}
-                {confettiParticles.map((particle) => (
-                  <img
-                    key={particle.id}
-                    src="/confetti.png"
-                    alt=""
-                    className="absolute w-5 h-5 pointer-events-none animate-confetti-burst"
-                    style={{
-                      left: '50%',
-                      top: '50%',
-                      '--x': `${particle.x}px`,
-                      '--y': `${particle.y}px`,
-                      '--r': `${particle.rotation}deg`,
-                    } as React.CSSProperties}
-                  />
-                ))}
-              </div>
-            </button>
+              </button>
+              {/* Confetti particles - outside button so no shrink effect */}
+              {confettiParticles.map((particle) => (
+                <img
+                  key={particle.id}
+                  src="/confetti.png"
+                  alt=""
+                  className="absolute w-5 h-5 pointer-events-none animate-confetti-burst"
+                  style={{
+                    right: '16px',
+                    top: '16px',
+                    '--x': `${particle.x}px`,
+                    '--y': `${particle.y}px`,
+                    '--r': `${particle.rotation}deg`,
+                  } as React.CSSProperties}
+                />
+              ))}
+            </div>
           ) : isLoading ? (
             <div className="w-8 h-8 rounded-full bg-white/5 animate-pulse" />
           ) : (
