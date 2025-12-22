@@ -47,7 +47,12 @@ const MARKETS = [
   { symbol: 'BYEMONEY', name: '$BYEMONEY', icon: '/byemoney.png' },
 ];
 
-const BANNER_IMAGES = ['/adspot1.png', '/adspot2.png', '/adspot3.png', '/adspot4.gif'];
+const BANNER_ITEMS = [
+  { src: '/adspot1.png', type: 'image' },
+  { src: '/adspot2.png', type: 'image' },
+  { src: '/adspot3.png', type: 'image' },
+  { src: '/adspot4.mp4', type: 'video' },
+];
 
 const triggerHaptic = async (type: 'light' | 'medium' | 'heavy') => {
   try { const { sdk } = await import('@farcaster/miniapp-sdk'); sdk.haptics.impactOccurred(type); } catch {}
@@ -185,8 +190,8 @@ export default function HomePage({ predictionData, onNavigate, walletAddress, sd
   }, []);
 
   useEffect(() => {
-    if (BANNER_IMAGES.length <= 1) return;
-    const interval = setInterval(() => setCurrentBannerIndex((prev) => (prev + 1) % BANNER_IMAGES.length), 4000);
+    if (BANNER_ITEMS.length <= 1) return;
+    const interval = setInterval(() => setCurrentBannerIndex((prev) => (prev + 1) % BANNER_ITEMS.length), 4000);
     return () => clearInterval(interval);
   }, []);
 
@@ -257,8 +262,25 @@ export default function HomePage({ predictionData, onNavigate, walletAddress, sd
         
         {/* Banner */}
         <div className="relative bg-white/[0.03] border border-white/[0.08] rounded-2xl overflow-hidden animate-fade-in" style={{ height: '180px' }}>
-          {BANNER_IMAGES.map((src, i) => (
-            <img key={src} src={src} alt="Banner" className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 ${i === currentBannerIndex ? 'opacity-100' : 'opacity-0'}`} />
+          {BANNER_ITEMS.map((item, i) => (
+            item.type === 'video' ? (
+              <video 
+                key={item.src} 
+                src={item.src} 
+                autoPlay 
+                loop 
+                muted 
+                playsInline
+                className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 ${i === currentBannerIndex ? 'opacity-100' : 'opacity-0'}`} 
+              />
+            ) : (
+              <img 
+                key={item.src} 
+                src={item.src} 
+                alt="Banner" 
+                className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 ${i === currentBannerIndex ? 'opacity-100' : 'opacity-0'}`} 
+              />
+            )
           ))}
         </div>
 
