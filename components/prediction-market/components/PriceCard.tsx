@@ -30,6 +30,9 @@ export function PriceCard({
   const isEthMarket = activeMarket === 'ETH';
   const selectedCoin = AVAILABLE_COINS.find((c) => c.symbol === activeMarket) || AVAILABLE_COINS[0];
 
+  // Check if we're switching markets (data source doesn't match active market)
+  const isMarketSwitching = marketDataSource !== activeMarket;
+
   // Calculate prices
   const currentPriceUsd = isEthMarket ? ethPriceUsd : 0;
   const startPriceUsd = isEthMarket && startPrice ? Number(startPrice) / 1e8 : 0;
@@ -49,9 +52,13 @@ export function PriceCard({
     ? ((byemoney1mValueUsd - byemoneyStartValueUsd) / byemoneyStartValueUsd) * 100
     : 0;
 
-  const showPriceData = isEthMarket
+  // Show price data only when not switching and data is valid
+  const showPriceData = !isMarketSwitching && (isEthMarket
     ? currentPriceUsd > 0
-    : byemoney1mValueUsd > 0 && marketDataSource === 'BYEMONEY';
+    : byemoney1mValueUsd > 0 && marketDataSource === 'BYEMONEY');
+
+  // Show start price data only when not switching and have valid start price
+  const hasValidStartPrice = !isMarketSwitching && (isEthMarket ? startPriceUsd > 0 : byemoneyStartPrice > 0);
 
   return (
     <button
@@ -94,40 +101,50 @@ export function PriceCard({
           </p>
         </div>
 
-        {hasMarket && !isResolved && (isEthMarket ? startPriceUsd > 0 : byemoneyStartPrice > 0) && (
+        {hasMarket && !isResolved && (
           <div className="text-right">
             <p className="text-[10px] text-white/40 mb-1">Since Start</p>
             <div
               className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg ${
-                priceChange >= 0 ? 'bg-white/10' : 'bg-red-500/20'
+                hasValidStartPrice
+                  ? priceChange >= 0 ? 'bg-white/10' : 'bg-red-500/20'
+                  : 'bg-white/5'
               }`}
             >
-              <svg
-                className={`w-3 h-3 ${priceChange >= 0 ? 'text-white' : 'text-red-400 rotate-180'}`}
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                strokeWidth={3}
-              >
-                <path d="M5 15l7-7 7 7" />
-              </svg>
-              <span
-                className={`text-lg font-bold ${priceChange >= 0 ? 'text-white' : 'text-red-400'}`}
-              >
-                {`${Math.abs(priceChange).toFixed(2)}%`}
-              </span>
+              {hasValidStartPrice ? (
+                <>
+                  <svg
+                    className={`w-3 h-3 ${priceChange >= 0 ? 'text-white' : 'text-red-400 rotate-180'}`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    strokeWidth={3}
+                  >
+                    <path d="M5 15l7-7 7 7" />
+                  </svg>
+                  <span
+                    className={`text-lg font-bold ${priceChange >= 0 ? 'text-white' : 'text-red-400'}`}
+                  >
+                    {`${Math.abs(priceChange).toFixed(2)}%`}
+                  </span>
+                </>
+              ) : (
+                <span className="text-lg font-bold text-white/30">--.---%</span>
+              )}
             </div>
           </div>
         )}
       </div>
 
-      {hasMarket && (isEthMarket ? startPriceUsd > 0 : byemoneyStartPrice > 0) && (
+      {hasMarket && (
         <div className="mt-3 pt-3 border-t border-white/5 flex items-center justify-between text-xs text-white/40">
           <span>
             Start:{' '}
-            {isEthMarket
-              ? formatUsdPrice(startPriceUsd)
-              : `$${byemoneyStartValueUsd.toFixed(3)}`}
+            {hasValidStartPrice
+              ? isEthMarket
+                ? formatUsdPrice(startPriceUsd)
+                : `$${byemoneyStartValueUsd.toFixed(3)}`
+              : '$---'}
           </span>
           <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-white/5 text-white/60">
             <span className="text-[10px] font-medium">
