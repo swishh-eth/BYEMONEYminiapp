@@ -104,10 +104,11 @@ async function fetchByemoneyUnclaimed(
       const upTickets = Number(position[0]);
       const downTickets = Number(position[1]);
       const claimed = position[2] as boolean;
-      const status = Number(market[8]);
-      const result = Number(market[9]);
-      const upPool = Number(formatEther(market[6] as bigint));
-      const downPool = Number(formatEther(market[7] as bigint));
+      // V3 contract: getMarket returns [id, startPrice, endPrice, startTime, endTime, upPool, downPool, status, result, totalTickets]
+      const status = Number(market[7]);
+      const result = Number(market[8]);
+      const upPool = Number(formatEther(market[5] as bigint));
+      const downPool = Number(formatEther(market[6] as bigint));
       const totalPool = upPool + downPool;
 
       if (upTickets === 0 && downTickets === 0) continue;
@@ -212,10 +213,11 @@ async function fetchEthUnclaimed(
           functionName: 'getPosition',
           args: [BigInt(marketId), walletAddress],
         }),
+        // V2 contract uses getMarket instead of markets
         publicClient.readContract({
           address: ETH_CONTRACT_ADDRESS,
           abi: ETH_CONTRACT_ABI,
-          functionName: 'markets',
+          functionName: 'getMarket',
           args: [BigInt(marketId)],
         }),
       ]);
@@ -224,8 +226,9 @@ async function fetchEthUnclaimed(
       const downTickets = Number(position[1]);
       const claimed = position[2];
 
-      const status = Number(marketInfo[8]);
-      const result = Number(marketInfo[9]);
+      // V2 getMarket returns: [id, startPrice, endPrice, startTime, endTime, upPool, downPool, status, result, totalTickets]
+      const status = Number(marketInfo[7]);
+      const result = Number(marketInfo[8]);
       const upPool = Number(formatEther(marketInfo[5]));
       const downPool = Number(formatEther(marketInfo[6]));
       const totalPool = upPool + downPool;

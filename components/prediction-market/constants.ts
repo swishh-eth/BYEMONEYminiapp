@@ -1,6 +1,6 @@
 // Contract Addresses
-export const ETH_CONTRACT_ADDRESS = '0x0625E29C2A71A834482bFc6b4cc012ACeee62DA4' as `0x${string}`;
-export const BYEMONEY_CONTRACT_ADDRESS = '0x8BD1Ce1E83CA48F33610EdCb9Dc531D0dA23bb55' as `0x${string}`;
+export const ETH_CONTRACT_ADDRESS = '0x69035b4a9B45daDa3411a158762Ca30BfADC6045' as `0x${string}`;
+export const BYEMONEY_CONTRACT_ADDRESS = '0x42BE4b56af6A0a249180A44EC704dedb7E2d5BED' as `0x${string}`;
 export const BYEMONEY_TOKEN_ADDRESS = '0xA12A532B0B7024b1D01Ae66a3b8cF77366c7dB07' as `0x${string}`;
 
 // Pricing Constants
@@ -19,13 +19,31 @@ export const AVAILABLE_COINS = [
   { symbol: 'BYEMONEY', name: 'ByeMoney', icon: '/byemoney.png', active: true },
 ] as const;
 
-// ETH Market ABI (Chainlink price)
+// ETH Market ABI (V2 - Chainlink price, new fee structure)
 export const ETH_CONTRACT_ABI = [
   {
     name: 'getCurrentMarket',
     type: 'function',
     stateMutability: 'view',
     inputs: [],
+    outputs: [
+      { name: 'id', type: 'uint256' },
+      { name: 'startPrice', type: 'uint256' },
+      { name: 'endPrice', type: 'uint256' },
+      { name: 'startTime', type: 'uint256' },
+      { name: 'endTime', type: 'uint256' },
+      { name: 'upPool', type: 'uint256' },
+      { name: 'downPool', type: 'uint256' },
+      { name: 'status', type: 'uint8' },
+      { name: 'result', type: 'uint8' },
+      { name: 'totalTickets', type: 'uint256' },
+    ],
+  },
+  {
+    name: 'getMarket',
+    type: 'function',
+    stateMutability: 'view',
+    inputs: [{ name: 'marketId', type: 'uint256' }],
     outputs: [
       { name: 'id', type: 'uint256' },
       { name: 'startPrice', type: 'uint256' },
@@ -51,24 +69,6 @@ export const ETH_CONTRACT_ABI = [
       { name: 'up', type: 'uint256' },
       { name: 'down', type: 'uint256' },
       { name: 'claimed', type: 'bool' },
-    ],
-  },
-  {
-    name: 'markets',
-    type: 'function',
-    stateMutability: 'view',
-    inputs: [{ name: 'marketId', type: 'uint256' }],
-    outputs: [
-      { name: 'id', type: 'uint256' },
-      { name: 'startPrice', type: 'uint256' },
-      { name: 'endPrice', type: 'uint256' },
-      { name: 'startTime', type: 'uint256' },
-      { name: 'endTime', type: 'uint256' },
-      { name: 'upPool', type: 'uint256' },
-      { name: 'downPool', type: 'uint256' },
-      { name: 'totalTickets', type: 'uint256' },
-      { name: 'status', type: 'uint8' },
-      { name: 'result', type: 'uint8' },
     ],
   },
   {
@@ -100,21 +100,94 @@ export const ETH_CONTRACT_ABI = [
     outputs: [{ name: '', type: 'bool' }],
   },
   {
+    name: 'getTimeRemaining',
+    type: 'function',
+    stateMutability: 'view',
+    inputs: [],
+    outputs: [{ name: '', type: 'uint256' }],
+  },
+  {
+    name: 'getBettingTimeRemaining',
+    type: 'function',
+    stateMutability: 'view',
+    inputs: [],
+    outputs: [{ name: '', type: 'uint256' }],
+  },
+  {
     name: 'currentMarketId',
     type: 'function',
     stateMutability: 'view',
     inputs: [],
     outputs: [{ name: '', type: 'uint256' }],
   },
+  {
+    name: 'getSeedPool',
+    type: 'function',
+    stateMutability: 'view',
+    inputs: [],
+    outputs: [{ name: '', type: 'uint256' }],
+  },
+  {
+    name: 'getAccumulatedFees',
+    type: 'function',
+    stateMutability: 'view',
+    inputs: [],
+    outputs: [{ name: '', type: 'uint256' }],
+  },
+  {
+    name: 'config',
+    type: 'function',
+    stateMutability: 'view',
+    inputs: [],
+    outputs: [
+      { name: 'ticketPrice', type: 'uint256' },
+      { name: 'roundDuration', type: 'uint256' },
+      { name: 'lockPeriod', type: 'uint256' },
+      { name: 'paused', type: 'bool' },
+    ],
+  },
+  // Resolver functions
+  {
+    name: 'resolveMarket',
+    type: 'function',
+    stateMutability: 'nonpayable',
+    inputs: [],
+    outputs: [],
+  },
+  {
+    name: 'startMarket',
+    type: 'function',
+    stateMutability: 'nonpayable',
+    inputs: [],
+    outputs: [],
+  },
 ] as const;
 
-// BYEMONEY Market ABI (Uniswap V4 price, ERC20 betting)
+// BYEMONEY Market ABI (V3 - Uniswap V4 price, new fee structure)
 export const BYEMONEY_CONTRACT_ABI = [
   {
     name: 'getCurrentMarket',
     type: 'function',
     stateMutability: 'view',
     inputs: [],
+    outputs: [
+      { name: 'id', type: 'uint256' },
+      { name: 'startPrice', type: 'uint256' },
+      { name: 'endPrice', type: 'uint256' },
+      { name: 'startTime', type: 'uint256' },
+      { name: 'endTime', type: 'uint256' },
+      { name: 'upPool', type: 'uint256' },
+      { name: 'downPool', type: 'uint256' },
+      { name: 'status', type: 'uint8' },
+      { name: 'result', type: 'uint8' },
+      { name: 'totalTickets', type: 'uint256' },
+    ],
+  },
+  {
+    name: 'getMarket',
+    type: 'function',
+    stateMutability: 'view',
+    inputs: [{ name: 'marketId', type: 'uint256' }],
     outputs: [
       { name: 'id', type: 'uint256' },
       { name: 'startPrice', type: 'uint256' },
@@ -160,13 +233,6 @@ export const BYEMONEY_CONTRACT_ABI = [
     outputs: [],
   },
   {
-    name: 'getPriceInEth',
-    type: 'function',
-    stateMutability: 'view',
-    inputs: [],
-    outputs: [{ name: '', type: 'uint256' }],
-  },
-  {
     name: 'getPrice',
     type: 'function',
     stateMutability: 'view',
@@ -181,6 +247,34 @@ export const BYEMONEY_CONTRACT_ABI = [
     outputs: [{ name: '', type: 'bool' }],
   },
   {
+    name: 'getTimeRemaining',
+    type: 'function',
+    stateMutability: 'view',
+    inputs: [],
+    outputs: [{ name: '', type: 'uint256' }],
+  },
+  {
+    name: 'getBettingTimeRemaining',
+    type: 'function',
+    stateMutability: 'view',
+    inputs: [],
+    outputs: [{ name: '', type: 'uint256' }],
+  },
+  {
+    name: 'getSeedPool',
+    type: 'function',
+    stateMutability: 'view',
+    inputs: [],
+    outputs: [{ name: '', type: 'uint256' }],
+  },
+  {
+    name: 'getAccumulatedFees',
+    type: 'function',
+    stateMutability: 'view',
+    inputs: [],
+    outputs: [{ name: '', type: 'uint256' }],
+  },
+  {
     name: 'config',
     type: 'function',
     stateMutability: 'view',
@@ -188,29 +282,24 @@ export const BYEMONEY_CONTRACT_ABI = [
     outputs: [
       { name: 'ticketPrice', type: 'uint256' },
       { name: 'roundDuration', type: 'uint256' },
-      { name: 'bettingCutoff', type: 'uint256' },
-      { name: 'feeBps', type: 'uint256' },
+      { name: 'lockPeriod', type: 'uint256' },
       { name: 'paused', type: 'bool' },
     ],
   },
+  // Resolver functions
   {
-    name: 'getMarket',
+    name: 'resolveMarket',
     type: 'function',
-    stateMutability: 'view',
-    inputs: [{ name: 'marketId', type: 'uint256' }],
-    outputs: [
-      { name: 'id', type: 'uint256' },
-      { name: 'startPrice', type: 'uint256' },
-      { name: 'endPrice', type: 'uint256' },
-      { name: 'startTime', type: 'uint256' },
-      { name: 'endTime', type: 'uint256' },
-      { name: 'bettingEndsAt', type: 'uint256' },
-      { name: 'upPool', type: 'uint256' },
-      { name: 'downPool', type: 'uint256' },
-      { name: 'status', type: 'uint8' },
-      { name: 'result', type: 'uint8' },
-      { name: 'totalTickets', type: 'uint256' },
-    ],
+    stateMutability: 'nonpayable',
+    inputs: [],
+    outputs: [],
+  },
+  {
+    name: 'startMarket',
+    type: 'function',
+    stateMutability: 'nonpayable',
+    inputs: [],
+    outputs: [],
   },
 ] as const;
 

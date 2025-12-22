@@ -1,13 +1,12 @@
 import { NextResponse } from 'next/server';
-import { createPublicClient, createWalletClient, http, formatEther, parseEther } from 'viem';
+import { createPublicClient, createWalletClient, http, formatEther } from 'viem';
 import { base } from 'viem/chains';
 import { privateKeyToAccount } from 'viem/accounts';
 
 // ============ Config ============
-const CONTRACT_ADDRESS = (process.env.PREDICTION_CONTRACT_ADDRESS || '0x0625E29C2A71A834482bFc6b4cc012ACeee62DA4') as `0x${string}`;
+const CONTRACT_ADDRESS = (process.env.PREDICTION_CONTRACT_ADDRESS || '0x69035b4a9B45daDa3411a158762Ca30BfADC6045') as `0x${string}`;
 const RESOLVER_PRIVATE_KEY = process.env.RESOLVER_PRIVATE_KEY as `0x${string}`;
 const BASE_RPC = process.env.BASE_RPC_URL || 'https://base-mainnet.g.alchemy.com/v2/jKHNMnfb18wYA1HfaHxo5';
-const SEED_AMOUNT = process.env.SEED_AMOUNT || '0.0001'; // ETH to seed new markets
 
 const CONTRACT_ABI = [
   {
@@ -36,9 +35,9 @@ const CONTRACT_ABI = [
     outputs: [],
   },
   {
-    name: 'seedMarket',
+    name: 'startMarket',
     type: 'function',
-    stateMutability: 'payable',
+    stateMutability: 'nonpayable',
     inputs: [],
     outputs: [],
   },
@@ -56,13 +55,27 @@ const CONTRACT_ABI = [
     inputs: [],
     outputs: [{ name: '', type: 'uint256' }],
   },
+  {
+    name: 'getTimeRemaining',
+    type: 'function',
+    stateMutability: 'view',
+    inputs: [],
+    outputs: [{ name: '', type: 'uint256' }],
+  },
+  {
+    name: 'getSeedPool',
+    type: 'function',
+    stateMutability: 'view',
+    inputs: [],
+    outputs: [{ name: '', type: 'uint256' }],
+  },
 ] as const;
 
 export async function GET(request: Request) {
   // Verify cron secret
   const authHeader = request.headers.get('authorization');
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-    console.log('Unauthorized resolver attempt');
+    console.log('[ETH] Unauthorized resolver attempt');
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -87,15 +100,15 @@ export async function GET(request: Request) {
       transport: http(BASE_RPC),
     });
 
-    // Check resolver wallet balance
+    // Check resolver wallet balance (only needs gas now, no seeding)
     const balance = await publicClient.getBalance({ address: account.address });
     const balanceEth = Number(formatEther(balance));
     
     if (balanceEth < 0.001) {
-      console.log(`Low resolver balance: ${balanceEth} ETH`);
+      console.log(`[ETH] Low resolver balance: ${balanceEth} ETH`);
       return NextResponse.json({ 
         status: 'warning',
-        message: 'Resolver wallet balance low - need ETH for gas + seeding',
+        message: 'Resolver wallet balance low - need ETH for gas',
         balance: balanceEth,
         address: account.address
       });
@@ -112,48 +125,86 @@ export async function GET(request: Request) {
     const isActive = status === 0;
     const isResolved = status === 1;
 
-    // If no market or already resolved, seed a new one
-    if (id === 0n || isResolved) {
-      console.log('No active market, seeding new one...');
+    // Get time remaining
+    const timeRemaining = await publicClient.readContract({
+      address: CONTRACT_ADDRESS,
+      abi: CONTRACT_ABI,
+      functionName: 'getTimeRemaining',
+    });
+
+    // If no market exists, start one
+    if (id === 0n) {
+      console.log('[ETH] No market exists, starting new one...');
       
-      const seedAmount = parseEther(SEED_AMOUNT);
-      
-      const seedHash = await walletClient.writeContract({
+      const startHash = await walletClient.writeContract({
         chain: base,
         account,
         address: CONTRACT_ADDRESS,
         abi: CONTRACT_ABI,
-        functionName: 'seedMarket',
-        value: seedAmount,
+        functionName: 'startMarket',
       });
 
-      await publicClient.waitForTransactionReceipt({ hash: seedHash, confirmations: 1 });
+      await publicClient.waitForTransactionReceipt({ hash: startHash, confirmations: 1 });
 
-      // Get new market ID
       const newMarketId = await publicClient.readContract({
         address: CONTRACT_ADDRESS,
         abi: CONTRACT_ABI,
         functionName: 'currentMarketId',
       });
 
-      console.log(`New market ${newMarketId} seeded with ${SEED_AMOUNT} ETH`);
+      // Get seed pool info
+      const seedPool = await publicClient.readContract({
+        address: CONTRACT_ADDRESS,
+        abi: CONTRACT_ABI,
+        functionName: 'getSeedPool',
+      });
+
+      console.log(`[ETH] New market ${newMarketId} started`);
 
       return NextResponse.json({
-        status: 'seeded',
+        status: 'started',
         marketId: newMarketId.toString(),
-        txHash: seedHash,
-        seedAmount: SEED_AMOUNT,
-        message: 'New market seeded successfully'
+        txHash: startHash,
+        seedPoolRemaining: formatEther(seedPool),
+        message: 'New ETH market started'
       });
     }
 
-    // Check if market has ended
-    const now = BigInt(Math.floor(Date.now() / 1000));
-    
-    if (now < endTime) {
-      const timeRemaining = Number(endTime - now);
-      const hours = Math.floor(timeRemaining / 3600);
-      const minutes = Math.floor((timeRemaining % 3600) / 60);
+    // If market is resolved, start a new one
+    if (isResolved) {
+      console.log('[ETH] Market resolved, starting new one...');
+      
+      const startHash = await walletClient.writeContract({
+        chain: base,
+        account,
+        address: CONTRACT_ADDRESS,
+        abi: CONTRACT_ABI,
+        functionName: 'startMarket',
+      });
+
+      await publicClient.waitForTransactionReceipt({ hash: startHash, confirmations: 1 });
+
+      const newMarketId = await publicClient.readContract({
+        address: CONTRACT_ADDRESS,
+        abi: CONTRACT_ABI,
+        functionName: 'currentMarketId',
+      });
+
+      console.log(`[ETH] New market ${newMarketId} started`);
+
+      return NextResponse.json({
+        status: 'started',
+        marketId: newMarketId.toString(),
+        txHash: startHash,
+        message: 'New ETH market started after previous resolved'
+      });
+    }
+
+    // If market hasn't ended yet
+    if (timeRemaining > 0n) {
+      const seconds = Number(timeRemaining);
+      const hours = Math.floor(seconds / 3600);
+      const minutes = Math.floor((seconds % 3600) / 60);
       
       return NextResponse.json({ 
         status: 'pending',
@@ -166,15 +217,15 @@ export async function GET(request: Request) {
       });
     }
 
-    // Get current price for logging
+    // Market has ended - resolve it
     const currentPrice = await publicClient.readContract({
       address: CONTRACT_ADDRESS,
       abi: CONTRACT_ABI,
       functionName: 'getPrice',
     });
 
-    console.log(`Resolving market ${id}...`);
-    console.log(`Start price: ${Number(startPrice) / 1e8}, Current price: ${Number(currentPrice) / 1e8}`);
+    console.log(`[ETH] Resolving market ${id}...`);
+    console.log(`[ETH] Start price: ${Number(startPrice) / 1e8}, Current price: ${Number(currentPrice) / 1e8}`);
 
     // Resolve the market
     const resolveHash = await walletClient.writeContract({
@@ -190,23 +241,20 @@ export async function GET(request: Request) {
     const direction = Number(currentPrice) > Number(startPrice) ? 'UP' : 
                      Number(currentPrice) < Number(startPrice) ? 'DOWN' : 'TIE';
 
-    console.log(`Market ${id} resolved: ${direction}`);
+    console.log(`[ETH] Market ${id} resolved: ${direction}`);
 
-    // Auto-seed the next market
-    console.log('Auto-seeding next market...');
+    // Start the next market (no seeding needed - contract auto-seeds from fee pool)
+    console.log('[ETH] Starting next market...');
     
-    const seedAmount = parseEther(SEED_AMOUNT);
-    
-    const seedHash = await walletClient.writeContract({
+    const startHash = await walletClient.writeContract({
       chain: base,
       account,
       address: CONTRACT_ADDRESS,
       abi: CONTRACT_ABI,
-      functionName: 'seedMarket',
-      value: seedAmount,
+      functionName: 'startMarket',
     });
 
-    await publicClient.waitForTransactionReceipt({ hash: seedHash, confirmations: 1 });
+    await publicClient.waitForTransactionReceipt({ hash: startHash, confirmations: 1 });
 
     const newMarketId = await publicClient.readContract({
       address: CONTRACT_ADDRESS,
@@ -214,25 +262,24 @@ export async function GET(request: Request) {
       functionName: 'currentMarketId',
     });
 
-    console.log(`New market ${newMarketId} seeded`);
+    console.log(`[ETH] New market ${newMarketId} started`);
 
     return NextResponse.json({
-      status: 'resolved_and_seeded',
+      status: 'resolved_and_started',
       resolvedMarketId: id.toString(),
       newMarketId: newMarketId.toString(),
       resolveTxHash: resolveHash,
-      seedTxHash: seedHash,
+      startTxHash: startHash,
       startPrice: (Number(startPrice) / 1e8).toFixed(2),
       endPrice: (Number(currentPrice) / 1e8).toFixed(2),
       direction,
       upPool: formatEther(upPool),
       downPool: formatEther(downPool),
-      seedAmount: SEED_AMOUNT,
-      message: 'Market resolved and new market seeded'
+      message: 'Market resolved and new market started'
     });
 
   } catch (error: any) {
-    console.error('Resolver error:', error);
+    console.error('[ETH] Resolver error:', error);
     
     let errorMessage = error.message || 'Unknown error';
     if (error.shortMessage) {
