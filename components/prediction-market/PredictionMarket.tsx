@@ -335,7 +335,7 @@ export default function PredictionMarket({
             activeMarket={activeMarket}
             currentPrice={currentPrice}
             ethPriceUsd={ethPriceUsd}
-            startPrice={marketData?.startPrice}
+            startPrice={isMarketSwitching ? undefined : marketData?.startPrice}
             marketDataSource={marketDataSource}
             hasMarket={hasMarket}
             isResolved={isResolved}
