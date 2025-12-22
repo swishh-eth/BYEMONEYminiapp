@@ -30,7 +30,7 @@ export default function Header({
   const [displayName, setDisplayName] = useState<string>(username || '');
   const [isLoading, setIsLoading] = useState(true);
   const [showNoWinningsPopup, setShowNoWinningsPopup] = useState(false);
-  const [confettiParticles, setConfettiParticles] = useState<Array<{ id: number; x: number; y: number }>>([]);
+  const [confettiParticles, setConfettiParticles] = useState<Array<{ id: number; x: number; y: number; rotation: number }>>([]);
 
   // Home page is index 1 (vote=0, home=1, info=2)
   const isHomePage = activePageIndex === 1;
@@ -90,16 +90,20 @@ export default function Header({
       sdk.haptics.impactOccurred('medium');
     } catch {}
 
-    // Spawn confetti particles
-    const newParticles = Array.from({ length: 12 }, (_, i) => ({
+    // Spawn confetti particles - ADD to existing instead of replacing
+    const newParticles = Array.from({ length: 15 }, (_, i) => ({
       id: Date.now() + i,
-      x: Math.random() * 60 - 30, // Random spread -30 to 30
-      y: Math.random() * 20 - 40, // Upward bias
+      x: (Math.random() - 0.5) * 200, // Much wider spread -100 to 100
+      y: Math.random() * -150 - 50, // Shoot upward -50 to -200
+      rotation: Math.random() * 360,
     }));
-    setConfettiParticles(newParticles);
+    setConfettiParticles(prev => [...prev, ...newParticles]);
 
-    // Clear particles after animation
-    setTimeout(() => setConfettiParticles([]), 1000);
+    // Clear only these particles after animation completes
+    const particleIds = newParticles.map(p => p.id);
+    setTimeout(() => {
+      setConfettiParticles(prev => prev.filter(p => !particleIds.includes(p.id)));
+    }, 3000);
   };
 
   return (
@@ -185,12 +189,13 @@ export default function Header({
                     key={particle.id}
                     src="/confetti.png"
                     alt=""
-                    className="absolute w-4 h-4 pointer-events-none animate-confetti-burst"
+                    className="absolute w-5 h-5 pointer-events-none animate-confetti-burst"
                     style={{
                       left: '50%',
                       top: '50%',
                       '--x': `${particle.x}px`,
                       '--y': `${particle.y}px`,
+                      '--r': `${particle.rotation}deg`,
                     } as React.CSSProperties}
                   />
                 ))}
@@ -252,16 +257,19 @@ export default function Header({
         }
         @keyframes confetti-burst {
           0% {
-            transform: translate(-50%, -50%) scale(1);
+            transform: translate(-50%, -50%) scale(1) rotate(0deg);
+            opacity: 1;
+          }
+          80% {
             opacity: 1;
           }
           100% {
-            transform: translate(calc(-50% + var(--x)), calc(-50% + var(--y))) scale(0.5);
+            transform: translate(calc(-50% + var(--x)), calc(-50% + var(--y))) scale(0.6) rotate(var(--r));
             opacity: 0;
           }
         }
         .animate-confetti-burst {
-          animation: confetti-burst 0.8s ease-out forwards;
+          animation: confetti-burst 2.5s ease-out forwards;
         }
       `}</style>
     </>
