@@ -90,13 +90,17 @@ export default function Header({
       sdk.haptics.impactOccurred('medium');
     } catch {}
 
-    // Spawn confetti particles - ADD to existing instead of replacing
-    const newParticles = Array.from({ length: 15 }, (_, i) => ({
-      id: Date.now() + i,
-      x: (Math.random() - 0.5) * 200, // Much wider spread -100 to 100
-      y: Math.random() * -150 - 50, // Shoot upward -50 to -200
-      rotation: Math.random() * 360,
-    }));
+    // Spawn confetti particles - spread in ALL directions
+    const newParticles = Array.from({ length: 15 }, (_, i) => {
+      const angle = (Math.PI * 2 * i) / 15 + Math.random() * 0.5; // Spread around full circle
+      const distance = 80 + Math.random() * 80; // 80-160px distance
+      return {
+        id: Date.now() + i,
+        x: Math.cos(angle) * distance,
+        y: Math.sin(angle) * distance,
+        rotation: Math.random() * 360,
+      };
+    });
     setConfettiParticles(prev => [...prev, ...newParticles]);
 
     // Clear only these particles after animation completes
