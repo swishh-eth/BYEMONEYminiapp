@@ -203,6 +203,12 @@ export default function HomePage({ predictionData, onNavigate, walletAddress, sd
   }, [predictionData?.recentWins]);
 
   const currentMarket = MARKETS[currentMarketIndex];
+  
+  // Check if data is loaded for the CURRENT market being displayed
+  const isCurrentMarketDataLoaded = currentMarket.symbol === 'ETH' 
+    ? (predictionData && predictionData.ethPrice > 0 && predictionData.totalPool !== undefined)
+    : (byemoneyData && byemoneyData.priceUsd > 0);
+
   const getMarketPercentages = () => {
     if (currentMarket.symbol === 'ETH' && predictionData && predictionData.totalPool > 0) {
       const up = (predictionData.upPool / predictionData.totalPool) * 100;
@@ -315,7 +321,7 @@ export default function HomePage({ predictionData, onNavigate, walletAddress, sd
         <button onClick={handleBetClick} className="relative bg-white/[0.03] border border-white/[0.08] rounded-2xl p-3 text-left hover:bg-white/[0.05] transition-all active:scale-[0.99] animate-fade-in" style={{ animationDelay: '25ms', minHeight: '172px' }}>
           <div className="absolute inset-0 opacity-[0.03] rounded-2xl" style={{ backgroundImage: `radial-gradient(circle at 1px 1px, white 1px, transparent 0)`, backgroundSize: '20px 20px' }} />
           <div className={`relative h-full ${isTransitioning ? 'opacity-0' : 'opacity-100'}`} style={{ transition: 'opacity 0.35s ease-in-out' }}>
-            {!dataLoaded ? (
+            {!isCurrentMarketDataLoaded ? (
               <div className="flex items-center justify-center h-full"><div className="w-6 h-6 border-2 border-white/10 border-t-white/40 rounded-full animate-spin" /></div>
             ) : (
               <>
