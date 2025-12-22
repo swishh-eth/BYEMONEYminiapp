@@ -108,10 +108,13 @@ export function useMarketData(
     }
   }, [activeMarket]);
 
-  // Handle market switching
+  // Handle market switching - CLEAR DATA to prevent showing stale/raw values
   useEffect(() => {
     if (marketDataSource !== activeMarket) {
       setIsMarketSwitching(true);
+      // Clear market data to prevent showing wrong prices during switch
+      setMarketData(null);
+      setCurrentPrice(null);
     }
   }, [activeMarket, marketDataSource]);
 
