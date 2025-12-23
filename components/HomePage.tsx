@@ -366,7 +366,7 @@ export default function HomePage({ predictionData, onNavigate, walletAddress, sd
           <div className="relative flex flex-col">
             <div className="flex items-center gap-2 mb-2"><div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" /><span className="text-[9px] text-white/40 uppercase tracking-wider">Recent Bets</span></div>
             {!dataLoaded ? (
-              <div className="flex items-center justify-center h-[72px]"><div className="w-6 h-6 border-2 border-white/10 border-t-white/40 rounded-full animate-spin" /></div>
+              <div className="flex items-center justify-center h-[80px]"><div className="w-6 h-6 border-2 border-white/10 border-t-white/40 rounded-full animate-spin" /></div>
             ) : predictionData?.recentWins && predictionData.recentWins.length > 0 ? (() => {
               const bets = predictionData.recentWins;
               const betsLength = bets.length;
@@ -375,7 +375,7 @@ export default function HomePage({ predictionData, onNavigate, walletAddress, sd
               const baseOffset = betsLength;
               const enableTransitions = betScrollIndex > 0;
               return (
-                <div className="relative h-[72px] overflow-hidden">
+                <div className="relative h-[80px] overflow-hidden">
                   <div className={enableTransitions ? "transition-transform duration-700 ease-in-out" : ""} style={{ transform: `translateY(-${(baseOffset + scrollOffset) * 36}px)` }}>
                     {extendedBets.map((bet, i) => {
                       const currentTop = baseOffset + scrollOffset;
@@ -404,7 +404,7 @@ export default function HomePage({ predictionData, onNavigate, walletAddress, sd
                 </div>
               );
             })() : (
-              <div className="h-[72px] flex flex-col items-center justify-center text-white/30 text-xs"><p>No recent bets yet</p><p className="text-[10px] mt-0.5">Be the first to bet!</p></div>
+              <div className="h-[80px] flex flex-col items-center justify-center text-white/30 text-xs"><p>No recent bets yet</p><p className="text-[10px] mt-0.5">Be the first to bet!</p></div>
             )}
           </div>
         </div>

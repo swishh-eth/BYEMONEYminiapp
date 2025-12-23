@@ -88,15 +88,15 @@ export default function InfoPage() {
               backgroundSize: '20px 20px',
             }}
           />
-          <div className="relative h-full p-4 flex flex-col">
+          <div className="relative h-full p-4 pb-2 flex flex-col">
             {/* Header */}
-            <div className="flex items-center gap-2 mb-4">
+            <div className="flex items-center gap-2 mb-3">
               <div className="w-1.5 h-1.5 rounded-full bg-white/40" />
               <span className="text-[10px] text-white/40 uppercase tracking-wider">How It Works</span>
             </div>
 
             {/* Content */}
-            <div className="space-y-4 flex-1">
+            <div className="space-y-3 flex-1">
               {/* Section 1 */}
               <div className="flex gap-3">
                 <div className="w-7 h-7 rounded-lg bg-white/10 flex items-center justify-center flex-shrink-0">
