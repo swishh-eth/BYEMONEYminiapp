@@ -206,7 +206,7 @@ export default function InfoPage() {
             <button
               key={link.id}
               onClick={() => handleLinkClick(link)}
-              className="relative flex flex-col items-center justify-center gap-2 bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.08] hover:border-white/[0.15] rounded-xl py-4 text-white/40 hover:text-white/70 transition-all active:scale-95 overflow-hidden"
+              className="relative flex flex-col items-center justify-center gap-2 bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.08] hover:border-white/[0.15] rounded-xl py-3 text-white/40 hover:text-white/70 transition-all active:scale-95 overflow-hidden"
             >
               <div className="absolute inset-0 opacity-[0.03]" 
                 style={{
@@ -214,9 +214,9 @@ export default function InfoPage() {
                   backgroundSize: '20px 20px',
                 }}
               />
-              <div className="relative flex flex-col items-center gap-2">
+              <div className="relative flex flex-col items-center gap-1.5">
                 <LinkIcon type={link.icon} />
-                <span className="text-[11px] font-medium">{link.name}</span>
+                <span className="text-[10px] font-medium">{link.name}</span>
               </div>
             </button>
           ))}
