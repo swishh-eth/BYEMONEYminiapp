@@ -81,14 +81,14 @@ export default function InfoPage() {
       <div className="flex-1 flex flex-col gap-3">
 
         {/* How It Works Tile */}
-        <div className="relative bg-white/[0.03] border border-white/[0.08] rounded-2xl overflow-hidden animate-fade-in flex-1">
+        <div className="relative bg-white/[0.03] border border-white/[0.08] rounded-2xl overflow-hidden animate-fade-in">
           <div className="absolute inset-0 opacity-[0.03] pointer-events-none" 
             style={{
               backgroundImage: `radial-gradient(circle at 1px 1px, white 1px, transparent 0)`,
               backgroundSize: '20px 20px',
             }}
           />
-          <div className="relative h-full p-4 pb-2 flex flex-col">
+          <div className="relative p-4 pb-3">
             {/* Header */}
             <div className="flex items-center gap-2 mb-3">
               <div className="w-1.5 h-1.5 rounded-full bg-white/40" />
@@ -96,7 +96,7 @@ export default function InfoPage() {
             </div>
 
             {/* Content */}
-            <div className="space-y-3 flex-1">
+            <div className="space-y-3">
               {/* Section 1 */}
               <div className="flex gap-3">
                 <div className="w-7 h-7 rounded-lg bg-white/10 flex items-center justify-center flex-shrink-0">
