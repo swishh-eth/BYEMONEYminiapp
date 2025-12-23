@@ -361,40 +361,40 @@ export default function HomePage({ predictionData, onNavigate, walletAddress, sd
         </button>
 
         {/* Recent Bets */}
-        <div className="relative bg-white/[0.03] border border-white/[0.08] rounded-2xl p-3 overflow-hidden animate-fade-in-opacity" style={{ animationDelay: '50ms', minHeight: '156px' }}>
+        <div className="relative bg-white/[0.03] border border-white/[0.08] rounded-2xl p-3 overflow-hidden animate-fade-in-opacity" style={{ animationDelay: '50ms' }}>
           <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: `radial-gradient(circle at 1px 1px, white 1px, transparent 0)`, backgroundSize: '20px 20px' }} />
-          <div className="relative h-full flex flex-col">
+          <div className="relative flex flex-col">
             <div className="flex items-center gap-2 mb-2"><div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" /><span className="text-[9px] text-white/40 uppercase tracking-wider">Recent Bets</span></div>
             {!dataLoaded ? (
-              <div className="flex-1 flex items-center justify-center"><div className="w-6 h-6 border-2 border-white/10 border-t-white/40 rounded-full animate-spin" /></div>
+              <div className="flex items-center justify-center h-[72px]"><div className="w-6 h-6 border-2 border-white/10 border-t-white/40 rounded-full animate-spin" /></div>
             ) : predictionData?.recentWins && predictionData.recentWins.length > 0 ? (() => {
               const bets = predictionData.recentWins;
               const betsLength = bets.length;
-              const extendedBets = [...bets, ...bets, ...bets, ...bets, ...bets];
+              const extendedBets = [...bets, ...bets, ...bets];
               const scrollOffset = betScrollIndex % betsLength;
-              const baseOffset = betsLength * 2;
+              const baseOffset = betsLength;
               const enableTransitions = betScrollIndex > 0;
               return (
-                <div className="relative h-[108px] overflow-hidden">
+                <div className="relative h-[72px] overflow-hidden">
                   <div className={enableTransitions ? "transition-transform duration-700 ease-in-out" : ""} style={{ transform: `translateY(-${(baseOffset + scrollOffset) * 36}px)` }}>
                     {extendedBets.map((bet, i) => {
                       const currentTop = baseOffset + scrollOffset;
                       const visualPos = i - currentTop;
-                      const isMiddle = visualPos === 1;
-                      const distanceFromMiddle = Math.abs(visualPos - 1);
-                      const opacity = isMiddle ? 1 : distanceFromMiddle === 1 ? 0.5 : distanceFromMiddle === 2 ? 0.2 : 0;
+                      const isTop = visualPos === 0;
+                      const isBottom = visualPos === 1;
+                      const opacity = isTop ? 0.5 : isBottom ? 1 : 0;
                       const isByemoney = bet.market === 'BYEMONEY';
                       const amountDisplay = isByemoney ? `${bet.amount >= 1000000 ? `${(bet.amount / 1000000).toFixed(0)}M` : bet.amount >= 1000 ? `${(bet.amount / 1000).toFixed(0)}K` : bet.amount.toFixed(0)} BYE` : `${bet.amount.toFixed(3)} ETH`;
                       return (
-                        <div key={i} className="flex items-center justify-between px-1 h-[36px]" style={{ opacity, transform: isMiddle ? 'scale(1.02)' : 'scale(1)', transition: enableTransitions ? 'opacity 0.7s ease-in-out, transform 0.7s ease-in-out' : 'none' }}>
+                        <div key={i} className="flex items-center justify-between px-1 h-[36px]" style={{ opacity, transition: enableTransitions ? 'opacity 0.7s ease-in-out' : 'none' }}>
                           <div className="flex items-center gap-2">
-                            <img src={bet.pfp || `https://api.dicebear.com/7.x/shapes/svg?seed=${bet.username}`} alt={bet.username} className="rounded-full bg-white/10" style={{ width: isMiddle ? '28px' : '20px', height: isMiddle ? '28px' : '20px', transition: 'width 0.7s, height 0.7s' }} />
-                            <span className="text-white" style={{ fontSize: isMiddle ? '14px' : '12px', fontWeight: isMiddle ? 500 : 400 }}>@{bet.username}</span>
+                            <img src={bet.pfp || `https://api.dicebear.com/7.x/shapes/svg?seed=${bet.username}`} alt={bet.username} className="w-6 h-6 rounded-full bg-white/10" />
+                            <span className="text-white text-sm">@{bet.username}</span>
                           </div>
                           <div className="flex items-center gap-1.5">
-                            <span className={`font-bold ${bet.direction === 'up' ? 'text-white' : 'text-red-400'}`} style={{ fontSize: isMiddle ? '14px' : '12px' }}>{amountDisplay}</span>
-                            <div className={`rounded flex items-center justify-center ${bet.direction === 'up' ? 'bg-white/20' : 'bg-red-500/20'}`} style={{ width: isMiddle ? '20px' : '16px', height: isMiddle ? '20px' : '16px' }}>
-                              <svg className={bet.direction === 'up' ? 'text-white' : 'text-red-400'} style={{ width: isMiddle ? '12px' : '10px', height: isMiddle ? '12px' : '10px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}><path d={bet.direction === 'up' ? 'M5 15l7-7 7 7' : 'M19 9l-7 7-7-7'} /></svg>
+                            <span className={`font-bold text-sm ${bet.direction === 'up' ? 'text-white' : 'text-red-400'}`}>{amountDisplay}</span>
+                            <div className={`w-5 h-5 rounded flex items-center justify-center ${bet.direction === 'up' ? 'bg-white/20' : 'bg-red-500/20'}`}>
+                              <svg className={`w-3 h-3 ${bet.direction === 'up' ? 'text-white' : 'text-red-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}><path d={bet.direction === 'up' ? 'M5 15l7-7 7 7' : 'M19 9l-7 7-7-7'} /></svg>
                             </div>
                           </div>
                         </div>
@@ -404,7 +404,7 @@ export default function HomePage({ predictionData, onNavigate, walletAddress, sd
                 </div>
               );
             })() : (
-              <div className="h-[108px] flex flex-col items-center justify-center text-white/30 text-xs"><p>No recent bets yet</p><p className="text-[10px] mt-0.5">Be the first to bet!</p></div>
+              <div className="h-[72px] flex flex-col items-center justify-center text-white/30 text-xs"><p>No recent bets yet</p><p className="text-[10px] mt-0.5">Be the first to bet!</p></div>
             )}
           </div>
         </div>
