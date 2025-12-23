@@ -443,9 +443,7 @@ export default function HomePage({ predictionData, onNavigate, walletAddress, sd
               <p className="text-center text-white/40 text-xs mt-1">Next reset in {formatTimeRemaining(timeUntilNextDay)}</p>
             </div>
             
-            {dailyClaimDataLoading ? (
-              <div className="flex items-center justify-center py-12 animate-fade-in"><div className="w-8 h-8 border-2 border-white/10 border-t-white/40 rounded-full animate-spin" /></div>
-            ) : !walletAddress ? (
+            {!walletAddress ? (
               <div className="text-center py-8 animate-fade-in"><p className="text-white/50 text-sm">Connect your wallet to view rewards</p></div>
             ) : (
               <div className="animate-fade-in">
