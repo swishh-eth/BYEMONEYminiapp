@@ -4,9 +4,15 @@ import { TOKEN, SOCIALS, DEXSCREENER } from '@/lib/constants';
 import { useState, useEffect, useRef } from 'react';
 
 const links = [
-  { id: 'basescan', name: 'Contract', url: SOCIALS.basescan, icon: 'scan' },
+  { id: 'share', name: 'Share', icon: 'share' },
   { id: 'farcaster', name: 'Farcaster', url: SOCIALS.farcaster, inApp: true, icon: 'cast' },
   { id: 'telegram', name: 'Telegram', url: SOCIALS.telegram, icon: 'send' },
+];
+
+const contractLinks = [
+  { id: 'eth-contract', name: 'ETH Market', url: 'https://basescan.org/address/0xf8e98EB6e3A08eD857920b9d8283E731a360B689', icon: 'scan' },
+  { id: 'byemoney-contract', name: 'BYE Market', url: 'https://basescan.org/address/0x30d4907C6741335B4d7ABA923F3914217d972DBc', icon: 'scan' },
+  { id: 'claim-contract', name: 'Daily Claim', url: 'https://basescan.org/address/0x4dD5aBfCec65c9E3C789569aD537E2baC0fBBC21', icon: 'scan' },
 ];
 
 // Haptic feedback helper
@@ -28,6 +34,12 @@ const playClick = () => {
 
 const LinkIcon = ({ type }: { type: string }) => {
   switch (type) {
+    case 'share':
+      return (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+          <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v13" />
+        </svg>
+      );
     case 'chart':
       return (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
@@ -63,16 +75,37 @@ export default function InfoPage() {
   const handleLinkClick = async (link: typeof links[0]) => {
     playClick();
     triggerHaptic('light');
+    
+    if (link.id === 'share') {
+      try {
+        const { sdk } = await import('@farcaster/miniapp-sdk');
+        await sdk.actions.composeCast({
+          text: "Time to say $BYEMONEY 👋💸",
+          embeds: ["https://byemoney.vercel.app"]
+        });
+      } catch {
+        // Fallback - copy link
+        navigator.clipboard.writeText("https://byemoney.vercel.app");
+      }
+      return;
+    }
+    
     if (link.inApp) {
       try {
         const { sdk } = await import('@farcaster/miniapp-sdk');
-        await sdk.actions.openUrl({ url: link.url });
+        await sdk.actions.openUrl({ url: link.url! });
       } catch {
         window.open(link.url, '_blank');
       }
     } else {
       window.open(link.url, '_blank');
     }
+  };
+
+  const handleContractClick = (link: typeof contractLinks[0]) => {
+    playClick();
+    triggerHaptic('light');
+    window.open(link.url, '_blank');
   };
 
   return (
@@ -184,6 +217,28 @@ export default function InfoPage() {
               <div className="relative flex flex-col items-center gap-2">
                 <LinkIcon type={link.icon} />
                 <span className="text-[11px] font-medium">{link.name}</span>
+              </div>
+            </button>
+          ))}
+        </div>
+
+        {/* Contract Links */}
+        <div className="grid grid-cols-3 gap-3 animate-fade-in" style={{ animationDelay: '100ms' }}>
+          {contractLinks.map((link) => (
+            <button
+              key={link.id}
+              onClick={() => handleContractClick(link)}
+              className="relative flex flex-col items-center justify-center gap-2 bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.08] hover:border-white/[0.15] rounded-xl py-3 text-white/40 hover:text-white/70 transition-all active:scale-95 overflow-hidden"
+            >
+              <div className="absolute inset-0 opacity-[0.03]" 
+                style={{
+                  backgroundImage: `radial-gradient(circle at 1px 1px, white 1px, transparent 0)`,
+                  backgroundSize: '20px 20px',
+                }}
+              />
+              <div className="relative flex flex-col items-center gap-1.5">
+                <LinkIcon type={link.icon} />
+                <span className="text-[10px] font-medium">{link.name}</span>
               </div>
             </button>
           ))}
