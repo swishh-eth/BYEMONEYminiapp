@@ -86,12 +86,34 @@ export default function HomePage({ predictionData, onNavigate, walletAddress, sd
   const [dailyClaimDataLoading, setDailyClaimDataLoading] = useState(false);
   
   const [byemoneyData, setByemoneyData] = useState<{ marketId: number; timeRemaining: number; totalPool: number; upPool: number; downPool: number; priceUsd: number; } | null>(null);
+  const [ethMarketData, setEthMarketData] = useState<{ marketId: number; timeRemaining: number; totalPool: number; upPool: number; downPool: number; ethPrice: number; } | null>(null);
 
   useEffect(() => {
-    const hasEthData = predictionData && predictionData.ethPrice > 0;
+    const hasEthData = ethMarketData && ethMarketData.ethPrice > 0;
     const hasByemoneyData = byemoneyData && byemoneyData.priceUsd > 0;
     if (hasEthData || hasByemoneyData) setTimeout(() => setDataLoaded(true), 300);
-  }, [predictionData, byemoneyData]);
+  }, [ethMarketData, byemoneyData]);
+
+  // Fetch ETH market data
+  useEffect(() => {
+    const fetchEthData = async () => {
+      try {
+        const [market, ethPrice] = await Promise.all([
+          publicClient.readContract({ address: ETH_CONTRACT_ADDRESS, abi: MARKET_ABI, functionName: 'getCurrentMarket' }),
+          publicClient.readContract({ address: ETH_CONTRACT_ADDRESS, abi: MARKET_ABI, functionName: 'getPrice' }),
+        ]);
+        const endTime = Number(market[4]) * 1000;
+        const timeRemaining = Math.max(0, Math.floor((endTime - Date.now()) / 1000));
+        const upPool = Number(formatEther(market[5]));
+        const downPool = Number(formatEther(market[6]));
+        const ethPriceUsd = Number(ethPrice) / 1e8;
+        setEthMarketData({ marketId: Number(market[0]), timeRemaining, totalPool: upPool + downPool, upPool, downPool, ethPrice: ethPriceUsd });
+      } catch (error) { console.error('Failed to fetch ETH data:', error); }
+    };
+    fetchEthData();
+    const interval = setInterval(fetchEthData, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     const fetchByemoneyData = async () => {
@@ -205,14 +227,13 @@ export default function HomePage({ predictionData, onNavigate, walletAddress, sd
   const currentMarket = MARKETS[currentMarketIndex];
   
   // Check if data is loaded for the CURRENT market being displayed
-  // For ETH, also check pool is reasonable (< 1000 ETH) to prevent showing BYEMONEY pool data
   const isCurrentMarketDataLoaded = currentMarket.symbol === 'ETH' 
-    ? (predictionData && predictionData.ethPrice > 0 && predictionData.totalPool !== undefined && predictionData.totalPool < 10)
+    ? (ethMarketData && ethMarketData.ethPrice > 0 && ethMarketData.totalPool !== undefined)
     : (byemoneyData && byemoneyData.priceUsd > 0);
 
   const getMarketPercentages = () => {
-    if (currentMarket.symbol === 'ETH' && predictionData && predictionData.totalPool > 0) {
-      const up = (predictionData.upPool / predictionData.totalPool) * 100;
+    if (currentMarket.symbol === 'ETH' && ethMarketData && ethMarketData.totalPool > 0) {
+      const up = (ethMarketData.upPool / ethMarketData.totalPool) * 100;
       return { upPercent: up, downPercent: 100 - up };
     } else if (currentMarket.symbol === 'BYEMONEY' && byemoneyData && byemoneyData.totalPool > 0) {
       const up = (byemoneyData.upPool / byemoneyData.totalPool) * 100;
@@ -337,11 +358,11 @@ export default function HomePage({ predictionData, onNavigate, walletAddress, sd
                 </div>
                 <div className="flex items-center justify-between mb-2">
                   <div>
-                    <p className="text-2xl font-bold">{currentMarket.symbol === 'ETH' && predictionData ? `$${predictionData.ethPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : currentMarket.symbol === 'BYEMONEY' && byemoneyData ? `$${byemoneyData.priceUsd.toFixed(3)}` : '$---'}</p>
-                    <p className="text-[10px] text-white/40">{(() => { const seconds = currentMarket.symbol === 'ETH' ? predictionData?.timeRemaining : byemoneyData?.timeRemaining; if (!seconds || seconds <= 0) return '0h 0m left'; return `${Math.floor(seconds / 3600)}h ${Math.floor((seconds % 3600) / 60)}m left`; })()}</p>
+                    <p className="text-2xl font-bold">{currentMarket.symbol === 'ETH' && ethMarketData ? `$${ethMarketData.ethPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : currentMarket.symbol === 'BYEMONEY' && byemoneyData ? `$${byemoneyData.priceUsd.toFixed(3)}` : '$---'}</p>
+                    <p className="text-[10px] text-white/40">{(() => { const seconds = currentMarket.symbol === 'ETH' ? ethMarketData?.timeRemaining : byemoneyData?.timeRemaining; if (!seconds || seconds <= 0) return '0h 0m left'; return `${Math.floor(seconds / 3600)}h ${Math.floor((seconds % 3600) / 60)}m left`; })()}</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm font-bold">{currentMarket.symbol === 'ETH' ? `${predictionData?.totalPool.toFixed(4) || '0'} ETH` : `${byemoneyData?.totalPool ? (byemoneyData.totalPool >= 1000000 ? `${(byemoneyData.totalPool / 1000000).toFixed(1)}M` : byemoneyData.totalPool >= 1000 ? `${(byemoneyData.totalPool / 1000).toFixed(1)}K` : byemoneyData.totalPool.toFixed(0)) : '0'}`}</p>
+                    <p className="text-sm font-bold">{currentMarket.symbol === 'ETH' ? `${ethMarketData?.totalPool.toFixed(4) || '0'} ETH` : `${byemoneyData?.totalPool ? (byemoneyData.totalPool >= 1000000 ? `${(byemoneyData.totalPool / 1000000).toFixed(1)}M` : byemoneyData.totalPool >= 1000 ? `${(byemoneyData.totalPool / 1000).toFixed(1)}K` : byemoneyData.totalPool.toFixed(0)) : '0'}`}</p>
                     <p className="text-[9px] text-white/40">in pool</p>
                   </div>
                 </div>
