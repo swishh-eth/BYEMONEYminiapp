@@ -169,6 +169,7 @@ export default function HomePage({ predictionData, onNavigate, walletAddress, sd
 
   const openDailyClaim = () => {
     playClick(); triggerHaptic('medium');
+    setDailyClaimDataLoading(true); // Set loading true BEFORE showing modal
     setShowDailyClaim(true); setClaimSuccess(false); setClaimError('');
     setTimeout(() => setDailyClaimMounted(true), 10);
     fetchDailyClaimData();
@@ -443,11 +444,11 @@ export default function HomePage({ predictionData, onNavigate, walletAddress, sd
             </div>
             
             {dailyClaimDataLoading ? (
-              <div className="flex items-center justify-center py-12"><div className="w-8 h-8 border-2 border-white/10 border-t-white/40 rounded-full animate-spin" /></div>
+              <div className="flex items-center justify-center py-12 animate-fade-in"><div className="w-8 h-8 border-2 border-white/10 border-t-white/40 rounded-full animate-spin" /></div>
             ) : !walletAddress ? (
-              <div className="text-center py-8"><p className="text-white/50 text-sm">Connect your wallet to view rewards</p></div>
+              <div className="text-center py-8 animate-fade-in"><p className="text-white/50 text-sm">Connect your wallet to view rewards</p></div>
             ) : (
-              <>
+              <div className="animate-fade-in">
                 <div className="bg-white/5 rounded-xl p-4 mb-4">
                   <p className="text-xs text-white/40 uppercase tracking-wider mb-2">Today's Tickets</p>
                   <div className="flex justify-between">
@@ -509,7 +510,7 @@ export default function HomePage({ predictionData, onNavigate, walletAddress, sd
                     )}
                   </button>
                 )}
-              </>
+              </div>
             )}
             
             <p className="text-center text-white/20 text-[10px] mt-4 uppercase tracking-wider">tap anywhere to close</p>
