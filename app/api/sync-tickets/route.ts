@@ -5,7 +5,7 @@ import { privateKeyToAccount } from 'viem/accounts';
 import { createClient } from '@supabase/supabase-js';
 
 // ============ Config ============
-const CLAIM_REWARDS_ADDRESS = (process.env.CLAIM_REWARDS_CONTRACT_ADDRESS || '0xAc32305008af0B1A9Bdb2587c10FFA3908d0AFc4') as `0x${string}`;
+const CLAIM_REWARDS_ADDRESS = (process.env.CLAIM_REWARDS_CONTRACT_ADDRESS || '0x4dD5aBfCec65c9E3C789569aD537E2baC0fBBC21') as `0x${string}`;
 const RESOLVER_PRIVATE_KEY = process.env.RESOLVER_PRIVATE_KEY as `0x${string}`;
 const BASE_RPC = process.env.BASE_RPC_URL || 'https://base-mainnet.g.alchemy.com/v2/jKHNMnfb18wYA1HfaHxo5';
 

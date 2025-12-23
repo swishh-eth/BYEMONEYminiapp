@@ -5,9 +5,9 @@ import { createPublicClient, http, formatEther, encodeFunctionData } from 'viem'
 import { base } from 'viem/chains';
 
 // Contract addresses
-const ETH_CONTRACT_ADDRESS = '0x69035b4a9B45daDa3411a158762Ca30BfADC6045' as `0x${string}`;
-const BYEMONEY_CONTRACT_ADDRESS = '0x42BE4b56af6A0a249180A44EC704dedb7E2d5BED' as `0x${string}`;
-const DAILY_CLAIM_ADDRESS = '0xAc32305008af0B1A9Bdb2587c10FFA3908d0AFc4' as `0x${string}`;
+const ETH_CONTRACT_ADDRESS = '0xf8e98EB6e3A08eD857920b9d8283E731a360B689' as `0x${string}`;
+const BYEMONEY_CONTRACT_ADDRESS = '0x30d4907C6741335B4d7ABA923F3914217d972DBc' as `0x${string}`;
+const DAILY_CLAIM_ADDRESS = '0x4dD5aBfCec65c9E3C789569aD537E2baC0fBBC21' as `0x${string}`;
 
 const MARKET_ABI = [
   { name: 'getCurrentMarket', type: 'function', stateMutability: 'view', inputs: [], outputs: [{ name: 'id', type: 'uint256' }, { name: 'startPrice', type: 'uint256' }, { name: 'endPrice', type: 'uint256' }, { name: 'startTime', type: 'uint256' }, { name: 'endTime', type: 'uint256' }, { name: 'upPool', type: 'uint256' }, { name: 'downPool', type: 'uint256' }, { name: 'status', type: 'uint8' }, { name: 'result', type: 'uint8' }, { name: 'totalTickets', type: 'uint256' }] },
