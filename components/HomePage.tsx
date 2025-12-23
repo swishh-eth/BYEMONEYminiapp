@@ -205,8 +205,9 @@ export default function HomePage({ predictionData, onNavigate, walletAddress, sd
   const currentMarket = MARKETS[currentMarketIndex];
   
   // Check if data is loaded for the CURRENT market being displayed
+  // For ETH, also check pool is reasonable (< 1000 ETH) to prevent showing BYEMONEY pool data
   const isCurrentMarketDataLoaded = currentMarket.symbol === 'ETH' 
-    ? (predictionData && predictionData.ethPrice > 0 && predictionData.totalPool !== undefined)
+    ? (predictionData && predictionData.ethPrice > 0 && predictionData.totalPool !== undefined && predictionData.totalPool < 10)
     : (byemoneyData && byemoneyData.priceUsd > 0);
 
   const getMarketPercentages = () => {
