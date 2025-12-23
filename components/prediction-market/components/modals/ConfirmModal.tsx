@@ -11,7 +11,13 @@ interface ConfirmModalProps {
   onClose: () => void;
   onConfirm: () => void;
   onToggleDontShow: () => void;
+  marketType?: 'ETH' | 'BYEMONEY';
 }
+
+const CONTRACT_ADDRESSES = {
+  ETH: '0xf8e98EB6e3A08eD857920b9d8283E731a360B689',
+  BYEMONEY: '0x30d4907C6741335B4d7ABA923F3914217d972DBc',
+};
 
 export function ConfirmModal({
   isOpen,
@@ -22,10 +28,17 @@ export function ConfirmModal({
   onClose,
   onConfirm,
   onToggleDontShow,
+  marketType = 'ETH',
 }: ConfirmModalProps) {
   if (!isOpen) return null;
 
   const isUp = selectedDirection === 'up';
+  const contractAddress = CONTRACT_ADDRESSES[marketType];
+  const shortAddress = `${contractAddress.slice(0, 6)}...${contractAddress.slice(-4)}`;
+
+  const handleContractClick = () => {
+    window.open(`https://basescan.org/address/${contractAddress}`, '_blank');
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in">
@@ -51,6 +64,47 @@ export function ConfirmModal({
           on <span className="font-semibold">{isUp ? 'PUMP' : 'DUMP'}</span>
         </p>
 
+        {/* Fee Breakdown */}
+        <div className={`rounded-xl p-3 mb-3 ${isUp ? 'bg-black/5' : 'bg-black/20'}`}>
+          <p className={`text-xs font-medium mb-2 ${isUp ? 'text-black/70' : 'text-white/90'}`}>
+            Fee Breakdown (5% total)
+          </p>
+          <div className={`space-y-1 text-xs ${isUp ? 'text-black/50' : 'text-white/70'}`}>
+            <div className="flex justify-between">
+              <span>Next round seed</span>
+              <span>2.5%</span>
+            </div>
+            <div className="flex justify-between">
+              <span>$BYEMONEY burn</span>
+              <span>2.0%</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Daily claim rewards</span>
+              <span>0.5%</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Contract Link */}
+        <button
+          onClick={handleContractClick}
+          className={`w-full rounded-xl p-2.5 mb-3 flex items-center justify-center gap-2 transition-all active:scale-95 ${
+            isUp ? 'bg-black/5 hover:bg-black/10' : 'bg-black/20 hover:bg-black/30'
+          }`}
+        >
+          <svg className={`w-4 h-4 ${isUp ? 'text-black/50' : 'text-white/70'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+            <path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            <path d="M9 12l2 2 4-4" />
+          </svg>
+          <span className={`text-xs ${isUp ? 'text-black/50' : 'text-white/70'}`}>
+            View Contract: {shortAddress}
+          </span>
+          <svg className={`w-3 h-3 ${isUp ? 'text-black/40' : 'text-white/50'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+            <path d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+          </svg>
+        </button>
+
+        {/* Disclaimer */}
         <div className={`rounded-xl p-3 mb-4 ${isUp ? 'bg-black/5' : 'bg-black/20'}`}>
           <p className={`text-xs text-center ${isUp ? 'text-black/50' : 'text-white/70'}`}>
             All sales are final. Bets cannot be refunded or reversed once placed. Only bet what you can afford to lose.

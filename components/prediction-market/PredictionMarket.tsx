@@ -505,16 +505,17 @@ export default function PredictionMarket({
         onClaim={handleClaim}
       />
 
-      <ConfirmModal
-        isOpen={showConfirmModal}
-        selectedDirection={selectedDirection}
-        totalCostDisplay={totalCostDisplay}
-        tokenSymbol={tokenSymbol}
-        dontShowAgain={dontShowAgain}
-        onClose={() => setShowConfirmModal(false)}
-        onConfirm={handleConfirmBuy}
-        onToggleDontShow={() => { setDontShowAgain(!dontShowAgain); playClick(); }}
-      />
+<ConfirmModal
+  isOpen={showConfirmModal}
+  selectedDirection={selectedDirection}
+  totalCostDisplay={totalCostDisplay}
+  tokenSymbol={tokenSymbol}
+  dontShowAgain={dontShowAgain}
+  onClose={() => setShowConfirmModal(false)}
+  onConfirm={handleConfirmBuy}
+  onToggleDontShow={() => { setDontShowAgain(!dontShowAgain); playClick(); }}
+  marketType={activeMarket}
+/>
 
       <style jsx>{styles}</style>
     </div>
