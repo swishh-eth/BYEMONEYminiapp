@@ -109,7 +109,7 @@ export default function InfoPage() {
   };
 
   return (
-    <div className="flex flex-col h-full p-4 pt-20 overflow-hidden">
+    <div className="flex flex-col h-full p-4 pt-20 overflow-y-auto scrollbar-hide">
       {/* Main content area */}
       <div className="flex-1 flex flex-col gap-3">
 
@@ -253,6 +253,13 @@ export default function InfoPage() {
         .animate-fade-in {
           animation: fade-in 0.4s ease-out forwards;
           opacity: 0;
+        }
+        .scrollbar-hide {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+        .scrollbar-hide::-webkit-scrollbar {
+          display: none;
         }
       `}</style>
     </div>

@@ -286,7 +286,7 @@ export default function HomePage({ predictionData, onNavigate, walletAddress, sd
   const hasTodayTickets = todayTicketsEth > 0n || todayTicketsByemoney > 0n;
 
   return (
-    <div className="flex flex-col h-full p-4 pt-20 overflow-hidden">
+    <div className="flex flex-col h-full p-4 pt-20 overflow-y-auto scrollbar-hide">
       <div className="flex-1 flex flex-col gap-3">
         
         {/* Banner */}
