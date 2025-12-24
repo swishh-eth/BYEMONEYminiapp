@@ -2,11 +2,11 @@
   "crons": [
     {
       "path": "/api/resolve",
-      "schedule": "* * * * *"
+      "schedule": "0-10 2 * * *"
     },
     {
       "path": "/api/resolve-byemoney",
-      "schedule": "* * * * *"
+      "schedule": "0-10 2 * * *"
     },
     {
       "path": "/api/sync-tickets",
