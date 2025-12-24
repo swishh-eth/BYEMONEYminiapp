@@ -128,6 +128,35 @@ export async function GET(request: Request) {
       });
     }
 
+    // Check and withdraw any accumulated fees first (on every run)
+    let earlyFeesTxHash = null;
+    let earlyFeesWithdrawn = '0';
+    try {
+      const accumulatedFees = await publicClient.readContract({
+        address: CONTRACT_ADDRESS,
+        abi: CONTRACT_ABI,
+        functionName: 'getAccumulatedFees',
+      });
+
+      if (accumulatedFees > 0n) {
+        console.log(`[ETH] Found ${formatEther(accumulatedFees)} ETH in accumulated fees, withdrawing...`);
+        
+        earlyFeesTxHash = await walletClient.writeContract({
+          chain: base,
+          account,
+          address: CONTRACT_ADDRESS,
+          abi: CONTRACT_ABI,
+          functionName: 'withdrawFees',
+        });
+
+        await publicClient.waitForTransactionReceipt({ hash: earlyFeesTxHash, confirmations: 1 });
+        earlyFeesWithdrawn = formatEther(accumulatedFees);
+        console.log(`[ETH] Fees withdrawn successfully: ${earlyFeesWithdrawn} ETH`);
+      }
+    } catch (feeError: any) {
+      console.log('[ETH] Fee check/withdrawal skipped:', feeError.message || feeError);
+    }
+
     // Get current market
     const market = await publicClient.readContract({
       address: CONTRACT_ADDRESS,
@@ -227,6 +256,8 @@ export async function GET(request: Request) {
         timeRemaining: `${hours}h ${minutes}m`,
         upPool: formatEther(upPool),
         downPool: formatEther(downPool),
+        feesWithdrawn: earlyFeesWithdrawn !== '0' ? earlyFeesWithdrawn : undefined,
+        feesTxHash: earlyFeesTxHash,
         message: 'Market has not ended yet' 
       });
     }
