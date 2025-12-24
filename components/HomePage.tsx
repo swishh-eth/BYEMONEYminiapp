@@ -6,7 +6,7 @@ import { base } from 'viem/chains';
 
 // Contract addresses
 const ETH_CONTRACT_ADDRESS = '0xf8e98EB6e3A08eD857920b9d8283E731a360B689' as `0x${string}`;
-const BYEMONEY_CONTRACT_ADDRESS = '0x30d4907C6741335B4d7ABA923F3914217d972DBc' as `0x${string}`;
+const BYEMONEY_CONTRACT_ADDRESS = '0x2937B3a1CA66cAe79E7230Efad2F5e801F99ade4' as `0x${string}`;
 const DAILY_CLAIM_ADDRESS = '0x4dD5aBfCec65c9E3C789569aD537E2baC0fBBC21' as `0x${string}`;
 
 const MARKET_ABI = [

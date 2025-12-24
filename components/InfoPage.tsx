@@ -11,7 +11,7 @@ const links = [
 
 const contractLinks = [
   { id: 'eth-contract', name: 'ETH Market', url: 'https://basescan.org/address/0xf8e98EB6e3A08eD857920b9d8283E731a360B689', icon: 'scan' },
-  { id: 'byemoney-contract', name: 'BYE Market', url: 'https://basescan.org/address/0x30d4907C6741335B4d7ABA923F3914217d972DBc', icon: 'scan' },
+  { id: 'byemoney-contract', name: 'BYE Market', url: 'https://basescan.org/address/0x2937B3a1CA66cAe79E7230Efad2F5e801F99ade4', icon: 'scan' },
   { id: 'claim-contract', name: 'Daily Claim', url: 'https://basescan.org/address/0x4dD5aBfCec65c9E3C789569aD537E2baC0fBBC21', icon: 'scan' },
 ];
 

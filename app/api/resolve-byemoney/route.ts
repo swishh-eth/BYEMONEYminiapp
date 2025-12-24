@@ -4,7 +4,7 @@ import { base } from 'viem/chains';
 import { privateKeyToAccount } from 'viem/accounts';
 
 // ============ Config ============
-const CONTRACT_ADDRESS = (process.env.BYEMONEY_PREDICTION_CONTRACT_ADDRESS || '0x30d4907C6741335B4d7ABA923F3914217d972DBc') as `0x${string}`;
+const CONTRACT_ADDRESS = (process.env.BYEMONEY_PREDICTION_CONTRACT_ADDRESS || '0x2937B3a1CA66cAe79E7230Efad2F5e801F99ade4') as `0x${string}`;
 const RESOLVER_PRIVATE_KEY = process.env.RESOLVER_PRIVATE_KEY as `0x${string}`;
 const BASE_RPC = process.env.BASE_RPC_URL || 'https://base-mainnet.g.alchemy.com/v2/jKHNMnfb18wYA1HfaHxo5';
 
