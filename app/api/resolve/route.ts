@@ -231,7 +231,7 @@ export async function GET(request: Request) {
       });
     }
 
-    // Market has ended - resolve it
+    // ============ Market has ended - resolve it ============
     const currentPrice = await publicClient.readContract({
       address: CONTRACT_ADDRESS,
       abi: CONTRACT_ABI,
@@ -241,7 +241,7 @@ export async function GET(request: Request) {
     console.log(`[ETH] Resolving market ${id}...`);
     console.log(`[ETH] Start price: ${Number(startPrice) / 1e8}, Current price: ${Number(currentPrice) / 1e8}`);
 
-    // Resolve the market
+    // Step 1: Resolve the market
     const resolveHash = await walletClient.writeContract({
       chain: base,
       account,
@@ -257,7 +257,41 @@ export async function GET(request: Request) {
 
     console.log(`[ETH] Market ${id} resolved: ${direction}`);
 
-    // Start the next market (no seeding needed - contract auto-seeds from fee pool)
+    // Step 2: Check and withdraw fees AFTER resolving (fees are now accumulated)
+    let feesTxHash = null;
+    let feesWithdrawn = '0';
+    
+    try {
+      const accumulatedFees = await publicClient.readContract({
+        address: CONTRACT_ADDRESS,
+        abi: CONTRACT_ABI,
+        functionName: 'getAccumulatedFees',
+      });
+
+      console.log(`[ETH] Accumulated fees after resolve: ${formatEther(accumulatedFees)} ETH`);
+
+      if (accumulatedFees > 0n) {
+        console.log(`[ETH] Withdrawing ${formatEther(accumulatedFees)} ETH in fees...`);
+        
+        feesTxHash = await walletClient.writeContract({
+          chain: base,
+          account,
+          address: CONTRACT_ADDRESS,
+          abi: CONTRACT_ABI,
+          functionName: 'withdrawFees',
+        });
+
+        await publicClient.waitForTransactionReceipt({ hash: feesTxHash, confirmations: 1 });
+        feesWithdrawn = formatEther(accumulatedFees);
+        console.log(`[ETH] Fees withdrawn successfully: ${feesWithdrawn} ETH`);
+      } else {
+        console.log('[ETH] No fees to withdraw');
+      }
+    } catch (feeError: any) {
+      console.error('[ETH] Fee withdrawal failed:', feeError.message || feeError);
+    }
+
+    // Step 3: Start the next market
     console.log('[ETH] Starting next market...');
     
     const startHash = await walletClient.writeContract({
@@ -277,35 +311,6 @@ export async function GET(request: Request) {
     });
 
     console.log(`[ETH] New market ${newMarketId} started`);
-
-    // Withdraw accumulated fees to ClaimRewards contract
-    let feesTxHash = null;
-    let feesWithdrawn = '0';
-    try {
-      const accumulatedFees = await publicClient.readContract({
-        address: CONTRACT_ADDRESS,
-        abi: CONTRACT_ABI,
-        functionName: 'getAccumulatedFees',
-      });
-
-      if (accumulatedFees > 0n) {
-        console.log(`[ETH] Withdrawing ${formatEther(accumulatedFees)} ETH in fees...`);
-        
-        feesTxHash = await walletClient.writeContract({
-          chain: base,
-          account,
-          address: CONTRACT_ADDRESS,
-          abi: CONTRACT_ABI,
-          functionName: 'withdrawFees',
-        });
-
-        await publicClient.waitForTransactionReceipt({ hash: feesTxHash, confirmations: 1 });
-        feesWithdrawn = formatEther(accumulatedFees);
-        console.log(`[ETH] Fees withdrawn: ${feesWithdrawn} ETH`);
-      }
-    } catch (feeError) {
-      console.log('[ETH] No fees to withdraw or withdrawal failed:', feeError);
-    }
 
     return NextResponse.json({
       status: 'resolved_and_started',

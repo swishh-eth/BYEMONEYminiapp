@@ -230,7 +230,7 @@ export async function GET(request: Request) {
       });
     }
 
-    // Market has ended - resolve it
+    // ============ Market has ended - resolve it ============
     const currentPrice = await publicClient.readContract({
       address: CONTRACT_ADDRESS,
       abi: CONTRACT_ABI,
@@ -240,7 +240,7 @@ export async function GET(request: Request) {
     console.log(`[BYEMONEY] Resolving market ${id}...`);
     console.log(`[BYEMONEY] Start price: ${startPrice}, End price: ${currentPrice}`);
 
-    // Resolve the market
+    // Step 1: Resolve the market
     const resolveHash = await walletClient.writeContract({
       chain: base,
       account,
@@ -251,12 +251,48 @@ export async function GET(request: Request) {
 
     await publicClient.waitForTransactionReceipt({ hash: resolveHash, confirmations: 1 });
 
-    const direction = currentPrice > startPrice ? 'UP' : 
-                     currentPrice < startPrice ? 'DOWN' : 'TIE';
+    // Note: For BYEMONEY with sqrtPriceX96, lower price = UP, higher price = DOWN
+    // But this log is just for display - the contract handles the actual logic
+    const direction = currentPrice < startPrice ? 'UP' : 
+                     currentPrice > startPrice ? 'DOWN' : 'TIE';
 
     console.log(`[BYEMONEY] Market ${id} resolved: ${direction}`);
 
-    // Start the next market (auto-seeds from fee pool)
+    // Step 2: Check and withdraw fees AFTER resolving (fees are now accumulated)
+    let feesTxHash = null;
+    let feesWithdrawn = '0';
+    
+    try {
+      const accumulatedFees = await publicClient.readContract({
+        address: CONTRACT_ADDRESS,
+        abi: CONTRACT_ABI,
+        functionName: 'getAccumulatedFees',
+      });
+
+      console.log(`[BYEMONEY] Accumulated fees after resolve: ${formatEther(accumulatedFees)} BYEMONEY`);
+
+      if (accumulatedFees > 0n) {
+        console.log(`[BYEMONEY] Withdrawing ${formatEther(accumulatedFees)} BYEMONEY in fees...`);
+        
+        feesTxHash = await walletClient.writeContract({
+          chain: base,
+          account,
+          address: CONTRACT_ADDRESS,
+          abi: CONTRACT_ABI,
+          functionName: 'withdrawFees',
+        });
+
+        await publicClient.waitForTransactionReceipt({ hash: feesTxHash, confirmations: 1 });
+        feesWithdrawn = formatEther(accumulatedFees);
+        console.log(`[BYEMONEY] Fees withdrawn successfully: ${feesWithdrawn} BYEMONEY`);
+      } else {
+        console.log('[BYEMONEY] No fees to withdraw');
+      }
+    } catch (feeError: any) {
+      console.error('[BYEMONEY] Fee withdrawal failed:', feeError.message || feeError);
+    }
+
+    // Step 3: Start the next market
     console.log('[BYEMONEY] Starting next market...');
     
     const startHash = await walletClient.writeContract({
@@ -275,44 +311,14 @@ export async function GET(request: Request) {
       functionName: 'currentMarketId',
     });
 
-    // Get seed pool and fees info
-    const [seedPool, accumulatedFees] = await Promise.all([
-      publicClient.readContract({
-        address: CONTRACT_ADDRESS,
-        abi: CONTRACT_ABI,
-        functionName: 'getSeedPool',
-      }),
-      publicClient.readContract({
-        address: CONTRACT_ADDRESS,
-        abi: CONTRACT_ABI,
-        functionName: 'getAccumulatedFees',
-      }),
-    ]);
+    // Get seed pool info
+    const seedPool = await publicClient.readContract({
+      address: CONTRACT_ADDRESS,
+      abi: CONTRACT_ABI,
+      functionName: 'getSeedPool',
+    });
 
     console.log(`[BYEMONEY] New market ${newMarketId} started`);
-
-    // Withdraw accumulated fees to ClaimRewards contract
-    let feesTxHash = null;
-    let feesWithdrawn = '0';
-    try {
-      if (accumulatedFees > 0n) {
-        console.log(`[BYEMONEY] Withdrawing ${formatEther(accumulatedFees)} BYEMONEY in fees...`);
-        
-        feesTxHash = await walletClient.writeContract({
-          chain: base,
-          account,
-          address: CONTRACT_ADDRESS,
-          abi: CONTRACT_ABI,
-          functionName: 'withdrawFees',
-        });
-
-        await publicClient.waitForTransactionReceipt({ hash: feesTxHash, confirmations: 1 });
-        feesWithdrawn = formatEther(accumulatedFees);
-        console.log(`[BYEMONEY] Fees withdrawn: ${feesWithdrawn} BYEMONEY`);
-      }
-    } catch (feeError) {
-      console.log('[BYEMONEY] No fees to withdraw or withdrawal failed:', feeError);
-    }
 
     return NextResponse.json({
       status: 'resolved_and_started',
