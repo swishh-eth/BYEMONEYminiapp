@@ -226,124 +226,41 @@ async function fetchEthUnclaimed(
   const unclaimed: UnclaimedMarket[] = [];
   const historyItems: HistoryItem[] = [];
 
-  // For ETH, we check via supabase for the bets table (new contract)
-  // For legacy, we need to scan markets directly
-  if (isLegacy) {
-    // Scan legacy contract markets directly (check markets 1-10)
-    for (let marketId = 1; marketId <= 10; marketId++) {
-      try {
-        const [position, marketInfo] = await Promise.all([
-          publicClient.readContract({
-            address: contractAddress,
-            abi: ETH_CONTRACT_ABI,
-            functionName: 'getPosition',
-            args: [BigInt(marketId), walletAddress],
-          }),
-          publicClient.readContract({
-            address: contractAddress,
-            abi: ETH_CONTRACT_ABI,
-            functionName: 'getMarket',
-            args: [BigInt(marketId)],
-          }),
-        ]);
+  // For BOTH old and new, we scan the contract directly for positions
+  // This ensures we get accurate status from the correct contract
+  
+  // Get current market ID to know how far to scan
+  let maxMarketId = 10;
+  try {
+    const currentId = await publicClient.readContract({
+      address: contractAddress,
+      abi: ETH_CONTRACT_ABI,
+      functionName: 'currentMarketId',
+    });
+    maxMarketId = Math.max(Number(currentId) + 1, 10);
+  } catch (e) {
+    // Fall back to scanning up to 10
+  }
 
-        const upTickets = Number(position[0]);
-        const downTickets = Number(position[1]);
-        const claimed = position[2];
-
-        if (upTickets === 0 && downTickets === 0) continue;
-
-        const status = Number(marketInfo[7]);
-        const result = Number(marketInfo[8]);
-        const upPool = Number(formatEther(marketInfo[5]));
-        const downPool = Number(formatEther(marketInfo[6]));
-        const totalPool = upPool + downPool;
-
-        if (upTickets > 0) {
-          const upWinnings = calculateWinnings(
-            upTickets, 'up', result, status, totalPool, upPool, downPool, BASE_TICKET_PRICE_ETH
-          );
-          historyItems.push({
-            marketId,
-            direction: 'up',
-            tickets: upTickets,
-            result,
-            status,
-            claimed,
-            winnings: upWinnings,
-            timestamp: '',
-            priceAtBet: 0,
-            market: 'ETH',
-            isLegacy: true,
-            contractAddress,
-          });
-        }
-
-        if (downTickets > 0) {
-          const downWinnings = calculateWinnings(
-            downTickets, 'down', result, status, totalPool, upPool, downPool, BASE_TICKET_PRICE_ETH
-          );
-          historyItems.push({
-            marketId,
-            direction: 'down',
-            tickets: downTickets,
-            result,
-            status,
-            claimed,
-            winnings: downWinnings,
-            timestamp: '',
-            priceAtBet: 0,
-            market: 'ETH',
-            isLegacy: true,
-            contractAddress,
-          });
-        }
-
-        const totalWinnings =
-          calculateWinnings(upTickets, 'up', result, status, totalPool, upPool, downPool, BASE_TICKET_PRICE_ETH) +
-          calculateWinnings(downTickets, 'down', result, status, totalPool, upPool, downPool, BASE_TICKET_PRICE_ETH);
-
-        if (!claimed && totalWinnings > 0 && status !== 0) {
-          unclaimed.push({
-            marketId,
-            upTickets,
-            downTickets,
-            result,
-            status,
-            estimatedWinnings: totalWinnings,
-            upPool,
-            downPool,
-            market: 'ETH',
-            isLegacy: true,
-            contractAddress,
-          });
-        }
-      } catch (e) {
-        // Market doesn't exist
-        break;
+  // Get timestamps from supabase if available (for display purposes only)
+  let betTimestamps: Map<string, { timestamp: string; priceAtBet: number }> = new Map();
+  if (supabase) {
+    const { data: bets } = await supabase
+      .from('prediction_bets')
+      .select('market_id, direction, timestamp, price_at_bet')
+      .eq('wallet_address', walletAddress.toLowerCase())
+      .order('timestamp', { ascending: false })
+      .limit(100);
+    
+    bets?.forEach(bet => {
+      const key = `${bet.market_id}-${bet.direction}`;
+      if (!betTimestamps.has(key)) {
+        betTimestamps.set(key, { timestamp: bet.timestamp, priceAtBet: bet.price_at_bet || 0 });
       }
-    }
-
-    return { unclaimed, history: historyItems };
+    });
   }
 
-  // New contract - use supabase
-  if (!supabase) return { unclaimed: [], history: [] };
-
-  const { data: bets } = await supabase
-    .from('prediction_bets')
-    .select('market_id, direction, tickets, price_at_bet, timestamp')
-    .eq('wallet_address', walletAddress.toLowerCase())
-    .order('timestamp', { ascending: false })
-    .limit(50);
-
-  if (!bets || bets.length === 0) {
-    return { unclaimed: [], history: [] };
-  }
-
-  const marketIds = [...new Set(bets.map((b) => b.market_id))].slice(0, 10);
-
-  for (const marketId of marketIds) {
+  for (let marketId = 1; marketId <= maxMarketId; marketId++) {
     try {
       const [position, marketInfo] = await Promise.all([
         publicClient.readContract({
@@ -364,55 +281,52 @@ async function fetchEthUnclaimed(
       const downTickets = Number(position[1]);
       const claimed = position[2];
 
-      // V2/V3 getMarket returns: [id, startPrice, endPrice, startTime, endTime, upPool, downPool, status, result, totalTickets]
+      if (upTickets === 0 && downTickets === 0) continue;
+
       const status = Number(marketInfo[7]);
       const result = Number(marketInfo[8]);
       const upPool = Number(formatEther(marketInfo[5]));
       const downPool = Number(formatEther(marketInfo[6]));
       const totalPool = upPool + downPool;
 
-      const userBets = bets.filter((b) => b.market_id === marketId);
-      const upBets = userBets.filter((b) => b.direction === 'up');
-      const downBets = userBets.filter((b) => b.direction === 'down');
-
-      if (upBets.length > 0) {
-        const totalUpTickets = upBets.reduce((sum, b) => sum + b.tickets, 0);
+      if (upTickets > 0) {
         const upWinnings = calculateWinnings(
-          totalUpTickets, 'up', result, status, totalPool, upPool, downPool, BASE_TICKET_PRICE_ETH
+          upTickets, 'up', result, status, totalPool, upPool, downPool, BASE_TICKET_PRICE_ETH
         );
+        const betInfo = betTimestamps.get(`${marketId}-up`);
         historyItems.push({
           marketId,
           direction: 'up',
-          tickets: totalUpTickets,
+          tickets: upTickets,
           result,
           status,
           claimed,
           winnings: upWinnings,
-          timestamp: upBets[0]?.timestamp || '',
-          priceAtBet: upBets[0]?.price_at_bet || 0,
+          timestamp: betInfo?.timestamp || '',
+          priceAtBet: betInfo?.priceAtBet || 0,
           market: 'ETH',
-          isLegacy: false,
+          isLegacy,
           contractAddress,
         });
       }
 
-      if (downBets.length > 0) {
-        const totalDownTickets = downBets.reduce((sum, b) => sum + b.tickets, 0);
+      if (downTickets > 0) {
         const downWinnings = calculateWinnings(
-          totalDownTickets, 'down', result, status, totalPool, upPool, downPool, BASE_TICKET_PRICE_ETH
+          downTickets, 'down', result, status, totalPool, upPool, downPool, BASE_TICKET_PRICE_ETH
         );
+        const betInfo = betTimestamps.get(`${marketId}-down`);
         historyItems.push({
           marketId,
           direction: 'down',
-          tickets: totalDownTickets,
+          tickets: downTickets,
           result,
           status,
           claimed,
           winnings: downWinnings,
-          timestamp: downBets[0]?.timestamp || '',
-          priceAtBet: downBets[0]?.price_at_bet || 0,
+          timestamp: betInfo?.timestamp || '',
+          priceAtBet: betInfo?.priceAtBet || 0,
           market: 'ETH',
-          isLegacy: false,
+          isLegacy,
           contractAddress,
         });
       }
@@ -432,15 +346,23 @@ async function fetchEthUnclaimed(
           upPool,
           downPool,
           market: 'ETH',
-          isLegacy: false,
+          isLegacy,
           contractAddress,
         });
       }
     } catch (e) {
-      console.log('Error fetching market', marketId, e);
+      // Market doesn't exist, stop scanning
+      break;
     }
   }
 
-  historyItems.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+  historyItems.sort((a, b) => {
+    // Sort by timestamp if available, otherwise by marketId
+    if (a.timestamp && b.timestamp) {
+      return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
+    }
+    return b.marketId - a.marketId;
+  });
+  
   return { unclaimed, history: historyItems };
 }
