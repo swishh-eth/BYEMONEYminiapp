@@ -1,6 +1,12 @@
-// Contract Addresses
-export const ETH_CONTRACT_ADDRESS = '0xf8e98EB6e3A08eD857920b9d8283E731a360B689' as `0x${string}`;
-export const BYEMONEY_CONTRACT_ADDRESS = '0x2937B3a1CA66cAe79E7230Efad2F5e801F99ade4' as `0x${string}`;
+// Contract Addresses - NEW (active for new bets)
+export const ETH_CONTRACT_ADDRESS = '0x473BaD200A9830f7bFF3d947f20B2a21C06Da126' as `0x${string}`;
+export const BYEMONEY_CONTRACT_ADDRESS = '0xF25743149142579c6d9040D807D1493A817336A6' as `0x${string}`;
+
+// Contract Addresses - OLD (for legacy claims)
+export const ETH_CONTRACT_ADDRESS_OLD = '0xf8e98EB6e3A08eD857920b9d8283E731a360B689' as `0x${string}`;
+export const BYEMONEY_CONTRACT_ADDRESS_OLD = '0x2937B3a1CA66cAe79E7230Efad2F5e801F99ade4' as `0x${string}`;
+
+// Token address
 export const BYEMONEY_TOKEN_ADDRESS = '0xA12A532B0B7024b1D01Ae66a3b8cF77366c7dB07' as `0x${string}`;
 
 // Pricing Constants
@@ -19,7 +25,7 @@ export const AVAILABLE_COINS = [
   { symbol: 'BYEMONEY', name: 'ByeMoney', icon: '/byemoney.png', active: true },
 ] as const;
 
-// ETH Market ABI (V2 - Chainlink price, new fee structure)
+// ETH Market ABI (V2/V3 - Chainlink price, new fee structure)
 export const ETH_CONTRACT_ABI = [
   {
     name: 'getCurrentMarket',
@@ -163,7 +169,7 @@ export const ETH_CONTRACT_ABI = [
   },
 ] as const;
 
-// BYEMONEY Market ABI (V3 - Uniswap V4 price, new fee structure)
+// BYEMONEY Market ABI (V4/V5 - Uniswap V4 price, new fee structure)
 export const BYEMONEY_CONTRACT_ABI = [
   {
     name: 'getCurrentMarket',

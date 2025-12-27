@@ -44,6 +44,8 @@ export interface UnclaimedMarket {
   upPool: number;
   downPool: number;
   market: MarketType;
+  isLegacy?: boolean;
+  contractAddress?: `0x${string}`;
 }
 
 export interface HistoryItem {
@@ -57,6 +59,8 @@ export interface HistoryItem {
   timestamp: string;
   priceAtBet: number;
   market: MarketType;
+  isLegacy?: boolean;
+  contractAddress?: `0x${string}`;
 }
 
 export interface TimeLeft {

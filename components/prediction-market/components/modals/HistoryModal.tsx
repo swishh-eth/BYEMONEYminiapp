@@ -27,7 +27,7 @@ interface HistoryModalProps {
   claimingMarketId: number | null;
   claimingMarket: MarketType | null;
   onClose: () => void;
-  onClaim: (marketId: number, market: MarketType) => void;
+  onClaim: (marketId: number, market: MarketType, isLegacy?: boolean, contractAddress?: `0x${string}`) => void;
 }
 
 export function HistoryModal({
@@ -167,29 +167,40 @@ export function HistoryModal({
                 <p className="text-sm font-bold text-white">{totalUnclaimedEth.toFixed(4)} ETH</p>
               </div>
               <div className="space-y-1.5">
-                {ethUnclaimed.map((m) => (
-                  <div key={`eth-${m.marketId}`} className="flex items-center justify-between bg-black/40 rounded-lg p-2">
-                    <div>
-                      <p className="text-xs text-white/70">Round #{m.marketId}</p>
-                      <p className="text-[10px] text-white/40">
-                        {m.status === 2 ? 'Cancelled' : m.result === 1 ? 'UP won' : 'DOWN won'}
-                      </p>
+                {ethUnclaimed.map((m) => {
+                  const buttonKey = `ETH-${m.marketId}${m.isLegacy ? '-legacy' : ''}`;
+                  return (
+                    <div key={buttonKey} className="flex items-center justify-between bg-black/40 rounded-lg p-2">
+                      <div>
+                        <div className="flex items-center gap-1.5">
+                          <p className="text-xs text-white/70">Round #{m.marketId}</p>
+                          {m.isLegacy && (
+                            <span className="text-[8px] px-1.5 py-0.5 bg-orange-500/20 text-orange-400 rounded">OLD</span>
+                          )}
+                        </div>
+                        <p className="text-[10px] text-white/40">
+                          {m.status === 2 ? 'Cancelled' : m.result === 1 ? 'UP won' : 'DOWN won'}
+                        </p>
+                      </div>
+                      <button
+                        ref={(el) => setButtonRef(buttonKey, el)}
+                        onClick={(e) => { 
+                          e.stopPropagation(); 
+                          onClaim(m.marketId, 'ETH', m.isLegacy, m.contractAddress); 
+                        }}
+                        disabled={claimingMarketId === m.marketId && claimingMarket === 'ETH'}
+                        className="bg-white hover:bg-white/90 text-black text-[10px] font-bold rounded-lg transition-colors disabled:opacity-50 flex items-center justify-center"
+                        style={{ width: '60px', height: '32px' }}
+                      >
+                        {claimingMarketId === m.marketId && claimingMarket === 'ETH' ? (
+                          <div className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" />
+                        ) : (
+                          'Claim'
+                        )}
+                      </button>
                     </div>
-                    <button
-                      ref={(el) => setButtonRef(`ETH-${m.marketId}`, el)}
-                      onClick={(e) => { e.stopPropagation(); onClaim(m.marketId, 'ETH'); }}
-                      disabled={claimingMarketId === m.marketId && claimingMarket === 'ETH'}
-                      className="bg-white hover:bg-white/90 text-black text-[10px] font-bold rounded-lg transition-colors disabled:opacity-50 flex items-center justify-center"
-                      style={{ width: '60px', height: '32px' }}
-                    >
-                      {claimingMarketId === m.marketId && claimingMarket === 'ETH' ? (
-                        <div className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" />
-                      ) : (
-                        'Claim'
-                      )}
-                    </button>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
@@ -205,29 +216,40 @@ export function HistoryModal({
                 <p className="text-sm font-bold text-white">{totalUnclaimedByemoney.toFixed(1)}M BYE</p>
               </div>
               <div className="space-y-1.5">
-                {byemoneyUnclaimed.map((m) => (
-                  <div key={`bye-${m.marketId}`} className="flex items-center justify-between bg-black/40 rounded-lg p-2">
-                    <div>
-                      <p className="text-xs text-white/70">Round #{m.marketId}</p>
-                      <p className="text-[10px] text-white/40">
-                        {m.status === 2 ? 'Cancelled' : m.result === 1 ? 'UP won' : 'DOWN won'}
-                      </p>
+                {byemoneyUnclaimed.map((m) => {
+                  const buttonKey = `BYEMONEY-${m.marketId}${m.isLegacy ? '-legacy' : ''}`;
+                  return (
+                    <div key={buttonKey} className="flex items-center justify-between bg-black/40 rounded-lg p-2">
+                      <div>
+                        <div className="flex items-center gap-1.5">
+                          <p className="text-xs text-white/70">Round #{m.marketId}</p>
+                          {m.isLegacy && (
+                            <span className="text-[8px] px-1.5 py-0.5 bg-orange-500/20 text-orange-400 rounded">OLD</span>
+                          )}
+                        </div>
+                        <p className="text-[10px] text-white/40">
+                          {m.status === 2 ? 'Cancelled' : m.result === 1 ? 'UP won' : 'DOWN won'}
+                        </p>
+                      </div>
+                      <button
+                        ref={(el) => setButtonRef(buttonKey, el)}
+                        onClick={(e) => { 
+                          e.stopPropagation(); 
+                          onClaim(m.marketId, 'BYEMONEY', m.isLegacy, m.contractAddress); 
+                        }}
+                        disabled={claimingMarketId === m.marketId && claimingMarket === 'BYEMONEY'}
+                        className="bg-white hover:bg-white/90 text-black text-[10px] font-bold rounded-lg transition-colors disabled:opacity-50 flex items-center justify-center"
+                        style={{ width: '60px', height: '32px' }}
+                      >
+                        {claimingMarketId === m.marketId && claimingMarket === 'BYEMONEY' ? (
+                          <div className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" />
+                        ) : (
+                          'Claim'
+                        )}
+                      </button>
                     </div>
-                    <button
-                      ref={(el) => setButtonRef(`BYEMONEY-${m.marketId}`, el)}
-                      onClick={(e) => { e.stopPropagation(); onClaim(m.marketId, 'BYEMONEY'); }}
-                      disabled={claimingMarketId === m.marketId && claimingMarket === 'BYEMONEY'}
-                      className="bg-white hover:bg-white/90 text-black text-[10px] font-bold rounded-lg transition-colors disabled:opacity-50 flex items-center justify-center"
-                      style={{ width: '60px', height: '32px' }}
-                    >
-                      {claimingMarketId === m.marketId && claimingMarket === 'BYEMONEY' ? (
-                        <div className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" />
-                      ) : (
-                        'Claim'
-                      )}
-                    </button>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
@@ -261,7 +283,7 @@ export function HistoryModal({
 
               return (
                 <div
-                  key={`${item.market}-${item.marketId}-${item.direction}-${index}`}
+                  key={`${item.market}-${item.marketId}-${item.direction}-${item.isLegacy ? 'legacy' : 'new'}-${index}`}
                   className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-2.5 animate-fade-in"
                   style={{ animationDelay: `${index * 30}ms` }}
                 >
@@ -283,6 +305,9 @@ export function HistoryModal({
                           <span className={`text-[8px] px-1 py-0.5 rounded ${item.direction === 'up' ? 'bg-white/10 text-white/70' : 'bg-red-500/20 text-red-400/70'}`}>
                             {item.direction === 'up' ? 'PUMP' : 'DUMP'}
                           </span>
+                          {item.isLegacy && (
+                            <span className="text-[8px] px-1 py-0.5 bg-orange-500/20 text-orange-400 rounded">OLD</span>
+                          )}
                           {dayName && <span className="text-[8px] text-white/30">{dayName}</span>}
                         </div>
                         <p className="text-[9px] text-white/40">

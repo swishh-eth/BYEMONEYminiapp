@@ -234,10 +234,16 @@ export default function PredictionMarket({
     }
   };
 
-  const handleClaim = async (marketId?: number, market?: MarketType) => {
+  // Updated handleClaim to support legacy contracts
+  const handleClaim = async (
+    marketId?: number, 
+    market?: MarketType, 
+    isLegacy?: boolean, 
+    contractAddress?: `0x${string}`
+  ) => {
     const id = marketId ?? (marketData ? Number(marketData.id) : null);
     if (!id) return;
-    const success = await executeClaim(id, market);
+    const success = await executeClaim(id, market, isLegacy, contractAddress);
     if (success) {
       setShowConfetti(true);
       setTimeout(() => setShowConfetti(false), 3000);

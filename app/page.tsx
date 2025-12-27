@@ -10,7 +10,7 @@ import HomePage from '@/components/HomePage';
 import { PredictionMarket } from '@/components/prediction-market';
 import InfoPage from '@/components/InfoPage';
 
-const ETH_CONTRACT_ADDRESS = '0xf8e98EB6e3A08eD857920b9d8283E731a360B689' as const;
+const ETH_CONTRACT_ADDRESS = '0x473BaD200A9830f7bFF3d947f20B2a21C06Da126' as const;
 const TICKET_PRICE_ETH = 0.001;
 const TICKET_PRICE_BYEMONEY = 1000000; // 1M BYEMONEY per ticket
 

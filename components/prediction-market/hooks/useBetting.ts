@@ -6,7 +6,9 @@ import { publicClient } from '../client';
 import { supabase } from '../supabase';
 import {
   ETH_CONTRACT_ADDRESS,
+  ETH_CONTRACT_ADDRESS_OLD,
   BYEMONEY_CONTRACT_ADDRESS,
+  BYEMONEY_CONTRACT_ADDRESS_OLD,
   BYEMONEY_TOKEN_ADDRESS,
   ETH_CONTRACT_ABI,
   BYEMONEY_CONTRACT_ABI,
@@ -26,7 +28,7 @@ interface UseBettingReturn {
     username?: string,
     marketId?: bigint
   ) => Promise<boolean>;
-  executeClaim: (marketId: number, market?: MarketType) => Promise<boolean>;
+  executeClaim: (marketId: number, market?: MarketType, isLegacy?: boolean, contractAddr?: `0x${string}`) => Promise<boolean>;
   claimingMarketId: number | null;
   claimingMarket: MarketType | null;
 }
@@ -55,6 +57,7 @@ export function useBetting(
     setErrorMsg('');
 
     try {
+      // Always use NEW contracts for buying
       const contractAddress =
         activeMarket === 'ETH' ? ETH_CONTRACT_ADDRESS : BYEMONEY_CONTRACT_ADDRESS;
 
@@ -92,7 +95,7 @@ export function useBetting(
           args: [walletAddress, contractAddress],
         });
 
-        // Approve if needed
+        // Approve if needed - use exact amount
         if (currentAllowance < totalCost) {
           const approveData = encodeFunctionData({
             abi: ERC20_ABI,
@@ -164,7 +167,12 @@ export function useBetting(
     }
   };
 
-  const executeClaim = async (marketId: number, market?: MarketType): Promise<boolean> => {
+  const executeClaim = async (
+    marketId: number, 
+    market?: MarketType, 
+    isLegacy?: boolean,
+    contractAddr?: `0x${string}`
+  ): Promise<boolean> => {
     if (!walletAddress || !sdk) return false;
 
     const claimMarket = market || activeMarket;
@@ -172,8 +180,20 @@ export function useBetting(
     setClaimingMarket(claimMarket);
     setTxState('claiming');
 
-    const contractAddress =
-      claimMarket === 'ETH' ? ETH_CONTRACT_ADDRESS : BYEMONEY_CONTRACT_ADDRESS;
+    // Determine the correct contract address
+    let contractAddress: `0x${string}`;
+    
+    if (contractAddr) {
+      // Use explicitly provided contract address
+      contractAddress = contractAddr;
+    } else if (isLegacy) {
+      // Use old contract
+      contractAddress = claimMarket === 'ETH' ? ETH_CONTRACT_ADDRESS_OLD : BYEMONEY_CONTRACT_ADDRESS_OLD;
+    } else {
+      // Use new contract
+      contractAddress = claimMarket === 'ETH' ? ETH_CONTRACT_ADDRESS : BYEMONEY_CONTRACT_ADDRESS;
+    }
+
     const contractAbi = claimMarket === 'ETH' ? ETH_CONTRACT_ABI : BYEMONEY_CONTRACT_ABI;
 
     try {
@@ -190,6 +210,7 @@ export function useBetting(
             from: walletAddress,
             to: contractAddress,
             data,
+            chainId: `0x${(8453).toString(16)}`,
           },
         ],
       });
