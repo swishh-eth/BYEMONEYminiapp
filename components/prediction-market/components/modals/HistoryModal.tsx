@@ -272,14 +272,16 @@ export function HistoryModal({
                 ? `$${(item.tickets * BASE_TICKET_PRICE_ETH * ethPrice).toFixed(2)}`
                 : '';
               
+              // BYEMONEY winnings are already in "tickets" (millions), ETH winnings are in ETH
               const winningsDisplay = isEthMarket
                 ? `+${item.winnings.toFixed(4)} ETH`
-                : `+${(item.winnings / 1000000).toFixed(1)}M`;
+                : `+${item.winnings.toFixed(1)}M`;
               const winningsUsd = isEthMarket && item.winnings > 0
-                ? `($${(item.winnings * ethPrice).toFixed(2)})`
+                ? `$${(item.winnings * ethPrice).toFixed(2)}`
                 : '';
               
               const isWin = item.result === (item.direction === 'up' ? 1 : 2);
+              const showWinnings = isWin && item.winnings > 0;
 
               return (
                 <div
@@ -287,19 +289,19 @@ export function HistoryModal({
                   className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-2.5 animate-fade-in"
                   style={{ animationDelay: `${index * 30}ms` }}
                 >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
                       <div className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 ${item.direction === 'up' ? 'bg-white/20' : 'bg-red-500/20'}`}>
                         <svg className={`w-3.5 h-3.5 ${item.direction === 'up' ? 'text-white' : 'text-red-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
                           <path d={item.direction === 'up' ? 'M5 15l7-7 7 7' : 'M19 9l-7 7-7-7'} />
                         </svg>
                       </div>
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-1.5">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1 flex-wrap">
                           <img 
                             src={isEthMarket ? '/eth.png' : '/byemoney.png'} 
                             alt={item.market} 
-                            className="w-3 h-3 rounded-full"
+                            className="w-3 h-3 rounded-full flex-shrink-0"
                           />
                           <p className="text-[11px] font-semibold">#{item.marketId}</p>
                           <span className={`text-[8px] px-1 py-0.5 rounded ${item.direction === 'up' ? 'bg-white/10 text-white/70' : 'bg-red-500/20 text-red-400/70'}`}>
@@ -308,27 +310,27 @@ export function HistoryModal({
                           {item.isLegacy && (
                             <span className="text-[8px] px-1 py-0.5 bg-orange-500/20 text-orange-400 rounded">OLD</span>
                           )}
-                          {dayName && <span className="text-[8px] text-white/30">{dayName}</span>}
                         </div>
-                        <p className="text-[9px] text-white/40">
+                        <p className="text-[9px] text-white/40 truncate">
                           {item.tickets}x · {betAmountDisplay} {betAmountUsd && `· ${betAmountUsd}`}
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                      {item.claimed && item.winnings > 0 && (
-                        <span className="text-[9px] text-green-400/70 font-medium">Claimed</span>
-                      )}
+                    <div className="flex flex-col items-end flex-shrink-0">
                       {item.status === 0 ? (
                         <span className="text-[10px] text-white font-medium">Active</span>
                       ) : item.status === 2 ? (
                         <span className="text-[10px] text-orange-400 font-medium">Cancelled</span>
                       ) : isWin ? (
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-[9px] text-white/50">Won</span>
-                          <span className="text-[10px] font-bold text-white">{winningsDisplay}</span>
+                        <>
+                          <div className="flex items-center gap-1">
+                            {item.claimed && (
+                              <span className="text-[9px] text-green-400/70">Claimed</span>
+                            )}
+                            <span className="text-[10px] font-bold text-white">{winningsDisplay}</span>
+                          </div>
                           {winningsUsd && <span className="text-[9px] text-white/40">{winningsUsd}</span>}
-                        </div>
+                        </>
                       ) : item.result === 0 ? (
                         <span className="text-[10px] text-white/40 font-medium">Tie</span>
                       ) : (
