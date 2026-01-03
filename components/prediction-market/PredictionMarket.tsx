@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { formatEther } from 'viem';
 
 // Types
@@ -151,7 +151,23 @@ export default function PredictionMarket({
   );
   const canRefund = isCancelled && !hasClaimed && userTotalTickets > 0;
 
-  const timeRemainingSeconds = timeLeft.hours * 3600 + timeLeft.minutes * 60 + timeLeft.seconds;
+  // Calculate time remaining directly from marketData.endTime (source of truth)
+  // This prevents stale timeLeft state from causing incorrect lock states
+  const timeRemainingSeconds = useMemo(() => {
+    if (!marketData?.endTime || marketData.status !== 0) return 0;
+    const endTime = Number(marketData.endTime) * 1000;
+    const now = Date.now();
+    return Math.max(0, Math.floor((endTime - now) / 1000));
+  }, [marketData?.endTime, marketData?.status]);
+
+  // Re-calculate every second for accurate lock state
+  const [, forceUpdate] = useState(0);
+  useEffect(() => {
+    if (!marketData || marketData.status !== 0) return;
+    const interval = setInterval(() => forceUpdate(n => n + 1), 1000);
+    return () => clearInterval(interval);
+  }, [marketData?.id, marketData?.status]);
+
   const isInLockPeriod = timeRemainingSeconds > 0 && timeRemainingSeconds <= LOCK_PERIOD_SECONDS;
   const isRoundEnded = timeRemainingSeconds === 0 && hasMarket && !isResolved && !isCancelled;
   // Lock during final hour OR when round has ended (waiting for resolution)

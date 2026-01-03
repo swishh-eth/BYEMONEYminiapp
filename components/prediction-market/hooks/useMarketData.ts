@@ -122,9 +122,13 @@ export function useMarketData(
     return () => clearInterval(interval);
   }, [fetchMarketData]);
 
-  // Update timer
+  // Update timer - fixed to properly reset when market changes
   useEffect(() => {
-    if (!marketData || marketData.id === 0n || marketData.status !== 0) return;
+    // Reset timeLeft immediately when market is not active/valid
+    if (!marketData || marketData.id === 0n || marketData.status !== 0) {
+      setTimeLeft({ hours: 0, minutes: 0, seconds: 0 });
+      return;
+    }
 
     const endTime = Number(marketData.endTime) * 1000;
 
@@ -139,10 +143,10 @@ export function useMarketData(
       });
     };
 
-    updateTimer();
+    updateTimer(); // Calculate immediately on mount/change
     const interval = setInterval(updateTimer, 1000);
     return () => clearInterval(interval);
-  }, [marketData]);
+  }, [marketData?.id, marketData?.status, marketData?.endTime]); // More specific deps
 
   const ethPriceUsd = ethPriceFromChainlink ? Number(ethPriceFromChainlink) / 1e8 : 2960;
 
